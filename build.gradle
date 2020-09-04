@@ -1,0 +1,271 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.yaml:snakeyaml:1.8'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'groovy'
+}
+
+project.version = '1.0.0'
+
+ext {
+    id = project.name
+    version = project.version
+    description = 'description'
+    author = 'wysohn'
+    authors = []
+
+    username = null
+    token = null
+}
+
+task checkSettings{
+    if(Objects.equals(rootProject.name, "PluginTemplate")){
+        throw new RuntimeException("Change project name in settings.gradle")
+    }
+}
+
+import groovy.swing.SwingBuilder
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.Yaml
+
+import java.nio.file.Path
+import java.nio.file.Paths
+
+task writePluginYml {
+    DumperOptions options = new DumperOptions()
+    options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
+    options.setPrettyFlow(true)
+
+    File file = new File("$projectDir/src/main/resources/plugin.yml")
+    if (!file.exists()){
+        if(!file.parentFile.exists())
+            file.parentFile.mkdirs()
+        file.createNewFile()
+    }
+
+    InputStream input = new FileInputStream(file)
+    Yaml yaml = new Yaml(options)
+    Map<String, Object> map = yaml.load(input)
+    input.close()
+
+    if (map == null)
+        map = new HashMap<>()
+
+    String id = project.ext.id
+    String desc = project.ext.description
+
+    map.put("name", id)
+    map.put("main", "io.github.wysohn."+id.toLowerCase()+".main."+id)
+    map.put("version", project.ext.version)
+    map.put("author", project.ext.author)
+    map.put("authors", project.ext.authors)
+    map.put("softdepend", [
+            "RapidFramework",
+            "Vault",
+            "PlaceholderAPI",
+            "ProtocolLib",
+            "WorldGuard",
+            "SmartInvs",
+            "ScoreboardScreen",
+            "Citizens"
+    ])
+    map.put("depend", [])
+    map.put("commands", new HashMap<String, Object>() {
+        {
+            put(id.toLowerCase(), new HashMap<String, Object>() {
+                {
+                    put("aliases", [id.toLowerCase().substring(0, 3)])
+                    put("description", desc)
+                }
+            })
+        }
+    })
+    map.put("permissions", new HashMap<String, Object>() {
+        {
+            put(id.toLowerCase(), new HashMap<String, Object>() {
+                {
+                    put("description", "root permission")
+                }
+            })
+        }
+    })
+    map.put("api-version", '1.13')
+
+    FileWriter writer = new FileWriter(file)
+    yaml.dump(map, writer)
+    writer.close()
+}
+
+task writeBaseCodes{
+    ext.replaceAndCopy = {file, toPath, map ->
+        File toFile = toPath.toFile()
+        if(toFile.exists())
+            return
+
+        FileReader reader = new FileReader(file)
+        FileWriter writer = new FileWriter(toFile)
+
+        Scanner sc = new Scanner(reader)
+        while(sc.hasNextLine()){
+            String line = sc.nextLine()
+
+            for(Map.Entry<String, String> entry : map.entrySet()){
+                line = line.replaceAll(entry.getKey(), entry.getValue())
+            }
+
+            writer.write(line)
+            writer.write("\n")
+        }
+
+        writer.close()
+        reader.close()
+    }
+
+    String id = project.ext.id
+    Path packagePath = Paths.get("$projectDir", "src", "main", "java",
+            "io", "github", "wysohn", id.toLowerCase(), "main")
+    if (!packagePath.toFile().exists())
+        packagePath.toFile().mkdirs()
+
+    File mainFile = new File("$projectDir/templates/Main.java")
+    File bridgeFile = new File("$projectDir/templates/Bridge.java")
+    File langFile = new File("$projectDir/templates/Langs.java")
+
+    Map placeholders = [
+            "\\\$pluginname\\\$": id,
+            "%pluginname%": id.toLowerCase(),
+    ]
+    replaceAndCopy(mainFile, Paths.get(packagePath.toString(), id + ".java"), placeholders)
+    replaceAndCopy(bridgeFile, Paths.get(packagePath.toString(), id + "Bridge.java"), placeholders)
+    replaceAndCopy(langFile, Paths.get(packagePath.toString(), id + "Langs.java"), placeholders)
+}
+
+def gh_username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+def gh_token = project.findProperty("gpr.token") ?: System.getenv("TOKEN")
+
+def initCredential() {
+    if (System.console() == null) {
+        new SwingBuilder().edt {
+            dialog(modal: true, // Otherwise the build will continue running before you closed the dialog
+                    title: 'Enter credential', // Dialog title
+                    alwaysOnTop: true, // pretty much what the name says
+                    resizable: false, // Don't allow the user to resize the dialog
+                    locationRelativeTo: null, // Place dialog in center of the screen
+                    pack: true, // We need to pack the dialog (so it will take the size of it's children)
+                    show: true // Let's show it
+            ) {
+                vbox { // Put everything below each other
+                    label(text: "Please enter credentials:")
+                    input_id = textField()
+                    input_pass = passwordField()
+                    button(defaultButton: true, text: 'OK', actionPerformed: {
+                        username = input_id.text
+                        token = input_pass.password // Set pass variable to value of input field
+                        dispose() // Close dialog
+                    })
+                } // vbox end
+            } // dialog end
+        } // edt end
+    } else {
+        username = System.console().readLine("ID >> ")
+        token = System.console().readPassword("Pass >> ")
+    }
+}
+
+repositories {
+    if(gh_username == null || gh_token == null)
+        initCredential()
+
+    jcenter()
+    mavenCentral()
+    maven {
+        url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    maven {
+        url "https://maven.enginehub.org/repo/"
+    }
+    maven {
+        url "https://repo.extendedclip.com/content/repositories/placeholderapi/"
+    }
+    maven {
+        url "https://maven.pkg.github.com/wysohn/RapidFramework"
+        credentials {
+            username = gh_username
+            password = gh_token
+        }
+    }
+    maven{
+        url "http://repo.citizensnpcs.co/"
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+            include '**/*.yml'
+        }
+    }
+
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: "libs", includes: ['*.jar'])
+
+    compile 'org.spigotmc:spigot-api:1.15.+'
+    compile "io.github.wysohn:RapidFramework:2.+"
+
+    testCompile 'junit:junit:4.+'
+    testCompile 'org.mockito:mockito-core:1.9.5'
+    testCompile 'org.powermock:powermock:1.5.6'
+    testCompile 'org.powermock:powermock-module-junit4:1.6.1'
+    testCompile 'org.powermock:powermock-api-mockito:1.6.1'
+    testCompile 'org.javassist:javassist:3.20.0-GA'
+    testCompile group: 'com.carrotsearch', name: 'junit-benchmarks', version: '0.7.0'
+
+    testCompile 'org.spigotmc:spigot-api:1.15.+'
+}
+
+jar {
+    from {
+        String[] include = [
+
+        ]
+
+        configurations.runtimeClasspath
+                .findAll { include.contains(it.name) }
+                .collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
