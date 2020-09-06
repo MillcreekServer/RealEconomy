@@ -1,0 +1,26 @@
+api-version: '1.13'
+depend: [
+]
+author: wysohn
+permissions:
+  realeconomy:
+    description: root permission
+name: RealEconomy
+main: io.github.wysohn.realeconomy.main.RealEconomy
+softdepend:
+  - RapidFramework
+  - Vault
+  - PlaceholderAPI
+  - ProtocolLib
+  - WorldGuard
+  - SmartInvs
+  - ScoreboardScreen
+  - Citizens
+version: 1.0.0
+commands:
+  realeconomy:
+    aliases:
+      - rea
+    description: description
+authors: [
+]

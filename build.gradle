@@ -234,8 +234,8 @@ sourceSets {
 dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
-    compile 'org.spigotmc:spigot-api:1.15.+'
-    compile "io.github.wysohn:RapidFramework:2.+"
+    compile 'org.spigotmc:spigot-api:1.16.+'
+    compile "io.github.wysohn:RapidFramework:2.18.10"
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.mockito:mockito-core:1.9.5'
@@ -269,3 +269,5 @@ compileJava {
 compileTestJava {
     options.encoding = 'UTF-8'
 }
+
+sourceCompatibility = 1.8
