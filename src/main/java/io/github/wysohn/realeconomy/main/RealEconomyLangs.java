@@ -1,8 +1,8 @@
 package io.github.wysohn.realeconomy.main;
 
-import io.github.wysohn.rapidframework2.core.manager.lang.Lang;
+import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 
-public enum RealEconomyLangs implements Lang {
+public enum RealEconomyLangs implements ILang {
 
     ;
 

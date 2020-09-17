@@ -1,26 +1,49 @@
 package io.github.wysohn.realeconomy.manager.currency;
 
-import io.github.wysohn.rapidframework2.core.database.Database;
-import io.github.wysohn.rapidframework2.core.manager.caching.AbstractManagerElementCaching;
-import io.github.wysohn.rapidframework2.tools.Validation;
+import com.google.inject.Injector;
+import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;
+import io.github.wysohn.rapidframework3.core.database.Databases;
+import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
+import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
+import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
+import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
+import io.github.wysohn.rapidframework3.utils.Validation;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Logger;
 
+@Singleton
 public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currency> {
     private final Map<String, UUID> codeMap = new HashMap<>();
 
-    public CurrencyManager(int loadPriority) {
-        super(loadPriority);
+    private final ManagerConfig config;
+
+    @Inject
+    public CurrencyManager(
+            @Named("pluginName") String pluginName,
+            @PluginLogger Logger logger,
+            ManagerConfig config,
+            @PluginDirectory File pluginDir,
+            IShutdownHandle shutdownHandle,
+            ISerializer serializer,
+            Injector injector) {
+        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, injector, Currency.class);
+        this.config = config;
     }
 
     @Override
-    protected Database.DatabaseFactory<Currency> createDatabaseFactory() {
-        return getDatabaseFactory(Currency.class, "currency");
+    protected Databases.DatabaseFactory createDatabaseFactory() {
+        return getDatabaseFactory("currency");
     }
 
     @Override
@@ -40,8 +63,8 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
         // remap code to UUID
         forEach(currency -> codeMap.put(currency.getCode(), currency.getKey()));
 
-        if (!main().conf().get(KEY_MAX_LEN).isPresent()) {
-            main().conf().put(KEY_MAX_LEN, 3);
+        if (!config.get(KEY_MAX_LEN).isPresent()) {
+            config.put(KEY_MAX_LEN, 3);
         }
     }
 
@@ -68,7 +91,7 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
         Validation.assertNotNull(code);
         code = code.toUpperCase();
 
-        int length_max = main().conf().get(KEY_MAX_LEN)
+        int length_max = config.get(KEY_MAX_LEN)
                 .map(Integer.class::cast)
                 .orElse(3);
 
@@ -93,8 +116,33 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
         return Result.OK;
     }
 
+    /**
+     * Change currency code
+     *
+     * @param name    name of the currency (not the code)
+     * @param newCode new code (refer to {@link #newCurrency(String, String)})
+     * @return The result
+     */
+    public synchronized Result changeCode(String name, String newCode) {
+        if (codeMap.containsKey(newCode))
+            return Result.DUP_CODE;
+
+        if (!get(name).isPresent())
+            return Result.NOT_EXIST;
+
+        get(name).map(Reference::get)
+                .ifPresent(currency -> {
+                    String previousCode = currency.getCode();
+                    currency.setCode(newCode);
+                    codeMap.put(newCode, currency.getKey());
+                    if (previousCode != null)
+                        codeMap.remove(previousCode);
+                });
+        return Result.OK;
+    }
+
     public enum Result {
-        OK, DUP_NAME, DUP_CODE, CODE_LENGTH
+        OK, DUP_NAME, DUP_CODE, CODE_LENGTH, NOT_EXIST
     }
 
     public static final String KEY_MAX_LEN = "currency.code.maxlen";

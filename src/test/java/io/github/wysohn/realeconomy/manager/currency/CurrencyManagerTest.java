@@ -1,73 +1,77 @@
 package io.github.wysohn.realeconomy.manager.currency;
 
-import io.github.wysohn.rapidframework2.bukkit.testutils.manager.AbstractBukkitManagerTest;
-import io.github.wysohn.rapidframework2.bukkit.testutils.manager.ManagerTestBuilder2;
-import io.github.wysohn.rapidframework2.core.database.Database;
-import io.github.wysohn.rapidframework2.core.main.PluginMain;
+import com.google.inject.Guice;
+import com.google.inject.Module;
+import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
+import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
+import io.github.wysohn.rapidframework3.testmodules.MockConfigModule;
+import io.github.wysohn.rapidframework3.testmodules.MockMainModule;
+import io.github.wysohn.rapidframework3.testmodules.MockPluginDirectoryModule;
+import io.github.wysohn.rapidframework3.testmodules.MockSerializerModule;
+import io.github.wysohn.rapidframework3.utils.Pair;
+import org.junit.Before;
 import org.junit.Test;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.function.Consumer;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @PowerMockIgnore("jdk.internal.reflect.*")
 public class CurrencyManagerTest extends AbstractBukkitManagerTest {
+
+    List<Module> moduleList = new LinkedList<>();
+    private MockMainModule mainModule;
+    private ISerializer mockSerializer;
+
+    @Before
+    public void init() {
+        mockSerializer = mock(ISerializer.class);
+
+        moduleList.add(new MockMainModule());
+        moduleList.add(new MockSerializerModule(mockSerializer));
+        moduleList.add(new MockPluginDirectoryModule());
+        moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3)));
+    }
+
     @Test
-    public void newCurrency() throws InvocationTargetException {
-        CurrencyManager manager = new CurrencyManager(PluginMain.Manager.NORM_PRIORITY);
-        assertTrue(ManagerTestBuilder2.of(manager)
-                .config(CurrencyManager.KEY_MAX_LEN, 3)
-                .mock((Consumer<CurrencyManager>) currencyManager -> assertEquals(CurrencyManager.Result.CODE_LENGTH,
-                        currencyManager.newCurrency("blahblah", "ABCDE")))
-                .test());
+    public void newCurrency() throws Exception {
+        CurrencyManager manager = Guice.createInjector(moduleList).getInstance(CurrencyManager.class);
+        manager.enable();
+
+        assertEquals(CurrencyManager.Result.CODE_LENGTH, manager.newCurrency("blahblah", "ABCDE"));
+        manager.disable();
     }
 
     @Test
     public void newCurrency2() throws Exception {
-        CurrencyManager manager = new CurrencyManager(PluginMain.Manager.NORM_PRIORITY);
+        CurrencyManager manager = Guice.createInjector(moduleList).getInstance(CurrencyManager.class);
+        manager.enable();
 
-        assertTrue(ManagerTestBuilder2.of(manager)
-                .config(CurrencyManager.KEY_MAX_LEN, 3)
-                .config("dbType", "file")
-                .enable()
-                .mock((Consumer<CurrencyManager>) currencyManager -> assertEquals(CurrencyManager.Result.OK,
-                        currencyManager.newCurrency("dollar", "USD")))
-                .mock((Consumer<CurrencyManager>) currencyManager -> assertEquals(CurrencyManager.Result.DUP_CODE,
-                        currencyManager.newCurrency("hoho", "USD")))
-                .disable()
-                .test());
+        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD"));
+        assertEquals(CurrencyManager.Result.DUP_CODE, manager.newCurrency("hoho", "USD"));
+        manager.disable();
     }
 
     @Test
     public void newCurrency3() throws Exception {
-        CurrencyManager manager = new CurrencyManager(PluginMain.Manager.NORM_PRIORITY);
+        CurrencyManager manager = Guice.createInjector(moduleList).getInstance(CurrencyManager.class);
+        manager.enable();
 
-        assertTrue(ManagerTestBuilder2.of(manager)
-                .config(CurrencyManager.KEY_MAX_LEN, 3)
-                .config("dbType", "file")
-                .enable()
-                .mock((Consumer<CurrencyManager>) currencyManager -> assertEquals(CurrencyManager.Result.OK,
-                        currencyManager.newCurrency("dollar", "USD")))
-                .mock((Consumer<CurrencyManager>) currencyManager -> assertEquals(CurrencyManager.Result.DUP_NAME,
-                        currencyManager.newCurrency("dollar", "ABC")))
-                .test());
+        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD"));
+        assertEquals(CurrencyManager.Result.DUP_NAME, manager.newCurrency("dollar", "ABC"));
+        manager.disable();
     }
 
     @Test
-    public void newCurrency4() throws InvocationTargetException {
-        CurrencyManager manager = new CurrencyManager(PluginMain.Manager.NORM_PRIORITY);
-        Database<Currency> mockDb = mock(Database.class);
+    public void newCurrency4() throws Exception {
+        CurrencyManager manager = Guice.createInjector(moduleList).getInstance(CurrencyManager.class);
+        manager.enable();
 
-        assertTrue(ManagerTestBuilder2.of(manager)
-                .mock((Consumer<CurrencyManager>) currencyManager -> assertEquals(CurrencyManager.Result.OK,
-                        currencyManager.newCurrency("berk", "BRK")))
-                .config(CurrencyManager.KEY_MAX_LEN, 3)
-                .mock((Consumer<CurrencyManager>) currencyManager -> assertEquals(CurrencyManager.Result.OK,
-                        currencyManager.newCurrency("dollar", "USD")))
-                .test());
+        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("berk", "BRK"));
+        assertEquals(CurrencyManager.Result.DUP_NAME, manager.newCurrency("dollar", "USD"));
+        manager.disable();
     }
 }

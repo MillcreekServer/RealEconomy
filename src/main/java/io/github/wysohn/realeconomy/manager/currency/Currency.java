@@ -1,6 +1,6 @@
 package io.github.wysohn.realeconomy.manager.currency;
 
-import io.github.wysohn.rapidframework2.core.manager.caching.CachedElement;
+import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 
 import java.util.UUID;
 
