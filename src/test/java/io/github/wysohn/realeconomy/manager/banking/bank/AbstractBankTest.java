@@ -5,23 +5,30 @@ import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
+import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
+import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
+import io.github.wysohn.realeconomy.interfaces.IMemento;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
+import io.github.wysohn.realeconomy.manager.account.AccountManager;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class AbstractBankTest extends AbstractBukkitManagerTest {
     CurrencyManager currencyManager;
+    AccountManager accountManager;
 
     List<Module> moduleList = new LinkedList<>();
     private IBankOwnerProvider provider;
@@ -30,6 +37,8 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
     public void init() {
         currencyManager = mock(CurrencyManager.class);
         when(currencyManager.get(any(UUID.class))).thenReturn(Optional.empty());
+        accountManager = mock(AccountManager.class);
+
         provider = mock(IBankOwnerProvider.class);
         when(provider.get(any())).thenReturn(mock(IBankOwner.class));
 
@@ -37,6 +46,23 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
             @Provides
             CurrencyManager currencyManager() {
                 return currencyManager;
+            }
+
+            @Provides
+            AccountManager accountManager() {
+                return accountManager;
+            }
+
+            @Provides
+            @MaxCapital
+            BigDecimal max() {
+                return BigDecimal.valueOf(Double.MAX_VALUE);
+            }
+
+            @Provides
+            @MinCapital
+            BigDecimal min() {
+                return BigDecimal.valueOf(-Double.MAX_VALUE);
             }
         });
         moduleList.add(new BankOwnerProviderModule(provider));
@@ -72,6 +98,61 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
         verify(currencyManager).get(uuid);
     }
+
+    @Test
+    public void deposit() {
+        AbstractBank bank = new TempBank();
+        addFakeObserver(bank);
+        Guice.createInjector(moduleList).injectMembers(bank);
+
+        UUID uuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        when(currency.getKey()).thenReturn(uuid);
+
+        assertTrue(bank.deposit(1552.34, currency));
+        assertEquals(0, bank.balance(currency).compareTo(BigDecimal.valueOf(1552.34)));
+        assertTrue(bank.deposit(5000.2243, currency));
+        assertEquals(0, bank.balance(currency).compareTo(BigDecimal.valueOf(1552.34 + 5000.2243)));
+        assertFalse(bank.deposit(Double.MAX_VALUE, currency));
+        assertEquals(0, bank.balance(currency).compareTo(BigDecimal.valueOf(1552.34 + 5000.2243)));
+    }
+
+    @Test
+    public void withdraw() {
+        AbstractBank bank = new TempBank();
+        addFakeObserver(bank);
+        Guice.createInjector(moduleList).injectMembers(bank);
+
+        UUID uuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        when(currency.getKey()).thenReturn(uuid);
+
+        assertTrue(bank.withdraw(3306.34, currency));
+        assertEquals(0, bank.balance(currency).compareTo(BigDecimal.valueOf(-3306.34)));
+        assertTrue(bank.withdraw(1254.673, currency));
+        assertEquals(0, bank.balance(currency).compareTo(BigDecimal.valueOf(-3306.34 - 1254.673)));
+        assertFalse(bank.withdraw(Double.MAX_VALUE, currency));
+        assertEquals(0, bank.balance(currency).compareTo(BigDecimal.valueOf(-3306.34 - 1254.673)));
+    }
+
+    @Test
+    public void saveState() {
+        AbstractBank bank = new TempBank();
+        addFakeObserver(bank);
+        Guice.createInjector(moduleList).injectMembers(bank);
+
+        UUID uuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        when(currency.getKey()).thenReturn(uuid);
+
+        assertTrue(bank.deposit(123246873.11212154, currency));
+        IMemento savedState = bank.saveState();
+        assertTrue(bank.deposit(13453.43, currency));
+        assertTrue(bank.withdraw(3354.75867, currency));
+        bank.restoreState(savedState);
+        assertEquals(BigDecimal.valueOf(123246873.11212154), bank.balance(currency));
+    }
+
 
     public static class TempBank extends AbstractBank {
         private TempBank() {

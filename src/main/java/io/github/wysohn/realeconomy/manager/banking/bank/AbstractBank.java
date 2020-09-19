@@ -7,6 +7,7 @@ import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.IMemento;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
+import io.github.wysohn.realeconomy.manager.account.AccountManager;
 import io.github.wysohn.realeconomy.manager.asset.Loan;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -21,6 +22,8 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     private Set<IBankOwnerProvider> ownerProviders;
     @Inject
     private CurrencyManager currencyManager;
+    @Inject
+    private AccountManager accountManager;
     @Inject
     @MinCapital
     private BigDecimal minimum;
@@ -80,6 +83,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
+        if (value.signum() < 0)
+            throw new RuntimeException("Cannot use negative value.");
+
         final boolean aBoolean = Optional.of(currency)
                 .map(CachedElement::getKey)
                 .map(uuid -> {
@@ -99,6 +105,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
+        if (value.signum() < 0)
+            throw new RuntimeException("Cannot use negative value.");
+
         final boolean aBoolean = Optional.of(currency)
                 .map(CachedElement::getKey)
                 .map(uuid -> {

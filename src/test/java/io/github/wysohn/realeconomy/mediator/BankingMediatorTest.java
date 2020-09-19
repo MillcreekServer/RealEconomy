@@ -137,11 +137,6 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void renameCode() {
-
-    }
-
-    @Test
     public void openAccount() {
 
     }
