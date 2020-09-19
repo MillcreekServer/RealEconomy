@@ -160,7 +160,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         this.capitals.putAll(mem.capitals);
 
         this.accounts.clear();
-        this.accounts.putAll(createDeepCopy(mem.accounts));
+        this.accounts.putAll(mem.accounts);
     }
 
     protected static class AbstractMemento implements IMemento {
