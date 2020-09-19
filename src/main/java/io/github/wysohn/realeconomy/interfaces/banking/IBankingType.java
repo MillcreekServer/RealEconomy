@@ -1,4 +1,7 @@
 package io.github.wysohn.realeconomy.interfaces.banking;
 
-public interface IBankingType {
+import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
+
+public interface IBankingType extends IPluginObject {
+    IAccount createAccount();
 }

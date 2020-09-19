@@ -8,10 +8,12 @@ import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitM
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
+import io.github.wysohn.realeconomy.inject.module.TransactionHandlerModule;
 import io.github.wysohn.realeconomy.interfaces.IMemento;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
-import io.github.wysohn.realeconomy.manager.account.AccountManager;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import org.junit.Before;
@@ -28,7 +30,6 @@ import static org.mockito.Mockito.*;
 
 public class AbstractBankTest extends AbstractBukkitManagerTest {
     CurrencyManager currencyManager;
-    AccountManager accountManager;
 
     List<Module> moduleList = new LinkedList<>();
     private IBankOwnerProvider provider;
@@ -37,7 +38,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
     public void init() {
         currencyManager = mock(CurrencyManager.class);
         when(currencyManager.get(any(UUID.class))).thenReturn(Optional.empty());
-        accountManager = mock(AccountManager.class);
 
         provider = mock(IBankOwnerProvider.class);
         when(provider.get(any())).thenReturn(mock(IBankOwner.class));
@@ -46,11 +46,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
             @Provides
             CurrencyManager currencyManager() {
                 return currencyManager;
-            }
-
-            @Provides
-            AccountManager accountManager() {
-                return accountManager;
             }
 
             @Provides
@@ -66,6 +61,7 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
             }
         });
         moduleList.add(new BankOwnerProviderModule(provider));
+        moduleList.add(new TransactionHandlerModule());
     }
 
     @Test
@@ -151,6 +147,40 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         assertTrue(bank.withdraw(3354.75867, currency));
         bank.restoreState(savedState);
         assertEquals(BigDecimal.valueOf(123246873.11212154), bank.balance(currency));
+    }
+
+    @Test
+    public void putAccount() {
+        AbstractBank bank = new TempBank();
+        addFakeObserver(bank);
+        Guice.createInjector(moduleList).injectMembers(bank);
+
+        IBankUser user = mock(IBankUser.class);
+        UUID uuid = UUID.randomUUID();
+        when(user.getUuid()).thenReturn(uuid);
+
+        assertNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+        assertTrue(bank.putAccount(user, BankingTypeRegistry.CHECKING));
+        assertFalse(bank.putAccount(user, BankingTypeRegistry.CHECKING));
+        assertNotNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+    }
+
+    @Test
+    public void removeAccount() {
+        AbstractBank bank = new TempBank();
+        addFakeObserver(bank);
+        Guice.createInjector(moduleList).injectMembers(bank);
+
+        IBankUser user = mock(IBankUser.class);
+        UUID uuid = UUID.randomUUID();
+        when(user.getUuid()).thenReturn(uuid);
+
+        assertNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+        assertTrue(bank.putAccount(user, BankingTypeRegistry.CHECKING));
+        assertNotNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+        assertTrue(bank.removeAccount(user, BankingTypeRegistry.CHECKING));
+        assertFalse(bank.removeAccount(user, BankingTypeRegistry.CHECKING));
+        assertNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
     }
 
 

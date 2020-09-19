@@ -3,11 +3,9 @@ package io.github.wysohn.realeconomy.manager.currency;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
+import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
-import io.github.wysohn.rapidframework3.testmodules.MockConfigModule;
-import io.github.wysohn.rapidframework3.testmodules.MockMainModule;
-import io.github.wysohn.rapidframework3.testmodules.MockPluginDirectoryModule;
-import io.github.wysohn.rapidframework3.testmodules.MockSerializerModule;
+import io.github.wysohn.rapidframework3.testmodules.*;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,10 +28,14 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
     public void init() {
         mockSerializer = mock(ISerializer.class);
 
-        moduleList.add(new MockMainModule());
-        moduleList.add(new MockSerializerModule(mockSerializer));
-        moduleList.add(new MockPluginDirectoryModule());
+        moduleList.add(new PluginInfoModule("test", "test", "test"));
+        moduleList.add(new MockLoggerModule());
         moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3)));
+        moduleList.add(new MockPluginDirectoryModule());
+        moduleList.add(new MockSerializerModule(mockSerializer));
+        moduleList.add(new MockShutdownModule(() -> {
+
+        }));
     }
 
     @Test
@@ -71,7 +73,7 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         manager.enable();
 
         assertEquals(CurrencyManager.Result.OK, manager.newCurrency("berk", "BRK"));
-        assertEquals(CurrencyManager.Result.DUP_NAME, manager.newCurrency("dollar", "USD"));
+        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD"));
         manager.disable();
     }
 }

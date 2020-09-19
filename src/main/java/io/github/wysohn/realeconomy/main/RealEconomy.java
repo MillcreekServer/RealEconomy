@@ -2,6 +2,7 @@ package io.github.wysohn.realeconomy.main;
 
 import io.github.wysohn.rapidframework3.bukkit.main.AbstractBukkitPlugin;
 import io.github.wysohn.rapidframework3.core.command.SubCommand;
+import io.github.wysohn.rapidframework3.core.inject.module.GsonSerializerModule;
 import io.github.wysohn.rapidframework3.core.inject.module.LanguagesModule;
 import io.github.wysohn.rapidframework3.core.inject.module.ManagerModule;
 import io.github.wysohn.rapidframework3.core.inject.module.MediatorModule;
@@ -10,6 +11,8 @@ import io.github.wysohn.rapidframework3.core.player.AbstractPlayerWrapper;
 import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
 import io.github.wysohn.realeconomy.inject.module.MaxCapitalModule;
 import io.github.wysohn.realeconomy.inject.module.ServerBankModule;
+import io.github.wysohn.realeconomy.inject.module.TransactionHandlerModule;
+import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import org.bukkit.plugin.java.JavaPluginLoader;
@@ -38,9 +41,14 @@ public class RealEconomy extends AbstractBukkitPlugin {
         pluginMainBuilder.addModule(new BankOwnerProviderModule(
                 //TODO users
         ));
+        pluginMainBuilder.addModule(new GsonSerializerModule(
+                CustomTypeAdapters.ACCOUNT,
+                CustomTypeAdapters.BANKING_TYPE
+        ));
         pluginMainBuilder.addModule(new BankOwnerProviderModule());
         pluginMainBuilder.addModule(new ServerBankModule());
         pluginMainBuilder.addModule(new MaxCapitalModule());
+        pluginMainBuilder.addModule(new TransactionHandlerModule());
         //TODO and some other modules as your need...
     }
 

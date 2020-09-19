@@ -1,14 +1,13 @@
 package io.github.wysohn.realeconomy.manager.banking.bank;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
+import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.IMemento;
-import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
-import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
-import io.github.wysohn.realeconomy.manager.account.AccountManager;
-import io.github.wysohn.realeconomy.manager.asset.Loan;
+import io.github.wysohn.realeconomy.interfaces.banking.*;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
@@ -19,11 +18,11 @@ import java.util.*;
 
 public abstract class AbstractBank extends CachedElement<UUID> implements IFinancialEntity {
     @Inject
+    private ITransactionHandler transactionHandler;
+    @Inject
     private Set<IBankOwnerProvider> ownerProviders;
     @Inject
     private CurrencyManager currencyManager;
-    @Inject
-    private AccountManager accountManager;
     @Inject
     @MinCapital
     private BigDecimal minimum;
@@ -31,8 +30,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     @MaxCapital
     private BigDecimal maximum;
 
+    // Currency uuid -> value
     private final Map<UUID, BigDecimal> capitals = new HashMap<>();
-    private final Map<UUID, Loan> loans = new HashMap<>();
+    private final Map<UUID, Map<IBankingType, IAccount>> accounts = new HashMap<>();
 
     private UUID bankOwnerUuid;
     private UUID baseCurrencyUuid;
@@ -75,54 +75,76 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
     @Override
     public BigDecimal balance(Currency currency) {
-        return Optional.of(currency)
-                .map(CachedElement::getKey)
-                .map(capitals::get)
-                .orElse(BigDecimal.ZERO);
+        return transactionHandler.balance(capitals, currency);
     }
 
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
-        if (value.signum() < 0)
-            throw new RuntimeException("Cannot use negative value.");
-
-        final boolean aBoolean = Optional.of(currency)
-                .map(CachedElement::getKey)
-                .map(uuid -> {
-                    BigDecimal current = capitals.getOrDefault(uuid, BigDecimal.ZERO);
-                    BigDecimal added = current.add(value);
-
-                    if (added.compareTo(maximum) > 0)
-                        return false;
-
-                    capitals.put(uuid, added);
-                    return true;
-                })
-                .orElse(false);
+        final boolean aBoolean = transactionHandler.deposit(capitals, value, currency);
         notifyObservers();
         return aBoolean;
     }
 
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
-        if (value.signum() < 0)
-            throw new RuntimeException("Cannot use negative value.");
-
-        final boolean aBoolean = Optional.of(currency)
-                .map(CachedElement::getKey)
-                .map(uuid -> {
-                    BigDecimal current = capitals.getOrDefault(uuid, BigDecimal.ZERO);
-                    BigDecimal subtracted = current.subtract(value);
-
-                    if (subtracted.compareTo(minimum) < 0)
-                        return false;
-
-                    capitals.put(uuid, subtracted);
-                    return true;
-                })
-                .orElse(false);
+        final boolean aBoolean = transactionHandler.withdraw(capitals, value, currency);
         notifyObservers();
         return aBoolean;
+    }
+
+    /**
+     * @param user the owner of account.
+     * @param type the account type to get from this bank.
+     * @return
+     */
+    public IAccount getAccount(IBankUser user, IBankingType type) {
+        Validation.assertNotNull(type);
+
+        return Optional.ofNullable(user)
+                .map(IPluginObject::getUuid)
+                .map(accounts::get)
+                .map(accountMap -> accountMap.get(type))
+                .orElse(null);
+    }
+
+    /**
+     * @param user the owner of account.
+     * @param type the account type to be added to this bank.
+     * @return true if newly created; false if the account type already exist
+     */
+    public boolean putAccount(IBankUser user, IBankingType type) {
+        Validation.assertNotNull(user);
+        Validation.assertNotNull(type);
+
+        Map<IBankingType, IAccount> accountMap = accounts.computeIfAbsent(user.getUuid(),
+                key -> new HashMap<>());
+
+        if (accountMap.containsKey(type))
+            return false;
+
+        Validation.validate(accountMap.put(type, type.createAccount()),
+                Objects::isNull,
+                "Inconsistent Map behavior.");
+
+        notifyObservers();
+        return true;
+    }
+
+    /**
+     * @param user the owner of account.
+     * @param type the account type to be added to this bank.
+     * @return true if deleted; false if account didn't exist in the first place.
+     */
+    public boolean removeAccount(IBankUser user, IBankingType type) {
+        Validation.assertNotNull(user);
+
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        if (accountMap == null)
+            return false;
+
+        final boolean deleted = accountMap.remove(type) != null;
+        if (deleted) notifyObservers();
+        return deleted;
     }
 
     @Override
@@ -137,17 +159,28 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         this.capitals.clear();
         this.capitals.putAll(mem.capitals);
 
-        this.loans.clear();
-        this.loans.putAll(mem.loans);
+        this.accounts.clear();
+        this.accounts.putAll(createDeepCopy(mem.accounts));
     }
 
     protected static class AbstractMemento implements IMemento {
         private final Map<UUID, BigDecimal> capitals = new HashMap<>();
-        private final Map<UUID, Loan> loans = new HashMap<>();
+        private final Map<UUID, Map<IBankingType, IAccount>> accounts = new HashMap<>();
 
         public AbstractMemento(AbstractBank bank) {
             capitals.putAll(bank.capitals);
-            loans.putAll(bank.loans);
+            // make a deep copy
+            accounts.putAll(createDeepCopy(bank.accounts));
         }
+    }
+
+    private static Map<UUID, Map<IBankingType, IAccount>> createDeepCopy(Map<UUID, Map<IBankingType, IAccount>> from) {
+        Map<UUID, Map<IBankingType, IAccount>> mapCopyParent = new HashMap<>();
+        from.forEach((uuid, accountMap) -> {
+            Map<IBankingType, IAccount> mapCopy = new HashMap<>();
+            accountMap.forEach((type, account) -> mapCopy.put(type, account.clone()));
+            mapCopyParent.put(uuid, mapCopy);
+        });
+        return mapCopyParent;
     }
 }
