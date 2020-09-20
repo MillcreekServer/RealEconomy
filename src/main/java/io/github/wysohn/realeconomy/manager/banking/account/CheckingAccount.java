@@ -13,6 +13,11 @@ public class CheckingAccount implements IAccount {
     public final Map<UUID, BigDecimal> balances = new HashMap<>();
 
     @Override
+    public Map<UUID, BigDecimal> getBalanceMap() {
+        return balances;
+    }
+
+    @Override
     public IBankingType getType() {
         return BankingTypeRegistry.CHECKING;
     }

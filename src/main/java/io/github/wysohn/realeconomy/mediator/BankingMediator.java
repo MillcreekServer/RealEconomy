@@ -1,12 +1,12 @@
 package io.github.wysohn.realeconomy.mediator;
 
+import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
+import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.ServerBank;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
-import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
-import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
-import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
+import io.github.wysohn.realeconomy.interfaces.banking.*;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 @Singleton
@@ -25,17 +26,20 @@ public class BankingMediator extends Mediator {
     private final BigDecimal maxCapital;
     private final CurrencyManager currencyManager;
     private final CentralBankingManager centralBankingManager;
+    private final ITransactionHandler transactionHandler;
 
     @Inject
     public BankingMediator(
             @ServerBank CentralBank serverBank,
             @MaxCapital BigDecimal maxCapital,
             CurrencyManager currencyManager,
-            CentralBankingManager centralBankingManager) {
+            CentralBankingManager centralBankingManager,
+            ITransactionHandler transactionHandler) {
         this.serverBank = serverBank;
         this.maxCapital = maxCapital;
         this.currencyManager = currencyManager;
         this.centralBankingManager = centralBankingManager;
+        this.transactionHandler = transactionHandler;
     }
 
     @Override
@@ -112,8 +116,79 @@ public class BankingMediator extends Mediator {
         return Result.UNKNOWN;
     }
 
-    public void openAccount(AbstractBank bank, IBankUser user, IBankingType type) {
+    public boolean openAccount(IBankUser user, IBankingType type) {
+        return this.openAccount(serverBank, user, type);
+    }
 
+    public boolean openAccount(AbstractBank bank, IBankUser user, IBankingType type) {
+        return bank.putAccount(user, type);
+    }
+
+    public BigDecimal balance(IBankUser user, IBankingType type) {
+        return this.balance(serverBank, user, type);
+    }
+
+    public BigDecimal balance(AbstractBank bank, IBankUser user, IBankingType type) {
+        Validation.assertNotNull(bank);
+        Validation.assertNotNull(user);
+        Validation.assertNotNull(type);
+
+        return Optional.of(bank)
+                .map(AbstractBank::getBaseCurrency)
+                .map(CachedElement::getKey)
+                .map(currencyUuid -> {
+                    IAccount account = bank.getAccount(user, type);
+                    return account.getBalanceMap().get(currencyUuid);
+                })
+                .orElse(BigDecimal.ZERO);
+    }
+
+    public Result deposit(IBankUser user, IBankingType type, BigDecimal amount) {
+        return deposit(serverBank, user, type, amount);
+    }
+
+    public Result deposit(AbstractBank bank, IBankUser user, IBankingType type, BigDecimal amount) {
+        Validation.assertNotNull(bank);
+        Validation.assertNotNull(user);
+        Validation.assertNotNull(type);
+        Validation.assertNotNull(amount);
+
+        if (bank.getBaseCurrency() == null)
+            return Result.NO_CURRENCY_SET;
+
+        IAccount account = bank.getAccount(user, type);
+        if (account == null)
+            return Result.NO_ACCOUNT;
+
+        if (transactionHandler.deposit(account.getBalanceMap(), amount, bank.getBaseCurrency())) {
+            return Result.OK;
+        } else {
+            return Result.FAIL_DEPOSIT;
+        }
+    }
+
+    public Result withdraw(IBankUser user, IBankingType type, BigDecimal amount) {
+        return this.withdraw(serverBank, user, type, amount);
+    }
+
+    public Result withdraw(AbstractBank bank, IBankUser user, IBankingType type, BigDecimal amount) {
+        Validation.assertNotNull(bank);
+        Validation.assertNotNull(user);
+        Validation.assertNotNull(type);
+        Validation.assertNotNull(amount);
+
+        if (bank.getBaseCurrency() == null)
+            return Result.NO_CURRENCY_SET;
+
+        IAccount account = bank.getAccount(user, type);
+        if (account == null)
+            return Result.NO_ACCOUNT;
+
+        if (transactionHandler.withdraw(account.getBalanceMap(), amount, bank.getBaseCurrency())) {
+            return Result.OK;
+        } else {
+            return Result.FAIL_WITHDRAW;
+        }
     }
 
     public void createCommercialBank(IBankOwner owner, UUID baseCurrency, double base, String name) {
@@ -121,6 +196,16 @@ public class BankingMediator extends Mediator {
     }
 
     public enum Result {
-        UNKNOWN, DUP_NAME, DUP_CODE, CODE_LENGTH, ALREADY_SET, NOT_FOUND, OK
+        OK,
+        UNKNOWN,
+        DUP_NAME,
+        DUP_CODE,
+        CODE_LENGTH,
+        ALREADY_SET,
+        NOT_FOUND,
+        NO_CURRENCY_SET,
+        NO_ACCOUNT,
+        FAIL_DEPOSIT,
+        FAIL_WITHDRAW,
     }
 }

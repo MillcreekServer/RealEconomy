@@ -137,7 +137,14 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void openAccount() {
+    public void balance() {
+    }
 
+    @Test
+    public void deposit() {
+    }
+
+    @Test
+    public void withdraw() {
     }
 }
