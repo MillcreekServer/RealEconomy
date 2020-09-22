@@ -23,9 +23,11 @@ public class ServerBankModule extends AbstractModule {
                 .orElseThrow(RuntimeException::new);
         if (serverBank.getBaseCurrency() == null) {
             currencyManager.newCurrency("default", "DFT");
-            serverBank.setBaseCurrency(currencyManager.get("default")
-                    .map(Reference::get)
-                    .orElseThrow(RuntimeException::new));
+            if (serverBank.getBaseCurrency() == null) {
+                serverBank.setBaseCurrency(currencyManager.get("default")
+                        .map(Reference::get)
+                        .orElseThrow(RuntimeException::new));
+            }
         }
         return serverBank;
     }

@@ -1,11 +1,12 @@
 package io.github.wysohn.realeconomy.interfaces;
 
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
+import io.github.wysohn.rapidframework3.interfaces.entity.IEntitySnapshot;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import java.math.BigDecimal;
 
-public interface IFinancialEntity extends ITransactionSnapshot, IPluginObject {
+public interface IFinancialEntity extends IEntitySnapshot, IPluginObject {
     BigDecimal balance(Currency currency);
 
     boolean deposit(BigDecimal value, Currency currency);

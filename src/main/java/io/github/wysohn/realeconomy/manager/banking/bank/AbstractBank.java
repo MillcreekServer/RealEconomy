@@ -1,12 +1,13 @@
 package io.github.wysohn.realeconomy.manager.banking.bank;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
+import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
-import io.github.wysohn.realeconomy.interfaces.IMemento;
 import io.github.wysohn.realeconomy.interfaces.banking.*;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -17,6 +18,8 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public abstract class AbstractBank extends CachedElement<UUID> implements IFinancialEntity {
+    private transient final Object transactionLock = new Object();
+
     @Inject
     private ITransactionHandler transactionHandler;
     @Inject
@@ -62,10 +65,19 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
                 .orElse(null);
     }
 
-    public void setBaseCurrency(Currency currency) {
-        this.baseCurrencyUuid = currency.getKey();
+    protected UUID getBaseCurrencyUuid() {
+        return baseCurrencyUuid;
+    }
 
-        notifyObservers();
+    public void setBaseCurrency(Currency currency) {
+        synchronized (transactionLock) {
+            if (this.baseCurrencyUuid != null)
+                throw new RuntimeException("BaseCurrency can be set only once.");
+
+            this.baseCurrencyUuid = currency.getKey();
+
+            notifyObservers();
+        }
     }
 
     @Override
@@ -80,19 +92,26 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
-        final boolean aBoolean = transactionHandler.deposit(capitals, value, currency);
-        notifyObservers();
-        return aBoolean;
+        synchronized (transactionLock) {
+            final boolean aBoolean = transactionHandler.deposit(capitals, value, currency);
+            notifyObservers();
+            return aBoolean;
+        }
     }
 
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
-        final boolean aBoolean = transactionHandler.withdraw(capitals, value, currency);
-        notifyObservers();
-        return aBoolean;
+        synchronized (transactionLock) {
+            final boolean aBoolean = transactionHandler.withdraw(capitals, value, currency);
+            notifyObservers();
+            return aBoolean;
+        }
     }
 
     /**
+     * Get a snapshot of the Account. Changes made to the IAccount instance provided does
+     * not have any effect. To make modification, use {@link #accountTransaction(IBankUser, IBankingType)}.
+     *
      * @param user the owner of account.
      * @param type the account type to get from this bank.
      * @return
@@ -104,6 +123,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
                 .map(IPluginObject::getUuid)
                 .map(accounts::get)
                 .map(accountMap -> accountMap.get(type))
+                .map(IAccount::clone)
                 .orElse(null);
     }
 
@@ -145,6 +165,130 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         final boolean deleted = accountMap.remove(type) != null;
         if (deleted) notifyObservers();
         return deleted;
+    }
+
+    /**
+     * Begin a transaction for the specified user. You may perform any number of
+     * transaction using the Transaction instance, yet none of the changes will have
+     * effect until you invoke {@link Transaction#commit()}. If something goes wrong
+     * while processing the transaction, account's state will be reverted.
+     *
+     * @param user the user
+     * @param type type of account
+     * @return Transaction instance
+     * @throws RuntimeException This does not check if the user has an account already.
+     *                          So if no account is found, exception will be thrown.
+     */
+    public Transaction accountTransaction(IBankUser user, IBankingType type) {
+        Validation.assertNotNull(user);
+        if (!accounts.containsKey(user.getUuid()))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        if (!accountMap.containsKey(type))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        return new Transaction(accountMap.get(type));
+    }
+
+    public class Transaction {
+        private final IAccount account;
+        private final List<Node> transactions = new ArrayList<>();
+
+        private Transaction(IAccount account) {
+            this.account = account;
+        }
+
+        public Transaction deposit(BigDecimal value) {
+            transactions.add(new DepositNode(value));
+            return this;
+        }
+
+        public Transaction deposit(double value) {
+            return this.deposit(BigDecimal.valueOf(value));
+        }
+
+        public Transaction withdraw(BigDecimal value) {
+            transactions.add(new WithdrawNode(value));
+            return this;
+        }
+
+        public Transaction withdraw(double value) {
+            return this.withdraw(BigDecimal.valueOf(value));
+        }
+
+        public void commit() {
+            synchronized (transactionLock) {
+                IMemento savedState = saveState();
+                FailSensitiveTask.of(() -> {
+                    for (Runnable transaction : transactions) {
+                        try {
+                            transaction.run();
+                        } catch (Exception ex) {
+                            throw new RuntimeException("Transaction failure", ex);
+                        }
+                    }
+                    notifyObservers();
+                    return true;
+                }).handleException(Throwable::printStackTrace)
+                        .onFail(() -> restoreState(savedState))
+                        .run();
+            }
+        }
+
+        private abstract class Node implements Runnable {
+            protected final BigDecimal value;
+
+            public Node(BigDecimal value) {
+                this.value = value;
+            }
+
+            @Override
+            public String toString() {
+                return "[" + getKey() + ":" + getStringKey() + "] "
+                        + account + ", "
+                        + getClass().getSimpleName() + ", "
+                        + value;
+            }
+        }
+
+        private class DepositNode extends Node {
+            public DepositNode(BigDecimal value) {
+                super(value);
+            }
+
+            @Override
+            public void run() {
+                if (transactionHandler.deposit(account.getBalanceMap(),
+                        value,
+                        Objects.requireNonNull(getBaseCurrency()))) {
+                    if (!AbstractBank.this.deposit(value, Objects.requireNonNull(getBaseCurrency()))) {
+                        throw new RuntimeException("Bank deposit refused.");
+                    }
+                } else {
+                    throw new RuntimeException("Account deposit refused.");
+                }
+            }
+        }
+
+        private class WithdrawNode extends Node {
+            public WithdrawNode(BigDecimal value) {
+                super(value);
+            }
+
+            @Override
+            public void run() {
+                if (AbstractBank.this.withdraw(value, Objects.requireNonNull(getBaseCurrency()))) {
+                    if (!transactionHandler.withdraw(account.getBalanceMap(),
+                            value,
+                            Objects.requireNonNull(getBaseCurrency()))) {
+                        throw new RuntimeException("Account withdraw refused.");
+                    }
+                } else {
+                    throw new RuntimeException("Bank withdraw refused.");
+                }
+            }
+        }
     }
 
     @Override

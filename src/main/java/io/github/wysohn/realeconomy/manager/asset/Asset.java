@@ -1,12 +1,12 @@
 package io.github.wysohn.realeconomy.manager.asset;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
-import io.github.wysohn.realeconomy.interfaces.ITransactionSnapshot;
+import io.github.wysohn.rapidframework3.interfaces.entity.IEntitySnapshot;
 import io.github.wysohn.realeconomy.manager.asset.signautre.AssetSignature;
 
 import java.util.UUID;
 
-public abstract class Asset<A extends Asset> extends CachedElement<UUID> implements ITransactionSnapshot {
+public abstract class Asset<A extends Asset> extends CachedElement<UUID> implements IEntitySnapshot {
     private AssetSignature<A> signature;
 
     private long issuedDate;

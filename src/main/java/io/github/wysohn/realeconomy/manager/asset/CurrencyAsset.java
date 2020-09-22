@@ -1,6 +1,6 @@
 package io.github.wysohn.realeconomy.manager.asset;
 
-import io.github.wysohn.realeconomy.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
 
 import java.util.UUID;
 

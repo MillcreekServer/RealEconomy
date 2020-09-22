@@ -4,9 +4,14 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
+import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.inject.annotation.ServerBank;
-import io.github.wysohn.realeconomy.inject.module.MaxCapitalModule;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
+import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
+import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -15,10 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.ref.WeakReference;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
@@ -30,6 +33,7 @@ public class BankingMediatorTest {
     private CentralBank serverBank;
     private CurrencyManager currencyManager;
     private CentralBankingManager centralBankingManager;
+    private ITransactionHandler transactionHandler;
 
     @Before
     public void init() {
@@ -37,6 +41,7 @@ public class BankingMediatorTest {
         currencyManager = mock(CurrencyManager.class);
         when(currencyManager.newCurrency(anyString(), anyString())).thenReturn(CurrencyManager.Result.OK);
         centralBankingManager = mock(CentralBankingManager.class);
+        transactionHandler = mock(ITransactionHandler.class);
 
         moduleList.add(new AbstractModule() {
             @Provides
@@ -45,7 +50,6 @@ public class BankingMediatorTest {
                 return serverBank;
             }
         });
-        moduleList.add(new MaxCapitalModule());
         moduleList.add(new AbstractModule() {
             @Provides
             CurrencyManager currencyManager() {
@@ -55,6 +59,23 @@ public class BankingMediatorTest {
             @Provides
             CentralBankingManager centralBankingManager() {
                 return centralBankingManager;
+            }
+
+            @Provides
+            @MaxCapital
+            BigDecimal max() {
+                return BigDecimal.valueOf(Double.MAX_VALUE);
+            }
+
+            @Provides
+            @MinCapital
+            BigDecimal min() {
+                return BigDecimal.valueOf(-Double.MAX_VALUE);
+            }
+
+            @Provides
+            ITransactionHandler transactionHandler() {
+                return transactionHandler;
             }
         });
     }
@@ -138,13 +159,129 @@ public class BankingMediatorTest {
 
     @Test
     public void balance() {
+        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+
+        UUID uuid = UUID.randomUUID();
+        UUID currencyUuid = UUID.randomUUID();
+        IBankUser user = mock(IBankUser.class);
+        IAccount account = mock(IAccount.class);
+        Currency currency = mock(Currency.class);
+        Map<UUID, BigDecimal> balances = mock(Map.class);
+
+        when(user.getUuid()).thenReturn(uuid);
+        when(currency.getKey()).thenReturn(currencyUuid);
+        when(serverBank.getBaseCurrency()).thenReturn(currency);
+        when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
+        when(account.getBalanceMap()).thenReturn(balances);
+
+        mediator.balance(user, BankingTypeRegistry.CHECKING);
+
+        verify(balances).get(currencyUuid);
     }
 
     @Test
     public void deposit() {
+        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+
+        IBankUser user = mock(IBankUser.class);
+
+        assertEquals(BankingMediator.Result.NO_CURRENCY_SET, mediator.deposit(user,
+                BankingTypeRegistry.CHECKING,
+                BigDecimal.TEN));
+    }
+
+    @Test
+    public void deposit2() {
+        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+
+        IBankUser user = mock(IBankUser.class);
+        UUID currencyUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+        when(serverBank.getBaseCurrency()).thenReturn(currency);
+
+        assertEquals(BankingMediator.Result.NO_ACCOUNT, mediator.deposit(user,
+                BankingTypeRegistry.CHECKING,
+                BigDecimal.TEN));
+    }
+
+    @Test
+    public void deposit3() {
+        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+
+        IBankUser user = mock(IBankUser.class);
+        UUID currencyUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        IAccount account = mock(IAccount.class);
+        Map<UUID, BigDecimal> balances = mock(Map.class);
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+        when(serverBank.getBaseCurrency()).thenReturn(currency);
+        when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
+        when(account.getBalanceMap()).thenReturn(balances);
+
+        when(transactionHandler.deposit(anyMap(), any(), any())).thenReturn(true);
+        assertEquals(BankingMediator.Result.OK, mediator.deposit(user,
+                BankingTypeRegistry.CHECKING,
+                BigDecimal.TEN));
+
+        when(transactionHandler.deposit(anyMap(), any(), any())).thenReturn(false);
+        assertEquals(BankingMediator.Result.FAIL_DEPOSIT, mediator.deposit(user,
+                BankingTypeRegistry.CHECKING,
+                BigDecimal.TEN));
     }
 
     @Test
     public void withdraw() {
+        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+
+        IBankUser user = mock(IBankUser.class);
+
+        assertEquals(BankingMediator.Result.NO_CURRENCY_SET, mediator.withdraw(user,
+                BankingTypeRegistry.CHECKING,
+                BigDecimal.TEN));
+    }
+
+    @Test
+    public void withdraw2() {
+        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+
+        IBankUser user = mock(IBankUser.class);
+        UUID currencyUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+        when(serverBank.getBaseCurrency()).thenReturn(currency);
+
+        assertEquals(BankingMediator.Result.NO_ACCOUNT, mediator.withdraw(user,
+                BankingTypeRegistry.CHECKING,
+                BigDecimal.TEN));
+    }
+
+    @Test
+    public void withdraw3() {
+        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+
+        IBankUser user = mock(IBankUser.class);
+        UUID currencyUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        IAccount account = mock(IAccount.class);
+        Map<UUID, BigDecimal> balances = mock(Map.class);
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+        when(serverBank.getBaseCurrency()).thenReturn(currency);
+        when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
+        when(account.getBalanceMap()).thenReturn(balances);
+
+        when(transactionHandler.withdraw(anyMap(), any(), any())).thenReturn(true);
+        assertEquals(BankingMediator.Result.OK, mediator.withdraw(user,
+                BankingTypeRegistry.CHECKING,
+                BigDecimal.TEN));
+
+        when(transactionHandler.withdraw(anyMap(), any(), any())).thenReturn(false);
+        assertEquals(BankingMediator.Result.FAIL_WITHDRAW, mediator.withdraw(user,
+                BankingTypeRegistry.CHECKING,
+                BigDecimal.TEN));
     }
 }

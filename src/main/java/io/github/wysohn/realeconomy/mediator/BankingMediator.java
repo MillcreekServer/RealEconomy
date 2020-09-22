@@ -2,6 +2,7 @@ package io.github.wysohn.realeconomy.mediator;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
+import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.ServerBank;
@@ -17,6 +18,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,6 +30,8 @@ public class BankingMediator extends Mediator {
     private final CurrencyManager currencyManager;
     private final CentralBankingManager centralBankingManager;
     private final ITransactionHandler transactionHandler;
+
+    private final Map<UUID, AbstractBank> usingBanks = new HashMap<>();
 
     @Inject
     public BankingMediator(
@@ -55,6 +60,10 @@ public class BankingMediator extends Mediator {
     @Override
     public void disable() throws Exception {
 
+    }
+
+    public CentralBank getServerBank() {
+        return serverBank;
     }
 
     /**
@@ -189,6 +198,31 @@ public class BankingMediator extends Mediator {
         } else {
             return Result.FAIL_WITHDRAW;
         }
+    }
+
+    public AbstractBank getUsingBank(IBankUser user) {
+        return Optional.ofNullable(user)
+                .map(IPluginObject::getUuid)
+                .map(usingBanks::get)
+                .orElse(serverBank);
+    }
+
+    public boolean enterBank(IBankUser user, AbstractBank bank) {
+        Validation.assertNotNull(user);
+        Validation.assertNotNull(bank);
+
+        if (usingBanks.containsKey(user.getUuid()))
+            return false;
+
+        usingBanks.put(user.getUuid(), bank);
+        return true;
+    }
+
+    public boolean exitBank(IBankUser user, AbstractBank bank) {
+        Validation.assertNotNull(user);
+        Validation.assertNotNull(bank);
+
+        return usingBanks.remove(user.getUuid()) != null;
     }
 
     public void createCommercialBank(IBankOwner owner, UUID baseCurrency, double base, String name) {

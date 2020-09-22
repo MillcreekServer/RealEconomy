@@ -233,7 +233,7 @@ dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
     compile 'org.spigotmc:spigot-api:1.16.+'
-    compile "io.github.wysohn:RapidFramework:3.0.13"
+    compile "io.github.wysohn:RapidFramework:3.2.0"
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.mockito:mockito-core:1.9.5'
