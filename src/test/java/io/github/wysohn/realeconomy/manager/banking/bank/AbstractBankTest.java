@@ -180,7 +180,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         when(currency.getKey()).thenReturn(currencyUuid);
         when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
 
-
         bank.setBaseCurrency(currency);
         assertTrue(bank.putAccount(user, BankingTypeRegistry.CHECKING));
         bank.accountTransaction(user, BankingTypeRegistry.CHECKING)

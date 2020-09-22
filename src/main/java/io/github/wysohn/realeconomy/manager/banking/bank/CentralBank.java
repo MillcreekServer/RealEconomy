@@ -15,7 +15,7 @@ public class CentralBank extends AbstractBank {
     @MaxCapital
     private BigDecimal maximum;
 
-    private BigDecimal liquidity;
+    private BigDecimal liquidity = BigDecimal.ZERO;
 
     private CentralBank() {
         super(null);
@@ -26,7 +26,8 @@ public class CentralBank extends AbstractBank {
     }
 
     public BigDecimal getLiquidity() {
-        return liquidity;
+        return Optional.ofNullable(liquidity)
+                .orElse(BigDecimal.ZERO);
     }
 
     @Override
