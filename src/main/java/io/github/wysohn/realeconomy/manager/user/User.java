@@ -2,15 +2,14 @@ package io.github.wysohn.realeconomy.manager.user;
 
 import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class User extends BukkitPlayer implements IBankUser {
     @Inject
@@ -33,17 +32,36 @@ public class User extends BukkitPlayer implements IBankUser {
 
     @Override
     public BigDecimal balance(Currency currency) {
-        return transactionHandler.balance(wallet, currency);
+        synchronized (wallet) {
+            return transactionHandler.balance(wallet, currency);
+        }
     }
 
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
-        return transactionHandler.deposit(wallet, value, currency);
+        synchronized (wallet) {
+            return transactionHandler.deposit(wallet, value, currency);
+        }
     }
 
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
-        return transactionHandler.withdraw(wallet, value, currency);
+        synchronized (wallet) {
+            return transactionHandler.withdraw(wallet, value, currency);
+        }
+    }
+
+    /**
+     * Clear all wallet and return all of the content of the wallet.
+     *
+     * @return
+     */
+    public List<Pair<UUID, BigDecimal>> clearWallet() {
+        List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
+        synchronized (wallet) {
+            wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
+        }
+        return copy;
     }
 
     @Override
@@ -56,8 +74,10 @@ public class User extends BukkitPlayer implements IBankUser {
         Memento mem = (Memento) memento;
         super.restoreState(mem.parentState);
 
-        wallet.clear();
-        wallet.putAll(mem.wallet);
+        synchronized (wallet) {
+            wallet.clear();
+            wallet.putAll(mem.wallet);
+        }
     }
 
     private static class Memento implements IMemento {
@@ -66,8 +86,10 @@ public class User extends BukkitPlayer implements IBankUser {
 
         public Memento(IMemento parentState, User user) {
             this.parentState = parentState;
-            //UUID and BigDecimal are both immutable
-            wallet.putAll(user.wallet);
+            synchronized (wallet) {
+                //UUID and BigDecimal are both immutable
+                wallet.putAll(user.wallet);
+            }
         }
     }
 }

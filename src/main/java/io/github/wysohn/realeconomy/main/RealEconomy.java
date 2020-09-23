@@ -1,5 +1,7 @@
 package io.github.wysohn.realeconomy.main;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.main.AbstractBukkitPlugin;
 import io.github.wysohn.rapidframework3.core.command.ArgumentMappers;
 import io.github.wysohn.rapidframework3.core.command.SubCommand;
@@ -43,6 +45,12 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
     @Override
     protected void init(PluginMainBuilder pluginMainBuilder) {
+        pluginMainBuilder.addModule(new AbstractModule() {
+            @Provides
+            RealEconomy realEconomy() {
+                return RealEconomy.this;
+            }
+        });
         pluginMainBuilder.addModule(new LanguagesModule(RealEconomyLangs.values()));
         pluginMainBuilder.addModule(new ManagerModule(
                 CentralBankingManager.class
