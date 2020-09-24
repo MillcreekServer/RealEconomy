@@ -5,6 +5,9 @@ import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 public enum RealEconomyLangs implements ILang {
     BankingType_Checking("Checking Account"),
 
+    Command_Common_UserNotFound("&cNo player found with name &6${string}&c."),
+    Command_Common_CurrencyNotFound("&cNo currency found with name &6${string}&c."),
+
     ;
 
     private final String[] def;

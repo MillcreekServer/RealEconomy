@@ -6,11 +6,13 @@ import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.ServerBank;
+import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
 import io.github.wysohn.realeconomy.interfaces.banking.*;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
+import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
 import javax.inject.Inject;
@@ -199,6 +201,24 @@ public class BankingMediator extends Mediator {
         } else {
             return Result.FAIL_WITHDRAW;
         }
+    }
+
+    /**
+     * {@link ITransactionHandler#send(IFinancialEntity, IFinancialEntity, BigDecimal, Currency)}
+     *
+     * @param from
+     * @param to
+     * @param amount
+     * @param currency
+     * @return
+     */
+    public ITransactionHandler.Result send(
+            IFinancialEntity from,
+            IFinancialEntity to,
+            BigDecimal amount,
+            Currency currency) {
+
+        return transactionHandler.send(from, to, amount, currency);
     }
 
     public AbstractBank getUsingBank(IBankUser user) {
