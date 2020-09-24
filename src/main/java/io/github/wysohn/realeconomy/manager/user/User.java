@@ -2,6 +2,7 @@ package io.github.wysohn.realeconomy.manager.user;
 
 import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
@@ -10,10 +11,13 @@ import io.github.wysohn.realeconomy.manager.currency.Currency;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public class User extends BukkitPlayer implements IBankUser {
     @Inject
     private ITransactionHandler transactionHandler;
+    @Inject
+    private ITaskSupervisor task;
 
     private final Map<UUID, BigDecimal> wallet = new HashMap<>();
 
@@ -60,8 +64,26 @@ public class User extends BukkitPlayer implements IBankUser {
         List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
         synchronized (wallet) {
             wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
+            wallet.clear();
         }
         return copy;
+    }
+
+    public void forEachBalance(BiConsumer<UUID, BigDecimal> fn, boolean sorted) {
+        List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
+        synchronized (wallet) {
+            wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
+        }
+
+        task.async(() -> {
+            if (sorted)
+                copy.sort(Comparator.comparing(pair -> pair.value));
+            copy.forEach(pair -> fn.accept(pair.key, pair.value));
+        });
+    }
+
+    public void forEachBalance(BiConsumer<UUID, BigDecimal> fn) {
+        forEachBalance(fn, false);
     }
 
     @Override

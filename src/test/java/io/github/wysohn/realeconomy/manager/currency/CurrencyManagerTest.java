@@ -1,12 +1,16 @@
 package io.github.wysohn.realeconomy.manager.currency;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
 import io.github.wysohn.rapidframework3.utils.Pair;
+import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
+import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import org.junit.Before;
 import org.junit.Test;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -23,10 +27,12 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
     List<Module> moduleList = new LinkedList<>();
     private MockMainModule mainModule;
     private ISerializer mockSerializer;
+    private CentralBankingManager centralBankingManager;
 
     @Before
     public void init() {
         mockSerializer = mock(ISerializer.class);
+        centralBankingManager = mock(CentralBankingManager.class);
 
         moduleList.add(new PluginInfoModule("test", "test", "test"));
         moduleList.add(new MockLoggerModule());
@@ -36,6 +42,12 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         moduleList.add(new MockShutdownModule(() -> {
 
         }));
+        moduleList.add(new AbstractModule() {
+            @Provides
+            CentralBankingManager centralBankingManager() {
+                return centralBankingManager;
+            }
+        });
     }
 
     @Test
@@ -43,7 +55,9 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         CurrencyManager manager = Guice.createInjector(moduleList).getInstance(CurrencyManager.class);
         manager.enable();
 
-        assertEquals(CurrencyManager.Result.CODE_LENGTH, manager.newCurrency("blahblah", "ABCDE"));
+        CentralBank centralBank = mock(CentralBank.class);
+
+        assertEquals(CurrencyManager.Result.CODE_LENGTH, manager.newCurrency("blahblah", "ABCDE", centralBank));
         manager.disable();
     }
 
@@ -52,8 +66,10 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         CurrencyManager manager = Guice.createInjector(moduleList).getInstance(CurrencyManager.class);
         manager.enable();
 
-        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD"));
-        assertEquals(CurrencyManager.Result.DUP_CODE, manager.newCurrency("hoho", "USD"));
+        CentralBank centralBank = mock(CentralBank.class);
+
+        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD", centralBank));
+        assertEquals(CurrencyManager.Result.DUP_CODE, manager.newCurrency("hoho", "USD", centralBank));
         manager.disable();
     }
 
@@ -62,8 +78,10 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         CurrencyManager manager = Guice.createInjector(moduleList).getInstance(CurrencyManager.class);
         manager.enable();
 
-        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD"));
-        assertEquals(CurrencyManager.Result.DUP_NAME, manager.newCurrency("dollar", "ABC"));
+        CentralBank centralBank = mock(CentralBank.class);
+
+        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD", centralBank));
+        assertEquals(CurrencyManager.Result.DUP_NAME, manager.newCurrency("dollar", "ABC", centralBank));
         manager.disable();
     }
 
@@ -72,8 +90,10 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         CurrencyManager manager = Guice.createInjector(moduleList).getInstance(CurrencyManager.class);
         manager.enable();
 
-        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("berk", "BRK"));
-        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD"));
+        CentralBank centralBank = mock(CentralBank.class);
+
+        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("berk", "BRK", centralBank));
+        assertEquals(CurrencyManager.Result.OK, manager.newCurrency("dollar", "USD", centralBank));
         manager.disable();
     }
 }

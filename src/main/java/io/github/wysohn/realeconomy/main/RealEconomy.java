@@ -17,20 +17,17 @@ import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
 import io.github.wysohn.realeconomy.inject.module.MaxCapitalModule;
 import io.github.wysohn.realeconomy.inject.module.ServerBankModule;
 import io.github.wysohn.realeconomy.inject.module.TransactionHandlerModule;
-import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
-import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
-import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
-import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.manager.user.UserManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.java.JavaPluginLoader;
 
 import java.lang.ref.Reference;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,6 +38,14 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
     private RealEconomy(JavaPluginLoader mockLoader) {
         super(mockLoader);
+    }
+
+    /**
+     * @param mockLoader
+     * @deprecated use for test only
+     */
+    public static RealEconomy mainForTest(JavaPluginLoader mockLoader) {
+        return new RealEconomy(mockLoader);
     }
 
     @Override
@@ -75,99 +80,82 @@ public class RealEconomy extends AbstractBukkitPlugin {
     @Override
     protected void registerCommands(List<SubCommand.Builder> list) {
         list.add(new SubCommand.Builder("balance", -1)
-                .addTabCompleter(0, TabCompleters.simple(Arrays.stream(BankingTypeRegistry.values())
-                        .map(IBankingType::name)
-                        .toArray(String[]::new)))
+                .addTabCompleter(0, TabCompleters.PLAYER)
                 .action((sender, args) -> {
-                    IBankingType bankingType = args.get(0)
+                    User target = args.get(0)
                             .map(String.class::cast)
-                            .map(BankingTypeRegistry::fromString)
-                            .orElse(BankingTypeRegistry.CHECKING);
+                            .map(Bukkit::getOfflinePlayer)
+                            .map(OfflinePlayer::getUniqueId)
+                            .flatMap(this::getUser)
+                            .orElseGet(() -> getUser(sender.getUuid()).orElse(null));
+                    if (target == null) {
+                        //TODO
+                        return true;
+                    }
 
-                    getUser(sender).ifPresent(user -> {
-                        AbstractBank bank = getCurrentBank(sender);
-                        if (bank == null) {
-                            //TODO message
-                            return;
-                        }
+                    target.forEachBalance((uuid, balance) -> {
+                        //TODO
+                    }, true);
 
-                        IAccount account = bank.getAccount(user, bankingType);
-                        if (account == null) {
-                            //TODO message
-                            return;
-                        }
-
-                        account.getBalanceMap().forEach((currencyUuid, balance) -> Optional.of(currencyUuid)
-                                .flatMap(uuid -> getMain().getManager(CurrencyManager.class)
-                                        .flatMap(currencyManager -> currencyManager.get(uuid))
-                                        .map(Reference::get))
-                                .ifPresent(currency -> {
-                                    //TODO message
-                                }));
-                    });
                     return true;
                 })
         );
         list.add(new SubCommand.Builder("pay", 3)
-                .addTabCompleter(0, TabCompleters.hint("<user[@bank]>"))
+                .addTabCompleter(0, TabCompleters.PLAYER)
                 .addTabCompleter(1, TabCompleters.hint("<amount>"))
-                .addTabCompleter(2, TabCompleters.simple(Arrays.stream(BankingTypeRegistry.values())
-                        .map(IBankingType::name)
-                        .toArray(String[]::new)))
+                .addTabCompleter(2, TabCompleters.hint("<currency>"))
                 .addArgumentMapper(1, ArgumentMappers.DOUBLE)
                 .action((sender, args) -> {
-                    IBankingType bankingType = args.get(2)
+                    User target = args.get(0)
                             .map(String.class::cast)
-                            .map(BankingTypeRegistry::fromString)
-                            .orElse(BankingTypeRegistry.CHECKING);
+                            .map(Bukkit::getOfflinePlayer)
+                            .map(OfflinePlayer::getUniqueId)
+                            .flatMap(this::getUser)
+                            .orElse(null);
+                    if (target == null) {
+                        //TODO
+                        return true;
+                    }
+
 
                     return true;
                 })
         );
         list.add(new SubCommand.Builder("give", -1)
-                .addTabCompleter(0, TabCompleters.hint("<bank>"))
-                .addTabCompleter(1, TabCompleters.hint("<user>"))
-                .addTabCompleter(2, TabCompleters.hint("<amount>"))
-                .addTabCompleter(3, TabCompleters.simple(Arrays.stream(BankingTypeRegistry.values())
-                        .map(IBankingType::name)
-                        .toArray(String[]::new)))
+                .addTabCompleter(0, TabCompleters.PLAYER)
+                .addTabCompleter(1, TabCompleters.hint("<amount>"))
+                .addTabCompleter(2, TabCompleters.hint("<currency>"))
                 .action((sender, args) -> {
-                    IBankingType bankingType = args.get(3)
+                    User target = args.get(0)
                             .map(String.class::cast)
-                            .map(BankingTypeRegistry::fromString)
-                            .orElse(BankingTypeRegistry.CHECKING);
+                            .map(Bukkit::getOfflinePlayer)
+                            .map(OfflinePlayer::getUniqueId)
+                            .flatMap(this::getUser)
+                            .orElse(null);
+                    if (target == null) {
+                        //TODO
+                        return true;
+                    }
+
 
                     return true;
                 })
         );
         list.add(new SubCommand.Builder("take", -1)
-                .addTabCompleter(0, TabCompleters.hint("<bank>"))
-                .addTabCompleter(1, TabCompleters.hint("<user>"))
-                .addTabCompleter(2, TabCompleters.hint("<amount>"))
-                .addTabCompleter(3, TabCompleters.simple(Arrays.stream(BankingTypeRegistry.values())
-                        .map(IBankingType::name)
-                        .toArray(String[]::new)))
+                .addTabCompleter(0, TabCompleters.PLAYER)
+                .addTabCompleter(1, TabCompleters.hint("<amount>"))
+                .addTabCompleter(2, TabCompleters.hint("<currency>"))
                 .action((sender, args) -> {
-                    IBankingType bankingType = args.get(3)
+                    User target = args.get(0)
                             .map(String.class::cast)
-                            .map(BankingTypeRegistry::fromString)
-                            .orElse(BankingTypeRegistry.CHECKING);
-
-                    return true;
-                })
-        );
-        list.add(new SubCommand.Builder("set", -1)
-                .addTabCompleter(0, TabCompleters.hint("<bank>"))
-                .addTabCompleter(1, TabCompleters.hint("<user>"))
-                .addTabCompleter(2, TabCompleters.hint("<amount>"))
-                .addTabCompleter(3, TabCompleters.simple(Arrays.stream(BankingTypeRegistry.values())
-                        .map(IBankingType::name)
-                        .toArray(String[]::new)))
-                .action((sender, args) -> {
-                    IBankingType bankingType = args.get(3)
-                            .map(String.class::cast)
-                            .map(BankingTypeRegistry::fromString)
-                            .orElse(BankingTypeRegistry.CHECKING);
+                            .map(Bukkit::getOfflinePlayer)
+                            .map(OfflinePlayer::getUniqueId)
+                            .flatMap(this::getUser)
+                            .orElse(null);
+                    if (target == null) {
+                        //TODO
+                        return true;
+                    }
 
                     return true;
                 })

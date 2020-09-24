@@ -39,7 +39,7 @@ public class BankingMediatorTest {
     public void init() {
         serverBank = mock(CentralBank.class);
         currencyManager = mock(CurrencyManager.class);
-        when(currencyManager.newCurrency(anyString(), anyString())).thenReturn(CurrencyManager.Result.OK);
+        when(currencyManager.newCurrency(anyString(), anyString(), any())).thenReturn(CurrencyManager.Result.OK);
         centralBankingManager = mock(CentralBankingManager.class);
         transactionHandler = mock(ITransactionHandler.class);
 
@@ -94,7 +94,7 @@ public class BankingMediatorTest {
                 .thenReturn(Optional.of(new WeakReference<>(mock(CentralBank.class))));
         assertEquals(BankingMediator.Result.ALREADY_SET,
                 mediator.createCurrency(government, "dollar", "USD"));
-        verify(currencyManager).newCurrency(eq("dollar"), eq("USD"));
+        verify(currencyManager, never()).newCurrency(any(), any(), any());
     }
 
     @Test
@@ -112,7 +112,7 @@ public class BankingMediatorTest {
                 .thenReturn(Optional.of(new WeakReference<>(mock(CentralBank.class))));
         assertEquals(BankingMediator.Result.OK,
                 mediator.createCurrency(government, "dollar", "USD"));
-        verify(currencyManager).newCurrency(eq("dollar"), eq("USD"));
+        verify(currencyManager).newCurrency(eq("dollar"), eq("USD"), any(CentralBank.class));
         verify(centralBankingManager).getOrNew(eq(uuid));
     }
 

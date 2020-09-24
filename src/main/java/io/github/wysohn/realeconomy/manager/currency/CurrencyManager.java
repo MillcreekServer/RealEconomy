@@ -9,6 +9,7 @@ import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.utils.Validation;
+import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -79,16 +80,22 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
     }
 
     /**
-     * Create a new currency.
+     * Create a new currency. Each CentralBank can have at least one and only one Currency, so if
+     * the provided bank already has a currency, exception will be thrown. Make sure to check
+     * if the bank already has a Currency or not. The ideal usage is that this method invoked
+     * only once when a CentralBank is first created.
      *
      * @param name an unique String to represent this currency.
      * @param code an unique currency code (USD for example). The maximum length can be found in config.yml by the key
      *             stated in {@link #KEY_MAX_LEN}
+     * @param bank the bank responsible for the currency.
      * @return The result
      */
-    public synchronized Result newCurrency(String name, String code) {
+    public synchronized Result newCurrency(String name, String code, CentralBank bank) {
         Validation.assertNotNull(name);
         Validation.assertNotNull(code);
+        Validation.assertNotNull(bank);
+
         code = code.toUpperCase();
 
         int length_max = config.get(KEY_MAX_LEN)
@@ -108,8 +115,10 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
         super.getOrNew(UUID.randomUUID())
                 .map(Reference::get)
                 .ifPresent(currency -> {
-                    currency.setStringKey(name);
+                    currency.setCentralBank(bank);
+                    bank.setBaseCurrency(currency);
 
+                    currency.setStringKey(name);
                     currency.setCode(finalCode);
                     codeMap.put(finalCode, currency.getKey());
                 });
@@ -120,7 +129,7 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
      * Change currency code
      *
      * @param name    name of the currency (not the code)
-     * @param newCode new code (refer to {@link #newCurrency(String, String)})
+     * @param newCode new code (refer to {@link #newCurrency(String, String, CentralBank)})
      * @return The result
      */
     public synchronized Result changeCode(String name, String newCode) {

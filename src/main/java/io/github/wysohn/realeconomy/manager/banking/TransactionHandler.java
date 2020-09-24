@@ -1,9 +1,15 @@
 package io.github.wysohn.realeconomy.manager.banking;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
+import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
+import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
+import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
+import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import javax.inject.Inject;
@@ -12,16 +18,20 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Singleton
 public class TransactionHandler implements ITransactionHandler {
+    private final ICurrencyOwnerProvider currencyOwnerProvider;
     private final BigDecimal maximum;
     private final BigDecimal minimum;
 
     @Inject
     public TransactionHandler(
+            ICurrencyOwnerProvider currencyOwnerProvider,
             @MaxCapital BigDecimal maximum,
             @MinCapital BigDecimal minimum) {
+        this.currencyOwnerProvider = currencyOwnerProvider;
         this.maximum = maximum;
         this.minimum = minimum;
     }
@@ -74,5 +84,51 @@ public class TransactionHandler implements ITransactionHandler {
                 })
                 .orElse(false);
         return aBoolean;
+    }
+
+    @Override
+    public Result send(IFinancialEntity from, IFinancialEntity to, BigDecimal amount, Currency currency) {
+        Validation.assertNotNull(amount);
+        Validation.assertNotNull(currency);
+        Validation.validate(amount, val -> val.signum() >= 0, "Cannot use negative value.");
+
+        CentralBank currencyOwner = currencyOwnerProvider.get(currency.getKey());
+        if (currencyOwner == null)
+            return Result.NO_OWNER;
+
+        if (from == null)
+            from = currencyOwner;
+        if (to == null)
+            to = currencyOwner;
+
+        IMemento savedFromState = from.saveState();
+        IMemento savedToState = to.saveState();
+
+        IFinancialEntity finalFrom = from;
+        IFinancialEntity finalTo = to;
+        return FailSensitiveTaskResult.of(() -> {
+            if (!finalFrom.withdraw(amount, currency))
+                return Result.FROM_INSUFFICIENT;
+
+            if (!finalTo.deposit(amount, currency))
+                return Result.TO_DEPOSIT_REFUSED;
+
+            return Result.OK;
+        }, Result.OK).onFail(() -> {
+            finalFrom.restoreState(savedFromState);
+            finalTo.restoreState(savedToState);
+        }).handleException(Throwable::printStackTrace).run();
+    }
+
+    public static class FailSensitiveTaskResult extends FailSensitiveTaskGeneric<FailSensitiveTaskResult, Result> {
+        private FailSensitiveTaskResult(
+                Supplier<Result> task,
+                Result expected) {
+            super(task, expected);
+        }
+
+        public static FailSensitiveTaskResult of(Supplier<Result> task, Result expected) {
+            return new FailSensitiveTaskResult(task, expected);
+        }
     }
 }

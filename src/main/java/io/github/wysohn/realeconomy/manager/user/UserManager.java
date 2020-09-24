@@ -43,6 +43,7 @@ import java.util.logging.Logger;
 
 @Singleton
 public class UserManager extends AbstractUserManager<User> {
+    private final Logger logger;
     private final ManagerConfig config;
     private final CurrencyManager currencyManager;
     private final NamespacedKey checkCurrencyKey;
@@ -62,6 +63,7 @@ public class UserManager extends AbstractUserManager<User> {
             @NamespaceKeyCheckBalance NamespacedKey checkBalanceKey) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, injector, User.class);
 
+        this.logger = logger;
         this.config = config;
         this.currencyManager = currencyManager;
         this.checkCurrencyKey = checkCurrencyKey;
@@ -92,10 +94,9 @@ public class UserManager extends AbstractUserManager<User> {
 
     /**
      * Convert all currencies into ItemStack with the special PersistentDataContainer.
-     * Collecting the ItemStack(s) will give currency to the player who obtains the item.
      * Once the List is returned, the user have empty wallet.
      *
-     * @param user user to check the wallet
+     * @param user user to itemize its wallet
      * @return all the converted items
      */
     private List<ItemStack> itemizeCurrencies(User user) {
@@ -115,7 +116,7 @@ public class UserManager extends AbstractUserManager<User> {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onDeath(PlayerDeathEvent event) {
-        if (config.get(DROP_CURRENCY_ON_DEATH)
+        if (!config.get(DROP_CURRENCY_ON_DEATH)
                 .filter(Boolean.class::isInstance)
                 .map(Boolean.class::cast)
                 .orElse(false))
@@ -191,16 +192,25 @@ public class UserManager extends AbstractUserManager<User> {
         Currency currency = currencyManager.get(currencyPair.key)
                 .map(Reference::get)
                 .orElse(null);
+
+        // remove the item early
+        item.remove();
+
         // it's a useless piece of paper if currency doesn't exist...
-        if (currency == null)
+        if (currency == null) {
+            logger.info(player + " has picked up a check, but Currency info was not found.");
+            logger.info("currency uuid: " + currencyPair.key + ", balance: " + currencyPair.value);
+            logger.info("Item is removed without the player get paid.");
             return;
+        }
 
         // very unlikely, but it may fail to deposit.
-        if (!user.deposit(currencyPair.value, currency))
+        if (!user.deposit(currencyPair.value, currency)) {
+            logger.info(player + "'s deposit was refused for some reason.");
+            logger.info("currency uuid: " + currencyPair.key + ", balance: " + currencyPair.value);
+            logger.info("Item is removed without the player get paid.");
             return;
-
-        // currency is paid, so remove the item
-        item.remove();
+        }
     }
 
     public static final String DROP_CURRENCY_ON_DEATH = "currencyDrop.onDeath";
