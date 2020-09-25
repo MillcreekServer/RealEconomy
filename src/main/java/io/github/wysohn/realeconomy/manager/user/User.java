@@ -1,6 +1,8 @@
 package io.github.wysohn.realeconomy.manager.user;
 
 import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.core.language.Pagination;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
@@ -11,7 +13,6 @@ import io.github.wysohn.realeconomy.manager.currency.Currency;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 public class User extends BukkitPlayer implements IBankUser {
     @Inject
@@ -69,21 +70,54 @@ public class User extends BukkitPlayer implements IBankUser {
         return copy;
     }
 
-    public void forEachBalance(BiConsumer<UUID, BigDecimal> fn, boolean sorted) {
-        List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
-        synchronized (wallet) {
-            wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
-        }
-
-        task.async(() -> {
-            if (sorted)
-                copy.sort(Comparator.comparing(pair -> pair.value));
-            copy.forEach(pair -> fn.accept(pair.key, pair.value));
-        });
+    public Pagination<Pair<UUID, BigDecimal>> balancesPagination(
+            ManagerLanguage lang,
+            int max,
+            String title,
+            String cmd) {
+        return new Pagination<>(lang, new DataProviderProxy(), max, title, cmd);
     }
 
-    public void forEachBalance(BiConsumer<UUID, BigDecimal> fn) {
-        forEachBalance(fn, false);
+    private class DataProviderProxy implements Pagination.DataProvider<Pair<UUID, BigDecimal>> {
+        private static final long QUERY_DELAY = 1000L;
+
+        private Pagination.DataProvider<Pair<UUID, BigDecimal>> cache;
+        private long lastQuery = -1L;
+
+        private void update() {
+            if (System.currentTimeMillis() < lastQuery + QUERY_DELAY)
+                return;
+
+            lastQuery = System.currentTimeMillis();
+            List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
+            synchronized (wallet) {
+                wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
+            }
+            copy.sort(Comparator.comparing(pair -> pair.value, Comparator.reverseOrder()));
+            cache = new Pagination.DataProvider<Pair<UUID, BigDecimal>>() {
+                @Override
+                public int size() {
+                    return copy.size();
+                }
+
+                @Override
+                public Pair<UUID, BigDecimal> get(int i) {
+                    return copy.get(i);
+                }
+            };
+        }
+
+        @Override
+        public int size() {
+            update();
+            return cache.size();
+        }
+
+        @Override
+        public Pair<UUID, BigDecimal> get(int i) {
+            update();
+            return cache.get(i);
+        }
     }
 
     @Override

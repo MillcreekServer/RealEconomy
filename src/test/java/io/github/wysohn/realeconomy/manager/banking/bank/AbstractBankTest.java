@@ -14,6 +14,7 @@ import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
+import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -37,6 +38,7 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
     List<Module> moduleList = new LinkedList<>();
     private IBankOwnerProvider provider;
     private ITransactionHandler transactionHandler;
+    private ICurrencyOwnerProvider currencyOwnerProvider;
 
     @Before
     public void init() {
@@ -47,6 +49,7 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         when(provider.get(any())).thenReturn(mock(IBankOwner.class));
 
         transactionHandler = mock(ITransactionHandler.class);
+        currencyOwnerProvider = mock(ICurrencyOwnerProvider.class);
 
         moduleList.add(new AbstractModule() {
             @Provides
@@ -64,6 +67,11 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
             @MinCapital
             BigDecimal min() {
                 return BigDecimal.valueOf(-Double.MAX_VALUE);
+            }
+
+            @Provides
+            ICurrencyOwnerProvider currencyOwnerProvider() {
+                return currencyOwnerProvider;
             }
         });
         moduleList.add(new BankOwnerProviderModule(provider));

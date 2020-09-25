@@ -14,6 +14,7 @@ import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckBalance;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckCurrency;
 import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
 import io.github.wysohn.realeconomy.inject.module.TransactionHandlerModule;
+import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.main.RealEconomy;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -60,6 +61,7 @@ public class UserManagerTest {
     private RealEconomy mockMain;
     private ITaskSupervisor taskSupervisor;
     private CentralBankingManager centralBankingManager;
+    private ICurrencyOwnerProvider currencyOwnerProvider;
 
     @Before
     public void init() {
@@ -71,6 +73,7 @@ public class UserManagerTest {
         mockSerializer = mock(ISerializer.class);
         taskSupervisor = mock(ITaskSupervisor.class);
         centralBankingManager = mock(CentralBankingManager.class);
+        currencyOwnerProvider = mock(ICurrencyOwnerProvider.class);
 
         moduleList.add(new PluginInfoModule("test", "test", "test"));
         moduleList.add(new MockLoggerModule());
@@ -107,6 +110,11 @@ public class UserManagerTest {
             @Provides
             CentralBankingManager centralBankingManager() {
                 return centralBankingManager;
+            }
+
+            @Provides
+            ICurrencyOwnerProvider currencyOwnerProvider() {
+                return currencyOwnerProvider;
             }
         });
     }

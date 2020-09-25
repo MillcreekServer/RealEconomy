@@ -32,11 +32,15 @@ import org.bukkit.plugin.java.JavaPluginLoader;
 
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 public class RealEconomy extends AbstractBukkitPlugin {
+    private static final DecimalFormat df = new DecimalFormat("#,###.00");
+
     public RealEconomy() {
     }
 
@@ -84,20 +88,20 @@ public class RealEconomy extends AbstractBukkitPlugin {
     @Override
     protected void registerCommands(List<SubCommand.Builder> list) {
         list.add(new SubCommand.Builder("balance", -1)
-                .addTabCompleter(0, TabCompleters.PLAYER)
+                        .addTabCompleter(0, TabCompleters.PLAYER)
+                        .addArgumentMapper(0, mapUser())
                 .action((sender, args) -> {
                     User target = args.get(0)
                             .map(String.class::cast)
                             .flatMap(this::getUser)
                             .orElseGet(() -> getUser(sender.getUuid()).orElse(null));
                     if (target == null) {
-                        //TODO
                         return true;
                     }
 
-                    target.forEachBalance((uuid, balance) -> {
-                        //TODO
-                    }, true);
+//                    target.forEachBalance((uuid, balance) -> {
+//                        //TODO
+//                    }, true);
 
                     return true;
                 })
@@ -121,7 +125,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     BigDecimal amount = optAmount.get();
                     Currency currency = optCurrency.get();
 
-                    processSend(getUser(sender).orElseThrow(RuntimeException::new),
+                    processSend(sender,
+                            getUser(sender).orElseThrow(RuntimeException::new),
                             target,
                             amount,
                             currency);
@@ -148,7 +153,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     BigDecimal amount = optAmount.get();
                     Currency currency = optCurrency.get();
 
-                    processSend(null,
+                    processSend(sender,
+                            null,
                             target,
                             amount,
                             currency);
@@ -174,7 +180,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     BigDecimal amount = optAmount.get();
                     Currency currency = optCurrency.get();
 
-                    processSend(target,
+                    processSend(sender,
+                            target,
                             null,
                             amount,
                             currency);
@@ -183,16 +190,32 @@ public class RealEconomy extends AbstractBukkitPlugin {
         );
     }
 
-    private void processSend(User from, User to, BigDecimal amount, Currency currency) {
+    private void processSend(ICommandSender sender, User from, User to, BigDecimal amount, Currency currency) {
         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
             switch (bankingMediator.send(from, to, amount, currency)) {
                 case NO_OWNER:
+                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoCurrencyOwner, (sen, man) ->
+                            man.addString(currency.toString()));
                     break;
                 case FROM_INSUFFICIENT:
+                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_WithdrawRefused);
                     break;
                 case TO_DEPOSIT_REFUSED:
+                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DepositRefused);
                     break;
                 case OK:
+                    if (from != null) {
+                        getMain().lang().sendMessage(from, RealEconomyLangs.Command_Common_SendSuccess_Sender, (sen, man) ->
+                                man.addString(df.format(amount))
+                                        .addString(Objects.toString(currency))
+                                        .addString(Objects.toString(to)));
+                    }
+                    if (to != null) {
+                        getMain().lang().sendMessage(to, RealEconomyLangs.Command_Common_SendSuccess_Receiver, (sen, man) ->
+                                man.addString(df.format(amount))
+                                        .addString(Objects.toString(currency))
+                                        .addString(Objects.toString(to)));
+                    }
                     break;
             }
         });
