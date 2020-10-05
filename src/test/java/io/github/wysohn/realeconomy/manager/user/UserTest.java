@@ -6,9 +6,7 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
-import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.core.language.Pagination;
-import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
@@ -26,7 +24,8 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class UserTest extends AbstractBukkitManagerTest {
     private final List<Module> moduleList = new LinkedList<>();
@@ -118,23 +117,9 @@ public class UserTest extends AbstractBukkitManagerTest {
         user.deposit(451.53, currency3);
         user.deposit(41122.54, currency2);
 
-        ManagerLanguage lang = mock(ManagerLanguage.class);
-        ICommandSender sender = mock(ICommandSender.class);
-        Pagination.MessageConverter<Pair<UUID, BigDecimal>> converter = mock(Pagination.MessageConverter.class);
-
-        Pagination<Pair<UUID, BigDecimal>> pairPagination = user.balancesPagination(lang,
-                7, "title", "somecommand");
-        pairPagination.show(sender, 0, converter);
-        pairPagination.shutdown();
-
-        verify(converter).convert(eq(sender),
-                eq(Pair.of(currency1Uuid, BigDecimal.valueOf(45605.33))),
-                eq(0));
-        verify(converter).convert(eq(sender),
-                eq(Pair.of(currency2Uuid, BigDecimal.valueOf(41122.54))),
-                eq(1));
-        verify(converter).convert(eq(sender),
-                eq(Pair.of(currency3Uuid, BigDecimal.valueOf(451.53))),
-                eq(2));
+        Pagination.DataProvider<Pair<UUID, BigDecimal>> dataProvider = user.balancesPagination();
+        assertEquals(Pair.of(currency1Uuid, BigDecimal.valueOf(45605.33)), dataProvider.get(0));
+        assertEquals(Pair.of(currency2Uuid, BigDecimal.valueOf(41122.54)), dataProvider.get(1));
+        assertEquals(Pair.of(currency3Uuid, BigDecimal.valueOf(451.53)), dataProvider.get(2));
     }
 }

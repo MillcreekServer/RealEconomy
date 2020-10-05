@@ -21,6 +21,16 @@ commands:
   realeconomy:
     aliases:
       - rea
+      - eco
+      - re
+      - reale
     description: description
+  balance:
+    aliases:
+      - bal
+      - money
+    description: shortcut command of /eco balance
+  pay:
+    description: shortcut command of /eco pay
 authors: [
 ]

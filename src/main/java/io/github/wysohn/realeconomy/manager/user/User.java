@@ -1,13 +1,13 @@
 package io.github.wysohn.realeconomy.manager.user;
 
 import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
-import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.core.language.Pagination;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
+import io.github.wysohn.realeconomy.manager.DataProviderProxy;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import javax.inject.Inject;
@@ -21,6 +21,8 @@ public class User extends BukkitPlayer implements IBankUser {
     private ITaskSupervisor task;
 
     private final Map<UUID, BigDecimal> wallet = new HashMap<>();
+
+    private transient Pagination.DataProvider<Pair<UUID, BigDecimal>> balanceProvider;
 
     private User() {
         super(null);
@@ -45,14 +47,18 @@ public class User extends BukkitPlayer implements IBankUser {
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
         synchronized (wallet) {
-            return transactionHandler.deposit(wallet, value, currency);
+            final boolean deposit = transactionHandler.deposit(wallet, value, currency);
+            notifyObservers();
+            return deposit;
         }
     }
 
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
         synchronized (wallet) {
-            return transactionHandler.withdraw(wallet, value, currency);
+            final boolean withdraw = transactionHandler.withdraw(wallet, value, currency);
+            notifyObservers();
+            return withdraw;
         }
     }
 
@@ -66,58 +72,21 @@ public class User extends BukkitPlayer implements IBankUser {
         synchronized (wallet) {
             wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
             wallet.clear();
+            notifyObservers();
         }
         return copy;
     }
 
-    public Pagination<Pair<UUID, BigDecimal>> balancesPagination(
-            ManagerLanguage lang,
-            int max,
-            String title,
-            String cmd) {
-        return new Pagination<>(lang, new DataProviderProxy(), max, title, cmd);
-    }
-
-    private class DataProviderProxy implements Pagination.DataProvider<Pair<UUID, BigDecimal>> {
-        private static final long QUERY_DELAY = 1000L;
-
-        private Pagination.DataProvider<Pair<UUID, BigDecimal>> cache;
-        private long lastQuery = -1L;
-
-        private void update() {
-            if (System.currentTimeMillis() < lastQuery + QUERY_DELAY)
-                return;
-
-            lastQuery = System.currentTimeMillis();
-            List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
-            synchronized (wallet) {
-                wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
-            }
-            copy.sort(Comparator.comparing(pair -> pair.value, Comparator.reverseOrder()));
-            cache = new Pagination.DataProvider<Pair<UUID, BigDecimal>>() {
-                @Override
-                public int size() {
-                    return copy.size();
+    public Pagination.DataProvider<Pair<UUID, BigDecimal>> balancesPagination() {
+        if (balanceProvider == null)
+            balanceProvider = new DataProviderProxy<>(() -> {
+                List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
+                synchronized (wallet) {
+                    wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
                 }
-
-                @Override
-                public Pair<UUID, BigDecimal> get(int i) {
-                    return copy.get(i);
-                }
-            };
-        }
-
-        @Override
-        public int size() {
-            update();
-            return cache.size();
-        }
-
-        @Override
-        public Pair<UUID, BigDecimal> get(int i) {
-            update();
-            return cache.get(i);
-        }
+                return copy;
+            }, Comparator.comparing(pair -> pair.value, Comparator.reverseOrder()));
+        return balanceProvider;
     }
 
     @Override
@@ -133,6 +102,7 @@ public class User extends BukkitPlayer implements IBankUser {
         synchronized (wallet) {
             wallet.clear();
             wallet.putAll(mem.wallet);
+            notifyObservers();
         }
     }
 
@@ -147,5 +117,11 @@ public class User extends BukkitPlayer implements IBankUser {
                 wallet.putAll(user.wallet);
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return Optional.ofNullable(getStringKey())
+                .orElse("[?]");
     }
 }

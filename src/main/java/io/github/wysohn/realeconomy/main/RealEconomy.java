@@ -3,6 +3,7 @@ package io.github.wysohn.realeconomy.main;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.main.AbstractBukkitPlugin;
+import io.github.wysohn.rapidframework3.core.command.ArgumentMappers;
 import io.github.wysohn.rapidframework3.core.command.SubCommand;
 import io.github.wysohn.rapidframework3.core.command.TabCompleters;
 import io.github.wysohn.rapidframework3.core.exceptions.InvalidArgumentException;
@@ -10,17 +11,22 @@ import io.github.wysohn.rapidframework3.core.inject.module.GsonSerializerModule;
 import io.github.wysohn.rapidframework3.core.inject.module.LanguagesModule;
 import io.github.wysohn.rapidframework3.core.inject.module.ManagerModule;
 import io.github.wysohn.rapidframework3.core.inject.module.MediatorModule;
+import io.github.wysohn.rapidframework3.core.language.DefaultLangs;
+import io.github.wysohn.rapidframework3.core.language.Pagination;
 import io.github.wysohn.rapidframework3.core.main.PluginMainBuilder;
+import io.github.wysohn.rapidframework3.core.message.MessageBuilder;
 import io.github.wysohn.rapidframework3.core.player.AbstractPlayerWrapper;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.command.IArgumentMapper;
+import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
-import io.github.wysohn.realeconomy.inject.module.MaxCapitalModule;
-import io.github.wysohn.realeconomy.inject.module.ServerBankModule;
+import io.github.wysohn.realeconomy.inject.module.CapitalLimitModule;
+import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
 import io.github.wysohn.realeconomy.inject.module.TransactionHandlerModule;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
+import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import io.github.wysohn.realeconomy.manager.user.User;
@@ -28,32 +34,22 @@ import io.github.wysohn.realeconomy.manager.user.UserManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.plugin.java.JavaPluginLoader;
+import org.bukkit.Server;
 
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 public class RealEconomy extends AbstractBukkitPlugin {
-    private static final DecimalFormat df = new DecimalFormat("#,###.00");
 
     public RealEconomy() {
     }
 
-    private RealEconomy(JavaPluginLoader mockLoader) {
-        super(mockLoader);
-    }
-
-    /**
-     * @param mockLoader
-     * @deprecated use for test only
-     */
-    public static RealEconomy mainForTest(JavaPluginLoader mockLoader) {
-        return new RealEconomy(mockLoader);
+    public RealEconomy(Server mockServer) {
+        super(mockServer);
     }
 
     @Override
@@ -66,7 +62,9 @@ public class RealEconomy extends AbstractBukkitPlugin {
         });
         pluginMainBuilder.addModule(new LanguagesModule(RealEconomyLangs.values()));
         pluginMainBuilder.addModule(new ManagerModule(
-                CentralBankingManager.class
+                CentralBankingManager.class,
+                CurrencyManager.class,
+                UserManager.class
         ));
         pluginMainBuilder.addModule(new MediatorModule(
                 BankingMediator.class
@@ -76,37 +74,53 @@ public class RealEconomy extends AbstractBukkitPlugin {
         ));
         pluginMainBuilder.addModule(new GsonSerializerModule(
                 CustomTypeAdapters.ACCOUNT,
-                CustomTypeAdapters.BANKING_TYPE
+                CustomTypeAdapters.BANKING_TYPE,
+                CustomTypeAdapters.ASSET,
+                CustomTypeAdapters.ASSET_SIGNATURE,
+                CustomTypeAdapters.ORDER
         ));
-        pluginMainBuilder.addModule(new BankOwnerProviderModule());
-        pluginMainBuilder.addModule(new ServerBankModule());
-        pluginMainBuilder.addModule(new MaxCapitalModule());
+        pluginMainBuilder.addModule(new CapitalLimitModule());
         pluginMainBuilder.addModule(new TransactionHandlerModule());
+        pluginMainBuilder.addModule(new NamespacedKeyModule());
         //TODO and some other modules as your need...
     }
 
     @Override
     protected void registerCommands(List<SubCommand.Builder> list) {
         list.add(new SubCommand.Builder("balance", -1)
-                        .addTabCompleter(0, TabCompleters.PLAYER)
-                        .addArgumentMapper(0, mapUser())
+                .withAlias("bal")
+                .withDescription(RealEconomyLangs.Command_Balance_Desc)
+                .addUsage(RealEconomyLangs.Command_Balance_Usage)
+                .addTabCompleter(0, TabCompleters.hint("[page]"))
+                .addArgumentMapper(0, ArgumentMappers.INTEGER)
                 .action((sender, args) -> {
-                    User target = args.get(0)
-                            .map(String.class::cast)
-                            .flatMap(this::getUser)
-                            .orElseGet(() -> getUser(sender.getUuid()).orElse(null));
+                    int page = args.get(0)
+                            .map(Integer.class::cast)
+                            .filter(val -> val > 0)
+                            .map(val -> val - 1)
+                            .orElse(0);
+
+                    User target = getUser(sender.getUuid()).orElse(null);
                     if (target == null) {
                         return true;
                     }
 
-//                    target.forEachBalance((uuid, balance) -> {
-//                        //TODO
-//                    }, true);
+                    new Pagination<>(getMain().lang(),
+                            target.balancesPagination(),
+                            7,
+                            getMain().lang().parseFirst(sender, RealEconomyLangs.Wallet),
+                            "/realeconomy balance").show(sender, page, (sen, pair, i) ->
+                            MessageBuilder.forMessage(toFormattedBalance(pair))
+                                    .append(" ")
+                                    .append(toCurrencyName(pair))
+                                    .build());
 
                     return true;
                 })
         );
         list.add(new SubCommand.Builder("pay", 3)
+                .withDescription(RealEconomyLangs.Command_Balance_Desc)
+                .addUsage(RealEconomyLangs.Command_Balance_Usage)
                 .addTabCompleter(0, TabCompleters.PLAYER)
                 .addTabCompleter(1, TabCompleters.hint("<amount>"))
                 .addTabCompleter(2, TabCompleters.hint("<currency>"))
@@ -134,7 +148,36 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     return true;
                 })
         );
+        list.add(new SubCommand.Builder("currencies", -1)
+                .withDescription(RealEconomyLangs.Command_Currencies_Desc)
+                .addUsage(RealEconomyLangs.Command_Currencies_Usage)
+                .addTabCompleter(0, TabCompleters.hint("[page]"))
+                .addArgumentMapper(0, ArgumentMappers.INTEGER)
+                .action((sender, args) -> {
+                    getMain().getManager(CurrencyManager.class).ifPresent(currencyManager -> {
+                        int page = args.get(0)
+                                .map(Integer.class::cast)
+                                .filter(val -> val > 0)
+                                .map(val -> val - 1)
+                                .orElse(0);
+
+                        new Pagination<>(getMain().lang(),
+                                currencyManager.currenciesPagination(),
+                                7,
+                                getMain().lang().parseFirst(sender, RealEconomyLangs.Currencies),
+                                "/realeconomy currencies").show(sender, page, (sen, currency, i) ->
+                                MessageBuilder.forMessage(Objects.toString(currency))
+                                        .append(":")
+                                        .append(currency.getCode())
+                                        .append(" ")
+                                        .append(Objects.toString(currency.ownerBank()))
+                                        .build());
+                    });
+                    return true;
+                }));
         list.add(new SubCommand.Builder("give", -1)
+                .withDescription(RealEconomyLangs.Command_Give_Desc)
+                .addUsage(RealEconomyLangs.Command_Give_Usage)
                 .addTabCompleter(0, TabCompleters.PLAYER)
                 .addTabCompleter(1, TabCompleters.hint("<amount>"))
                 .addTabCompleter(2, TabCompleters.hint("<currency>"))
@@ -162,6 +205,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 })
         );
         list.add(new SubCommand.Builder("take", -1)
+                .withDescription(RealEconomyLangs.Command_Take_Desc)
+                .addUsage(RealEconomyLangs.Command_Take_Usage)
                 .addTabCompleter(0, TabCompleters.PLAYER)
                 .addTabCompleter(1, TabCompleters.hint("<amount>"))
                 .addTabCompleter(2, TabCompleters.hint("<currency>"))
@@ -188,37 +233,100 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     return true;
                 })
         );
+        list.add(new SubCommand.Builder("bank", -1)
+                .withDescription(RealEconomyLangs.Command_Bank_Desc)
+                .addUsage(RealEconomyLangs.Command_Bank_Usage)
+                .addTabCompleter(0, TabCompleters.hint("<bank name>"))
+                .addTabCompleter(1, TabCompleters.simple("info"))
+                .addArgumentMapper(0, s -> Optional.of(s)
+                        .map(RealEconomy.this::getCentralBank)
+                        .orElseThrow(() -> new InvalidArgumentException(RealEconomyLangs.Command_Common_BankNotFound,
+                                (sen, man) -> man.addString(s))))
+                .addArgumentMapper(1, ArgumentMappers.STRING)
+                .action((sender, args) -> {
+                    CentralBank centralBank = args.get(0)
+                            .map(CentralBank.class::cast)
+                            .orElse(null);
+                    String action = args.get(1)
+                            .map(String.class::cast)
+                            .orElse(null);
+                    if (centralBank == null)
+                        return true;
+                    if (action == null)
+                        return false;
+
+                    switch (action) {
+                        case "info":
+                            getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
+                            getMain().lang().sendMessage(sender, DefaultLangs.General_Header, (sen, man) ->
+                                    man.addString(centralBank.getStringKey()));
+                            getMain().lang().sendProperty(sender, centralBank);
+                            getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
+                            break;
+                        default:
+                            return false;
+                    }
+
+                    return true;
+                }));
+
+        getMain().comm().linkMainCommand("balance", "realeconomy", "balance");
+        getMain().comm().linkMainCommand("pay", "realeconomy", "pay");
+    }
+
+    private CentralBank getCentralBank(String name) {
+        return getMain().getManager(CentralBankingManager.class)
+                .flatMap(centralBankingManager -> centralBankingManager.get(name))
+                .map(Reference::get)
+                .orElse(null);
+    }
+
+
+    private String toCurrencyName(Pair<UUID, BigDecimal> pair) {
+        return getCurrency(pair.key)
+                .map(Object::toString)
+                .orElse("[?]");
+    }
+
+    private String toFormattedBalance(Pair<UUID, BigDecimal> pair) {
+        return Metrics.df.format(pair.value);
     }
 
     private void processSend(ICommandSender sender, User from, User to, BigDecimal amount, Currency currency) {
+        if (Objects.equals(from, to)) {
+            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_SenderReceiverSame);
+            return;
+        }
+
         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
             switch (bankingMediator.send(from, to, amount, currency)) {
                 case NO_OWNER:
                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoCurrencyOwner, (sen, man) ->
                             man.addString(currency.toString()));
                     break;
-                case FROM_INSUFFICIENT:
+                case FROM_WITHDRAW_REFUSED:
                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_WithdrawRefused);
                     break;
                 case TO_DEPOSIT_REFUSED:
                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DepositRefused);
                     break;
                 case OK:
-                    if (from != null) {
-                        getMain().lang().sendMessage(from, RealEconomyLangs.Command_Common_SendSuccess_Sender, (sen, man) ->
-                                man.addString(df.format(amount))
-                                        .addString(Objects.toString(currency))
-                                        .addString(Objects.toString(to)));
-                    }
-                    if (to != null) {
-                        getMain().lang().sendMessage(to, RealEconomyLangs.Command_Common_SendSuccess_Receiver, (sen, man) ->
-                                man.addString(df.format(amount))
-                                        .addString(Objects.toString(currency))
-                                        .addString(Objects.toString(to)));
-                    }
+                    sendResultMessage(sender, from, to, amount, currency);
+                    if (from != null && sender != from)
+                        sendResultMessage(from, from, to, amount, currency);
+                    if (to != null && sender != to)
+                        sendResultMessage(to, from, to, amount, currency);
                     break;
             }
         });
+    }
+
+    private void sendResultMessage(ICommandSender sender, User from, User to, BigDecimal amount, Currency currency) {
+        getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_SendSuccess, (sen, man) ->
+                man.addString(Objects.toString(from == null ? currency.ownerBank() : from))
+                        .addString(Metrics.df.format(amount))
+                        .addString(Objects.toString(currency))
+                        .addString(Objects.toString(to == null ? currency.ownerBank() : to)));
     }
 
     private IArgumentMapper<Currency> mapCurrency() {
@@ -245,6 +353,12 @@ public class RealEconomy extends AbstractBukkitPlugin {
     private Optional<Currency> getCurrency(String currencyName) {
         return getMain().getManager(CurrencyManager.class)
                 .flatMap(currencyManager -> currencyManager.get(currencyName))
+                .map(Reference::get);
+    }
+
+    private Optional<Currency> getCurrency(UUID currencyUuid) {
+        return getMain().getManager(CurrencyManager.class)
+                .flatMap(currencyManager -> currencyManager.get(currencyUuid))
                 .map(Reference::get);
     }
 

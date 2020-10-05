@@ -5,7 +5,6 @@ import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
-import io.github.wysohn.realeconomy.inject.annotation.ServerBank;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
 import io.github.wysohn.realeconomy.interfaces.banking.*;
@@ -26,7 +25,13 @@ import java.util.UUID;
 
 @Singleton
 public class BankingMediator extends Mediator {
-    private final CentralBank serverBank;
+    private static final UUID SERVER_BANK_UUID = UUID.fromString("567738eb-15f8-4550-bed2-49be1e57ebb7");
+    private static CentralBank serverBank;
+
+    public static CentralBank getServerBank() {
+        return serverBank;
+    }
+
     private final BigDecimal maxCapital;
     private final CurrencyManager currencyManager;
     private final CentralBankingManager centralBankingManager;
@@ -36,12 +41,10 @@ public class BankingMediator extends Mediator {
 
     @Inject
     public BankingMediator(
-            @ServerBank CentralBank serverBank,
             @MaxCapital BigDecimal maxCapital,
             CurrencyManager currencyManager,
             CentralBankingManager centralBankingManager,
             ITransactionHandler transactionHandler) {
-        this.serverBank = serverBank;
         this.maxCapital = maxCapital;
         this.currencyManager = currencyManager;
         this.centralBankingManager = centralBankingManager;
@@ -50,7 +53,13 @@ public class BankingMediator extends Mediator {
 
     @Override
     public void enable() throws Exception {
-
+        serverBank = centralBankingManager.getOrNew(SERVER_BANK_UUID)
+                .map(Reference::get)
+                .orElseThrow(RuntimeException::new);
+        if (serverBank.getBaseCurrency() == null) {
+            serverBank.setStringKey("*");
+            currencyManager.newCurrency("default", "DFT", serverBank);
+        }
     }
 
     @Override
@@ -61,10 +70,6 @@ public class BankingMediator extends Mediator {
     @Override
     public void disable() throws Exception {
 
-    }
-
-    public CentralBank getServerBank() {
-        return serverBank;
     }
 
     /**
@@ -172,6 +177,7 @@ public class BankingMediator extends Mediator {
         if (account == null)
             return Result.NO_ACCOUNT;
 
+        //TODO wrong implementation. must use bank#accountTransaction()
         if (transactionHandler.deposit(account.getBalanceMap(), amount, bank.getBaseCurrency())) {
             return Result.OK;
         } else {
@@ -196,6 +202,7 @@ public class BankingMediator extends Mediator {
         if (account == null)
             return Result.NO_ACCOUNT;
 
+        //TODO wrong implementation. must use bank#accountTransaction()
         if (transactionHandler.withdraw(account.getBalanceMap(), amount, bank.getBaseCurrency())) {
             return Result.OK;
         } else {

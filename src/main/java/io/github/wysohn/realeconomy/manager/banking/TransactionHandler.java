@@ -8,7 +8,6 @@ import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
-import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
@@ -22,16 +21,13 @@ import java.util.function.Supplier;
 
 @Singleton
 public class TransactionHandler implements ITransactionHandler {
-    private final ICurrencyOwnerProvider currencyOwnerProvider;
     private final BigDecimal maximum;
     private final BigDecimal minimum;
 
     @Inject
     public TransactionHandler(
-            ICurrencyOwnerProvider currencyOwnerProvider,
             @MaxCapital BigDecimal maximum,
             @MinCapital BigDecimal minimum) {
-        this.currencyOwnerProvider = currencyOwnerProvider;
         this.maximum = maximum;
         this.minimum = minimum;
     }
@@ -66,7 +62,10 @@ public class TransactionHandler implements ITransactionHandler {
     }
 
     @Override
-    public boolean withdraw(Map<UUID, BigDecimal> capitals, BigDecimal value, Currency currency) {
+    public boolean withdraw(Map<UUID, BigDecimal> capitals,
+                            BigDecimal value,
+                            Currency currency,
+                            boolean allowNegative) {
         if (value.signum() < 0)
             throw new RuntimeException("Cannot use negative value.");
 
@@ -75,6 +74,9 @@ public class TransactionHandler implements ITransactionHandler {
                 .map(uuid -> {
                     BigDecimal current = capitals.getOrDefault(uuid, BigDecimal.ZERO);
                     BigDecimal subtracted = current.subtract(value);
+
+                    if (!allowNegative && subtracted.signum() < 0)
+                        return false;
 
                     if (subtracted.compareTo(minimum) < 0)
                         return false;
@@ -92,7 +94,7 @@ public class TransactionHandler implements ITransactionHandler {
         Validation.assertNotNull(currency);
         Validation.validate(amount, val -> val.signum() >= 0, "Cannot use negative value.");
 
-        CentralBank currencyOwner = currencyOwnerProvider.get(currency.getKey());
+        CentralBank currencyOwner = currency.ownerBank();
         if (currencyOwner == null)
             return Result.NO_OWNER;
 
@@ -108,7 +110,7 @@ public class TransactionHandler implements ITransactionHandler {
         IFinancialEntity finalTo = to;
         return FailSensitiveTaskResult.of(() -> {
             if (!finalFrom.withdraw(amount, currency))
-                return Result.FROM_INSUFFICIENT;
+                return Result.FROM_WITHDRAW_REFUSED;
 
             if (!finalTo.deposit(amount, currency))
                 return Result.TO_DEPOSIT_REFUSED;

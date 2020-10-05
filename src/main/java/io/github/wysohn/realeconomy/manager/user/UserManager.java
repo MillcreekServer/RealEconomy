@@ -9,6 +9,7 @@ import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
+import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckBalance;
@@ -57,11 +58,12 @@ public class UserManager extends AbstractUserManager<User> {
             @PluginDirectory File pluginDir,
             IShutdownHandle shutdownHandle,
             ISerializer serializer,
+            ITypeAsserter asserter,
             Injector injector,
             CurrencyManager currencyManager,
             @NamespaceKeyCheckCurrency NamespacedKey checkCurrencyKey,
             @NamespaceKeyCheckBalance NamespacedKey checkBalanceKey) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, injector, User.class);
+        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, User.class);
 
         this.logger = logger;
         this.config = config;

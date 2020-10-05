@@ -12,7 +12,11 @@ public interface ITransactionHandler {
 
     boolean deposit(Map<UUID, BigDecimal> capitals, BigDecimal value, Currency currency);
 
-    boolean withdraw(Map<UUID, BigDecimal> capitals, BigDecimal value, Currency currency);
+    default boolean withdraw(Map<UUID, BigDecimal> capitals, BigDecimal value, Currency currency) {
+        return withdraw(capitals, value, currency, false);
+    }
+
+    boolean withdraw(Map<UUID, BigDecimal> capitals, BigDecimal value, Currency currency, boolean allowNegative);
 
     /**
      * Make a transaction between two financial entities. 'from' or 'to' can be null, yet in that case,
@@ -28,6 +32,6 @@ public interface ITransactionHandler {
     Result send(IFinancialEntity from, IFinancialEntity to, BigDecimal amount, Currency currency);
 
     enum Result {
-        NO_OWNER, FROM_INSUFFICIENT, TO_DEPOSIT_REFUSED, OK
+        NO_OWNER, FROM_WITHDRAW_REFUSED, TO_DEPOSIT_REFUSED, OK
     }
 }

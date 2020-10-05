@@ -5,7 +5,9 @@ import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCachi
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
+import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
+import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
 import java.io.File;
 import java.util.UUID;
@@ -20,9 +22,12 @@ public abstract class AbstractBankingManager<Bank extends AbstractBank>
             File pluginDir,
             IShutdownHandle shutdownHandle,
             ISerializer serializer,
+            ITypeAsserter asserter,
             Injector injector,
             Class<Bank> type) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, injector, type);
+        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, type);
+
+        dependsOn(CurrencyManager.class);
     }
 
     @Override

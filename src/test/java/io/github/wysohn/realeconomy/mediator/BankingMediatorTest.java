@@ -6,7 +6,6 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
-import io.github.wysohn.realeconomy.inject.annotation.ServerBank;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
 import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
@@ -45,13 +44,6 @@ public class BankingMediatorTest {
 
         moduleList.add(new AbstractModule() {
             @Provides
-            @ServerBank
-            CentralBank centralBank() {
-                return serverBank;
-            }
-        });
-        moduleList.add(new AbstractModule() {
-            @Provides
             CurrencyManager currencyManager() {
                 return currencyManager;
             }
@@ -81,85 +73,111 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void createCurrency() {
+    public void createCurrency() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         UUID uuid = UUID.randomUUID();
         IGovernment government = mock(IGovernment.class);
         Currency currency = mock(Currency.class);
         when(government.getUuid()).thenReturn(uuid);
         when(currencyManager.get(anyString())).thenReturn(Optional.of(new WeakReference<>(currency)));
-
         when(centralBankingManager.get(any(UUID.class)))
                 .thenReturn(Optional.of(new WeakReference<>(mock(CentralBank.class))));
+
         assertEquals(BankingMediator.Result.ALREADY_SET,
                 mediator.createCurrency(government, "dollar", "USD"));
-        verify(currencyManager, never()).newCurrency(any(), any(), any());
+        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
     }
 
     @Test
-    public void createCurrency2() {
+    public void createCurrency2() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         UUID uuid = UUID.randomUUID();
         IGovernment government = mock(IGovernment.class);
         Currency currency = mock(Currency.class);
         when(government.getUuid()).thenReturn(uuid);
         when(currencyManager.get(anyString())).thenReturn(Optional.of(new WeakReference<>(currency)));
-
         when(centralBankingManager.get(any(UUID.class))).thenReturn(Optional.empty());
         when(centralBankingManager.getOrNew(any()))
                 .thenReturn(Optional.of(new WeakReference<>(mock(CentralBank.class))));
+
         assertEquals(BankingMediator.Result.OK,
                 mediator.createCurrency(government, "dollar", "USD"));
+        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
         verify(currencyManager).newCurrency(eq("dollar"), eq("USD"), any(CentralBank.class));
         verify(centralBankingManager).getOrNew(eq(uuid));
     }
 
     @Test
-    public void renameCurrency() {
+    public void renameCurrency() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         when(currencyManager.get(anyString()))
                 .thenReturn(Optional.of(new WeakReference<>(mock(Currency.class))));
+
         assertEquals(BankingMediator.Result.DUP_NAME,
                 mediator.renameCurrency("dollar", "other"));
+        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
         verify(currencyManager).get(eq("other"));
     }
 
     @Test
-    public void renameCurrency2() {
+    public void renameCurrency2() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         when(currencyManager.get(eq("other")))
                 .thenReturn(Optional.empty());
         when(currencyManager.get(eq("dollar")))
                 .thenReturn(Optional.empty());
+
         assertEquals(BankingMediator.Result.NOT_FOUND,
                 mediator.renameCurrency("dollar", "other"));
+        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
         verify(currencyManager).get(eq("other"));
         verify(currencyManager).get(eq("dollar"));
     }
 
     @Test
-    public void renameCurrency3() {
+    public void renameCurrency3() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         Currency currency = mock(Currency.class);
         when(currencyManager.get(eq("other")))
                 .thenReturn(Optional.empty());
         when(currencyManager.get(eq("dollar")))
                 .thenReturn(Optional.of(new WeakReference<>(currency)));
+
         assertEquals(BankingMediator.Result.OK,
                 mediator.renameCurrency("dollar", "other"));
+
+        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
         verify(currencyManager).get(eq("other"));
         verify(currencyManager, times(2)).get(eq("dollar"));
         verify(currency).setStringKey("other");
     }
 
     @Test
-    public void balance() {
+    public void balance() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         UUID uuid = UUID.randomUUID();
         UUID currencyUuid = UUID.randomUUID();
@@ -180,8 +198,11 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void deposit() {
+    public void deposit() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         IBankUser user = mock(IBankUser.class);
 
@@ -191,8 +212,11 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void deposit2() {
+    public void deposit2() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         IBankUser user = mock(IBankUser.class);
         UUID currencyUuid = UUID.randomUUID();
@@ -207,8 +231,11 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void deposit3() {
+    public void deposit3() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         IBankUser user = mock(IBankUser.class);
         UUID currencyUuid = UUID.randomUUID();
@@ -233,8 +260,11 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void withdraw() {
+    public void withdraw() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         IBankUser user = mock(IBankUser.class);
 
@@ -244,8 +274,11 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void withdraw2() {
+    public void withdraw2() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         IBankUser user = mock(IBankUser.class);
         UUID currencyUuid = UUID.randomUUID();
@@ -260,8 +293,11 @@ public class BankingMediatorTest {
     }
 
     @Test
-    public void withdraw3() {
+    public void withdraw3() throws Exception {
         BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
 
         IBankUser user = mock(IBankUser.class);
         UUID currencyUuid = UUID.randomUUID();

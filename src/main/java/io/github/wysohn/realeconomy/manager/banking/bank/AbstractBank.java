@@ -3,12 +3,15 @@ package io.github.wysohn.realeconomy.manager.banking.bank;
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
+import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.banking.*;
+import io.github.wysohn.realeconomy.main.RealEconomyLangs;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
@@ -18,6 +21,8 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public abstract class AbstractBank extends CachedElement<UUID> implements IFinancialEntity {
+    public static final String BANK_MARK = "\u2608";
+
     private transient final Object transactionLock = new Object();
 
     @Inject
@@ -28,14 +33,15 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     private CurrencyManager currencyManager;
     @Inject
     @MinCapital
-    private BigDecimal minimum;
+    protected BigDecimal minimum;
     @Inject
     @MaxCapital
-    private BigDecimal maximum;
+    protected BigDecimal maximum;
 
     // Currency uuid -> value
     private final Map<UUID, BigDecimal> capitals = new HashMap<>();
     private final Map<UUID, Map<IBankingType, IAccount>> accounts = new HashMap<>();
+    private final Map<UUID, Asset> assetMap = new HashMap<>();
 
     private UUID bankOwnerUuid;
     private UUID baseCurrencyUuid;
@@ -102,7 +108,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
         synchronized (transactionLock) {
-            final boolean aBoolean = transactionHandler.withdraw(capitals, value, currency);
+            final boolean aBoolean = transactionHandler.withdraw(capitals, value, currency, true);
             notifyObservers();
             return aBoolean;
         }
@@ -291,6 +297,33 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         }
     }
 
+    public Asset getAsset(UUID uuid) {
+        return assetMap.get(uuid);
+    }
+
+    public Asset putAsset(UUID uuid, Asset asset) {
+        final Asset put = assetMap.put(uuid, asset);
+        notifyObservers();
+        return put;
+    }
+
+    public Asset removeAsset(UUID uuid) {
+        final Asset remove = assetMap.remove(uuid);
+        notifyObservers();
+        return remove;
+    }
+
+    @Override
+    public Map<ILang, Object> properties() {
+        Map<ILang, Object> properties = new LinkedHashMap<>();
+        Optional.ofNullable(getBankOwner())
+                .ifPresent(owner -> properties.put(RealEconomyLangs.Bank_Owner, owner));
+        Optional.ofNullable(getBaseCurrency())
+                .ifPresent(currency -> properties.put(RealEconomyLangs.Bank_BaseCurrency, currency));
+        properties.put(RealEconomyLangs.Bank_NumAccounts, accounts.size());
+        return properties;
+    }
+
     @Override
     public IMemento saveState() {
         return new AbstractMemento(this);
@@ -300,11 +333,13 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     public void restoreState(IMemento memento) {
         AbstractMemento mem = (AbstractMemento) memento;
 
-        this.capitals.clear();
-        this.capitals.putAll(mem.capitals);
+        synchronized (transactionLock) {
+            this.capitals.clear();
+            this.capitals.putAll(mem.capitals);
 
-        this.accounts.clear();
-        this.accounts.putAll(mem.accounts);
+            this.accounts.clear();
+            this.accounts.putAll(mem.accounts);
+        }
     }
 
     protected static class AbstractMemento implements IMemento {
@@ -312,9 +347,11 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         private final Map<UUID, Map<IBankingType, IAccount>> accounts = new HashMap<>();
 
         public AbstractMemento(AbstractBank bank) {
-            capitals.putAll(bank.capitals);
-            // make a deep copy
-            accounts.putAll(createDeepCopy(bank.accounts));
+            synchronized (bank.transactionLock) {
+                capitals.putAll(bank.capitals);
+                // make a deep copy
+                accounts.putAll(createDeepCopy(bank.accounts));
+            }
         }
     }
 
@@ -326,5 +363,10 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
             mapCopyParent.put(uuid, mapCopy);
         });
         return mapCopyParent;
+    }
+
+    @Override
+    public String toString() {
+        return BANK_MARK + getStringKey();
     }
 }

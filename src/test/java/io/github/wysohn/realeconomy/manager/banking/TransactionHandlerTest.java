@@ -2,7 +2,6 @@ package io.github.wysohn.realeconomy.manager.banking;
 
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
-import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import org.junit.Before;
@@ -24,13 +23,10 @@ public class TransactionHandlerTest {
     private Map<UUID, BigDecimal> capitals;
     private Currency currency;
     private UUID currencyUuid;
-    private ICurrencyOwnerProvider currencyOwnerProvider;
 
     @Before
     public void init() {
-        currencyOwnerProvider = mock(ICurrencyOwnerProvider.class);
         handler = new TransactionHandler(
-                currencyOwnerProvider,
                 BigDecimal.valueOf(Double.MAX_VALUE),
                 BigDecimal.valueOf(-Double.MAX_VALUE)
         );
@@ -61,11 +57,12 @@ public class TransactionHandlerTest {
 
     @Test
     public void withdraw() {
-        assertTrue(handler.withdraw(capitals, BigDecimal.valueOf(3306.34), currency));
+        assertFalse(handler.withdraw(capitals, BigDecimal.valueOf(3306.34), currency));
+        assertTrue(handler.withdraw(capitals, BigDecimal.valueOf(3306.34), currency, true));
         assertEquals(0, handler.balance(capitals, currency).compareTo(BigDecimal.valueOf(-3306.34)));
-        assertTrue(handler.withdraw(capitals, BigDecimal.valueOf(1254.673), currency));
+        assertTrue(handler.withdraw(capitals, BigDecimal.valueOf(1254.673), currency, true));
         assertEquals(0, handler.balance(capitals, currency).compareTo(BigDecimal.valueOf(-3306.34 - 1254.673)));
-        assertFalse(handler.withdraw(capitals, BigDecimal.valueOf(Double.MAX_VALUE), currency));
+        assertFalse(handler.withdraw(capitals, BigDecimal.valueOf(Double.MAX_VALUE), currency, true));
         assertEquals(0, handler.balance(capitals, currency).compareTo(BigDecimal.valueOf(-3306.34 - 1254.673)));
     }
 
@@ -89,9 +86,9 @@ public class TransactionHandlerTest {
         IFinancialEntity to = mock(IFinancialEntity.class);
         CentralBank bank = mock(CentralBank.class);
 
-        when(currencyOwnerProvider.get(eq(currencyUuid))).thenReturn(bank);
+        when(currency.ownerBank()).thenReturn(bank);
 
-        assertEquals(ITransactionHandler.Result.FROM_INSUFFICIENT,
+        assertEquals(ITransactionHandler.Result.FROM_WITHDRAW_REFUSED,
                 handler.send(from, to, BigDecimal.valueOf(3034.88), currency));
 
         verify(from, never()).deposit(any(BigDecimal.class), any(Currency.class));
@@ -109,7 +106,7 @@ public class TransactionHandlerTest {
         IFinancialEntity to = mock(IFinancialEntity.class);
         CentralBank bank = mock(CentralBank.class);
 
-        when(currencyOwnerProvider.get(eq(currencyUuid))).thenReturn(bank);
+        when(currency.ownerBank()).thenReturn(bank);
         when(from.withdraw(any(BigDecimal.class), any(Currency.class))).thenReturn(true);
 
         assertEquals(ITransactionHandler.Result.TO_DEPOSIT_REFUSED,
@@ -130,7 +127,7 @@ public class TransactionHandlerTest {
         IFinancialEntity to = mock(IFinancialEntity.class);
         CentralBank bank = mock(CentralBank.class);
 
-        when(currencyOwnerProvider.get(eq(currencyUuid))).thenReturn(bank);
+        when(currency.ownerBank()).thenReturn(bank);
         when(from.withdraw(any(BigDecimal.class), any(Currency.class))).thenReturn(true);
         when(to.deposit(any(BigDecimal.class), any(Currency.class))).thenReturn(true);
 

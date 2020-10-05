@@ -33,7 +33,6 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.java.JavaPluginLoader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -69,7 +68,7 @@ public class UserManagerTest {
         Server server = mock(Server.class);
         when(server.getLogger()).thenReturn(logger);
 
-        mockMain = RealEconomy.mainForTest(new JavaPluginLoader(server));
+        mockMain = new RealEconomy(server);
         mockSerializer = mock(ISerializer.class);
         taskSupervisor = mock(ITaskSupervisor.class);
         centralBankingManager = mock(CentralBankingManager.class);

@@ -5,10 +5,13 @@ import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCachi
 import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.language.Pagination;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
+import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
+import io.github.wysohn.realeconomy.manager.DataProviderProxy;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 
 import javax.inject.Inject;
@@ -17,10 +20,7 @@ import javax.inject.Singleton;
 import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Logger;
 
 @Singleton
@@ -28,6 +28,8 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
     private final Map<String, UUID> codeMap = new HashMap<>();
 
     private final ManagerConfig config;
+
+    private DataProviderProxy<Currency> currenciesProvider;
 
     @Inject
     public CurrencyManager(
@@ -37,8 +39,9 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
             @PluginDirectory File pluginDir,
             IShutdownHandle shutdownHandle,
             ISerializer serializer,
+            ITypeAsserter asserter,
             Injector injector) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, injector, Currency.class);
+        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, Currency.class);
         this.config = config;
     }
 
@@ -69,10 +72,18 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
         }
     }
 
+    @Override
+    public Optional<WeakReference<Currency>> get(UUID key) {
+        final Optional<WeakReference<Currency>> reference = super.get(key);
+        reference.map(Reference::get).ifPresent(currency ->
+                currency.setUseCount(currency.getUseCount() + 1));
+        return reference;
+    }
+
     /**
      * @param key
      * @return
-     * @deprecated Use {@link #newCurrency(String, String)}
+     * @deprecated Use {@link #newCurrency(String, String, CentralBank)}
      */
     @Override
     public Optional<WeakReference<Currency>> getOrNew(UUID key) {
@@ -148,6 +159,16 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
                         codeMap.remove(previousCode);
                 });
         return Result.OK;
+    }
+
+    public Pagination.DataProvider<Currency> currenciesPagination() {
+        if (currenciesProvider == null)
+            currenciesProvider = new DataProviderProxy<>(() -> {
+                List<Currency> copy = new ArrayList<>();
+                forEach(copy::add);
+                return copy;
+            }, Comparator.comparing(Currency::getUseCount, Comparator.reverseOrder()));
+        return currenciesProvider;
     }
 
     public enum Result {

@@ -81,8 +81,21 @@ task writePluginYml {
         {
             put(id.toLowerCase(), new HashMap<String, Object>() {
                 {
-                    put("aliases", [id.toLowerCase().substring(0, 3)])
+                    put("aliases", [id.toLowerCase().substring(0, 3), "eco", "re", "reale"])
                     put("description", desc)
+                }
+            })
+
+            put("balance", new HashMap<String, Object>() {
+                {
+                    put("aliases", ["bal", "money"])
+                    put("description", "shortcut command of /eco balance")
+                }
+            })
+
+            put("pay", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco pay")
                 }
             })
         }
@@ -233,7 +246,7 @@ dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
     compile 'org.spigotmc:spigot-api:1.16.+'
-    compile "io.github.wysohn:RapidFramework:3.3.1"
+    compile "io.github.wysohn:RapidFramework:3.5.16"
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.mockito:mockito-core:1.9.5'

@@ -16,6 +16,7 @@ public class Currency extends CachedElement<UUID> {
 
     private String code;
     private UUID centralBankUuid;
+    private int useCount;
 
     private Currency() {
         super(null);
@@ -49,6 +50,15 @@ public class Currency extends CachedElement<UUID> {
 
         this.centralBankUuid = centralBank.getKey();
 
+        notifyObservers();
+    }
+
+    public int getUseCount() {
+        return useCount;
+    }
+
+    public void setUseCount(int useCount) {
+        this.useCount = useCount;
         notifyObservers();
     }
 

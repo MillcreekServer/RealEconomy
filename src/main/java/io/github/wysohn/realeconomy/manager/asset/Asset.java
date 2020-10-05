@@ -1,31 +1,33 @@
 package io.github.wysohn.realeconomy.manager.asset;
 
-import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.interfaces.entity.IEntitySnapshot;
-import io.github.wysohn.realeconomy.manager.asset.signautre.AssetSignature;
+import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
+import java.util.Objects;
 import java.util.UUID;
 
-public abstract class Asset<A extends Asset> extends CachedElement<UUID> implements IEntitySnapshot {
-    private AssetSignature<A> signature;
+public abstract class Asset implements IEntitySnapshot {
+    private final UUID uuid;
+    private final AssetSignature signature;
 
     private long issuedDate;
     private long lastUpdate;
 
-    private Asset() {
-        super(null);
-    }
-
-    public Asset(UUID key) {
-        super(key);
-    }
-
-    public AssetSignature<A> getSignature() {
-        return signature;
-    }
-
-    void setSignature(AssetSignature<A> signature) {
+    public Asset(UUID key, AssetSignature signature) {
+        this.uuid = key;
         this.signature = signature;
+    }
+
+    public Asset(AssetSignature signature) {
+        this(UUID.randomUUID(), signature);
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public AssetSignature getSignature() {
+        return signature;
     }
 
     public long getIssuedDate() {
@@ -34,8 +36,6 @@ public abstract class Asset<A extends Asset> extends CachedElement<UUID> impleme
 
     void setIssuedDate(long issuedDate) {
         this.issuedDate = issuedDate;
-
-        notifyObservers();
     }
 
     public long getLastUpdate() {
@@ -44,17 +44,18 @@ public abstract class Asset<A extends Asset> extends CachedElement<UUID> impleme
 
     void setLastUpdate(long lastUpdate) {
         this.lastUpdate = lastUpdate;
-
-        notifyObservers();
     }
 
-    protected static abstract class AbstractMemento {
-        private final long issuedDate;
-        private final long lastUpdate;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Asset asset = (Asset) o;
+        return uuid.equals(asset.uuid);
+    }
 
-        public AbstractMemento(Asset asset) {
-            issuedDate = asset.issuedDate;
-            lastUpdate = asset.lastUpdate;
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
     }
 }

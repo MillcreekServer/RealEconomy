@@ -5,16 +5,16 @@ import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
 import java.util.UUID;
 
-public class Loan extends Asset {
-    private Loan() {
+public class Check extends Asset {
+    private Check() {
         super(null, null);
     }
 
-    public Loan(UUID key, AssetSignature signature) {
+    public Check(UUID key, AssetSignature signature) {
         super(key, signature);
     }
 
-    public Loan(AssetSignature signature) {
+    public Check(AssetSignature signature) {
         super(signature);
     }
 
