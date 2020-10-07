@@ -6,7 +6,6 @@ import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuerProvider;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.Order;
-import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -56,10 +55,8 @@ public class TradeMediator extends Mediator {
 
         assetListingManager.getOrNew(signature)
                 .map(Reference::get)
-                .ifPresent(assetListing -> assetListing.addSell(new Order(orderIssuerProvider,
-                        currencyManager,
+                .ifPresent(assetListing -> assetListing.addSell(new Order(
                         issuer.getUuid(),
-                        OrderType.SELL,
                         price,
                         currency.getKey(),
                         stock)));

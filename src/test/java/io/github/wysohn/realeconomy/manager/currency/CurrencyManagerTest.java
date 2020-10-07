@@ -6,6 +6,7 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
+import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
 import io.github.wysohn.rapidframework3.utils.Pair;
@@ -35,6 +36,7 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         centralBankingManager = mock(CentralBankingManager.class);
 
         moduleList.add(new PluginInfoModule("test", "test", "test"));
+        moduleList.add(new TypeAsserterModule());
         moduleList.add(new MockLoggerModule());
         moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3)));
         moduleList.add(new MockPluginDirectoryModule());

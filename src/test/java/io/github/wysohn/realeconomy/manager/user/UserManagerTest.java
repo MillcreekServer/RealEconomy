@@ -4,6 +4,7 @@ import com.google.inject.Module;
 import com.google.inject.*;
 import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
+import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
@@ -75,6 +76,7 @@ public class UserManagerTest {
         currencyOwnerProvider = mock(ICurrencyOwnerProvider.class);
 
         moduleList.add(new PluginInfoModule("test", "test", "test"));
+        moduleList.add(new TypeAsserterModule());
         moduleList.add(new MockLoggerModule());
         moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3),
                 Pair.of(UserManager.DROP_CURRENCY_ON_DEATH, true),

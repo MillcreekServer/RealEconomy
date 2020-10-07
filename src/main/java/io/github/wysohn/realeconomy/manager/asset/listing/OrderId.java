@@ -37,10 +37,17 @@ public class OrderId {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        OrderId orderId = (OrderId) o;
-        return b == orderId.b &&
-                a == orderId.a;
+        if (o == null) return false;
+        if (o instanceof Order) {
+            // this allow us to use OrderId directly on the queue
+            OrderId orderId = ((Order) o).getOrderId();
+            return b == orderId.b && a == orderId.a;
+        } else if (o instanceof OrderId) {
+            OrderId orderId = (OrderId) o;
+            return b == orderId.b && a == orderId.a;
+        } else {
+            return false;
+        }
     }
 
     @Override

@@ -1,11 +1,6 @@
 package io.github.wysohn.realeconomy.manager.asset.listing;
 
-import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
-import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuerProvider;
-import io.github.wysohn.realeconomy.manager.currency.Currency;
-import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
-
-import java.lang.ref.Reference;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -14,28 +9,25 @@ import java.util.UUID;
  * currency
  */
 public class Order implements Comparable<Order> {
-    private transient final IOrderIssuerProvider orderIssuerProvider;
-    private transient final CurrencyManager currencyManager;
-
     private final OrderId orderId;
 
     private final UUID issuerUuid;
-    private final OrderType type;
     private final double price;
     private final UUID currencyUuid;
 
     private int amount;
     private final int max;
 
-    public Order(IOrderIssuerProvider orderIssuerProvider,
-                 CurrencyManager currencyManager,
-                 UUID issuerUuid,
-                 OrderType type, double price, UUID currencyUuid, int stock) {
-        this.orderIssuerProvider = orderIssuerProvider;
-        this.currencyManager = currencyManager;
+    private Order() {
+        this(null, -0.0, null, -0);
+    }
+
+    public Order(UUID issuerUuid,
+                 double price,
+                 UUID currencyUuid,
+                 int stock) {
         this.orderId = OrderId.randomId();
         this.issuerUuid = issuerUuid;
-        this.type = type;
         this.price = price;
         this.currencyUuid = currencyUuid;
         this.amount = stock;
@@ -46,20 +38,16 @@ public class Order implements Comparable<Order> {
         return orderId;
     }
 
-    public IOrderIssuer getIssuer() {
-        return orderIssuerProvider.get(issuerUuid);
-    }
-
-    public OrderType getType() {
-        return type;
+    public UUID getIssuerUuid() {
+        return issuerUuid;
     }
 
     public double getPrice() {
         return price;
     }
 
-    public Currency getCurrency() {
-        return currencyManager.get(currencyUuid).map(Reference::get).orElse(null);
+    public UUID getCurrencyUuid() {
+        return currencyUuid;
     }
 
     public int getAmount() {
@@ -82,5 +70,25 @@ public class Order implements Comparable<Order> {
             // if different currency, don't compare price
             return currencyUuid.compareTo(o.currencyUuid);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+        if (o instanceof OrderId) {
+            // this allows direct comparison of Order and OrderId
+            return orderId.equals(o);
+        } else if (o instanceof Order) {
+            Order order = (Order) o;
+            return orderId.equals(order.orderId);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(orderId);
     }
 }

@@ -7,10 +7,7 @@ import io.github.wysohn.rapidframework3.core.command.ArgumentMappers;
 import io.github.wysohn.rapidframework3.core.command.SubCommand;
 import io.github.wysohn.rapidframework3.core.command.TabCompleters;
 import io.github.wysohn.rapidframework3.core.exceptions.InvalidArgumentException;
-import io.github.wysohn.rapidframework3.core.inject.module.GsonSerializerModule;
-import io.github.wysohn.rapidframework3.core.inject.module.LanguagesModule;
-import io.github.wysohn.rapidframework3.core.inject.module.ManagerModule;
-import io.github.wysohn.rapidframework3.core.inject.module.MediatorModule;
+import io.github.wysohn.rapidframework3.core.inject.module.*;
 import io.github.wysohn.rapidframework3.core.language.DefaultLangs;
 import io.github.wysohn.rapidframework3.core.language.Pagination;
 import io.github.wysohn.rapidframework3.core.main.PluginMainBuilder;
@@ -79,6 +76,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 CustomTypeAdapters.ASSET_SIGNATURE,
                 CustomTypeAdapters.ORDER
         ));
+        pluginMainBuilder.addModule(new TypeAsserterModule());
         pluginMainBuilder.addModule(new CapitalLimitModule());
         pluginMainBuilder.addModule(new TransactionHandlerModule());
         pluginMainBuilder.addModule(new NamespacedKeyModule());
