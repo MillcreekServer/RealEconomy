@@ -5,6 +5,7 @@ import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashSet;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -20,6 +21,21 @@ public class AssetListingTest extends AbstractBukkitManagerTest {
         signature = mock(AssetSignature.class);
         listing = new AssetListing(signature);
         addFakeObserver(listing);
+    }
+
+    @Test
+    public void hashTest() {
+        UUID issuerUuid = UUID.randomUUID();
+        UUID currencyUuid = UUID.randomUUID();
+
+        Order order = new Order(issuerUuid,
+                2043.44,
+                currencyUuid,
+                30);
+        OrderId id = order.getOrderId();
+
+        assertEquals(order.hashCode(), id.hashCode());
+        assertEquals(order, id);
     }
 
     @Test
@@ -66,6 +82,32 @@ public class AssetListingTest extends AbstractBukkitManagerTest {
 
     @Test
     public void cancelBuy() {
+        UUID issuerUuid = UUID.randomUUID();
+        UUID currencyUuid = UUID.randomUUID();
+
+        Order order1 = new Order(issuerUuid,
+                1030.4,
+                currencyUuid,
+                30);
+        listing.addBuy(order1);
+        Order order2 = new Order(issuerUuid,
+                1244.5,
+                currencyUuid,
+                15);
+        listing.addBuy(order2);
+        Order order3 = new Order(issuerUuid,
+                2000.6,
+                currencyUuid,
+                10);
+        listing.addBuy(order3);
+
+        assertTrue(listing.buyAvailable());
+        listing.cancelBuy(new HashSet<OrderId>() {{
+            add(order2.getOrderId());
+            add(order3.getOrderId());
+        }});
+        assertEquals(1030.4, listing.pollBuy().getPrice(), 0.00001);
+        assertFalse(listing.buyAvailable());
     }
 
     @Test

@@ -1,6 +1,5 @@
 package io.github.wysohn.realeconomy.manager.asset.listing;
 
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -89,6 +88,6 @@ public class Order implements Comparable<Order> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(orderId);
+        return orderId.hashCode();
     }
 }

@@ -71,7 +71,7 @@ public class AssetListing extends CachedElement<AssetSignature> {
      * Also, since this is a linear time operation, expect some overhead.
      *
      * @param orderIds buy orders to be delete
-     * @return {@link PriorityQueue#bulkRemove(Predicate)}
+     * @return {@link PriorityQueue#bulkRemove(Predicate)} (bulkRemove only exist in JDK 11 and above)
      */
     public boolean cancelBuy(Set<OrderId> orderIds) {
         return buyOrders.removeAll(orderIds);
@@ -130,7 +130,7 @@ public class AssetListing extends CachedElement<AssetSignature> {
      * Also, since this is a linear time operation, expect some overhead.
      *
      * @param orderIds buy orders to be delete
-     * @return {@link PriorityQueue#bulkRemove(Predicate)}
+     * @return {@link PriorityQueue#bulkRemove(Predicate)} (bulkRemove only exist in JDK 11 and above)
      */
     public boolean cancelSell(Set<OrderId> orderIds) {
         return sellOrders.removeAll(orderIds);
