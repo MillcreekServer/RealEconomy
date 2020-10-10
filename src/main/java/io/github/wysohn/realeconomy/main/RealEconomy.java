@@ -73,8 +73,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 CustomTypeAdapters.ACCOUNT,
                 CustomTypeAdapters.BANKING_TYPE,
                 CustomTypeAdapters.ASSET,
-                CustomTypeAdapters.ASSET_SIGNATURE,
-                CustomTypeAdapters.ORDER
+                CustomTypeAdapters.ASSET_SIGNATURE
         ));
         pluginMainBuilder.addModule(new TypeAsserterModule());
         pluginMainBuilder.addModule(new CapitalLimitModule());

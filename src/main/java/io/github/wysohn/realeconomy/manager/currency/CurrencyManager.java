@@ -5,13 +5,13 @@ import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCachi
 import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
-import io.github.wysohn.rapidframework3.core.language.Pagination;
+import io.github.wysohn.rapidframework3.core.language.DataProviderProxy;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
+import io.github.wysohn.rapidframework3.interfaces.language.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
-import io.github.wysohn.realeconomy.manager.DataProviderProxy;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 
 import javax.inject.Inject;
@@ -29,7 +29,7 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
 
     private final ManagerConfig config;
 
-    private DataProviderProxy<Currency> currenciesProvider;
+    private DataProvider<Currency> currenciesProvider;
 
     @Inject
     public CurrencyManager(
@@ -161,13 +161,13 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
         return Result.OK;
     }
 
-    public Pagination.DataProvider<Currency> currenciesPagination() {
+    public DataProvider<Currency> currenciesPagination() {
         if (currenciesProvider == null)
             currenciesProvider = new DataProviderProxy<>(() -> {
                 List<Currency> copy = new ArrayList<>();
                 forEach(copy::add);
                 return copy;
-            }, Comparator.comparing(Currency::getUseCount, Comparator.reverseOrder()));
+            }).sortOnUpdate(Comparator.comparing(Currency::getUseCount, Comparator.reverseOrder()));
         return currenciesProvider;
     }
 

@@ -1,13 +1,13 @@
 package io.github.wysohn.realeconomy.manager.user;
 
 import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
-import io.github.wysohn.rapidframework3.core.language.Pagination;
+import io.github.wysohn.rapidframework3.core.language.DataProviderProxy;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.interfaces.language.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
-import io.github.wysohn.realeconomy.manager.DataProviderProxy;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import javax.inject.Inject;
@@ -22,7 +22,7 @@ public class User extends BukkitPlayer implements IBankUser {
 
     private final Map<UUID, BigDecimal> wallet = new HashMap<>();
 
-    private transient Pagination.DataProvider<Pair<UUID, BigDecimal>> balanceProvider;
+    private transient DataProvider<Pair<UUID, BigDecimal>> balanceProvider;
 
     private User() {
         super(null);
@@ -77,7 +77,7 @@ public class User extends BukkitPlayer implements IBankUser {
         return copy;
     }
 
-    public Pagination.DataProvider<Pair<UUID, BigDecimal>> balancesPagination() {
+    public DataProvider<Pair<UUID, BigDecimal>> balancesPagination() {
         if (balanceProvider == null)
             balanceProvider = new DataProviderProxy<>(() -> {
                 List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
@@ -85,7 +85,7 @@ public class User extends BukkitPlayer implements IBankUser {
                     wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
                 }
                 return copy;
-            }, Comparator.comparing(pair -> pair.value, Comparator.reverseOrder()));
+            }).sortOnUpdate(Comparator.comparing(pair -> pair.value, Comparator.reverseOrder()));
         return balanceProvider;
     }
 

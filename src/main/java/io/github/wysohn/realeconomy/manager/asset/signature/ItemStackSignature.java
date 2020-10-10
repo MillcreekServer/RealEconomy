@@ -22,6 +22,16 @@ public class ItemStackSignature extends PhysicalAssetSignature {
         this.itemStack = itemStack;
     }
 
+    /**
+     * The returned ItemStack will share the reference. Must copy it using {@link ItemStack#clone()}
+     * if necessary.
+     *
+     * @return
+     */
+    public ItemStack getItemStack() {
+        return itemStack;
+    }
+
     @Override
     public AssetSignature clone() {
         return new ItemStackSignature(getIssuerUuid(), itemStack.clone());

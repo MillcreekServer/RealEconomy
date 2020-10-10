@@ -22,6 +22,8 @@ public class Item extends Asset {
 
     public void setAmount(int amount) {
         this.amount = amount;
+
+        setLastUpdate(System.currentTimeMillis());
     }
 
     @Override
@@ -31,15 +33,18 @@ public class Item extends Asset {
 
     @Override
     public void restoreState(IMemento iMemento) {
+        super.restoreState(iMemento);
+
         Memento mem = (Memento) iMemento;
 
         this.amount = mem.amount;
     }
 
-    private class Memento implements IMemento {
+    private static class Memento extends AbstractMemento {
         private final int amount;
 
         public Memento(Item item) {
+            super(item);
             this.amount = item.amount;
         }
     }

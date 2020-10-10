@@ -6,7 +6,7 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
-import io.github.wysohn.rapidframework3.core.language.Pagination;
+import io.github.wysohn.rapidframework3.interfaces.language.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
@@ -117,7 +117,7 @@ public class UserTest extends AbstractBukkitManagerTest {
         user.deposit(451.53, currency3);
         user.deposit(41122.54, currency2);
 
-        Pagination.DataProvider<Pair<UUID, BigDecimal>> dataProvider = user.balancesPagination();
+        DataProvider<Pair<UUID, BigDecimal>> dataProvider = user.balancesPagination();
         assertEquals(Pair.of(currency1Uuid, BigDecimal.valueOf(45605.33)), dataProvider.get(0));
         assertEquals(Pair.of(currency2Uuid, BigDecimal.valueOf(41122.54)), dataProvider.get(1));
         assertEquals(Pair.of(currency3Uuid, BigDecimal.valueOf(451.53)), dataProvider.get(2));

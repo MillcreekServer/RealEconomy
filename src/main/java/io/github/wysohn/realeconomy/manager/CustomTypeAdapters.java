@@ -1,13 +1,11 @@
 package io.github.wysohn.realeconomy.manager;
 
 import copy.com.google.gson.*;
-import io.github.wysohn.rapidframework3.core.serialize.DefaultSerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.CustomAdapter;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
-import io.github.wysohn.realeconomy.manager.asset.listing.Order;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 
@@ -123,6 +121,4 @@ public class CustomTypeAdapters {
             return obj;
         }
     });
-
-    public static final Pair<Class<?>, CustomAdapter<?>> ORDER = Pair.of(Order.class, new DefaultSerializer<>());
 }

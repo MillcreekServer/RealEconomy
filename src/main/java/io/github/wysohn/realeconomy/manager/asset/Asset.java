@@ -1,5 +1,6 @@
 package io.github.wysohn.realeconomy.manager.asset;
 
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.entity.IEntitySnapshot;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
@@ -9,17 +10,22 @@ import java.util.UUID;
 public abstract class Asset implements IEntitySnapshot {
     private final UUID uuid;
     private final AssetSignature signature;
+    private final long issuedDate;
 
-    private long issuedDate;
     private long lastUpdate;
 
-    public Asset(UUID key, AssetSignature signature) {
+    public Asset(UUID key, AssetSignature signature, long issuedDate) {
         this.uuid = key;
         this.signature = signature;
+        this.issuedDate = issuedDate;
+    }
+
+    public Asset(UUID key, AssetSignature signature) {
+        this(key, signature, System.currentTimeMillis());
     }
 
     public Asset(AssetSignature signature) {
-        this(UUID.randomUUID(), signature);
+        this(UUID.randomUUID(), signature, System.currentTimeMillis());
     }
 
     public UUID getUuid() {
@@ -32,10 +38,6 @@ public abstract class Asset implements IEntitySnapshot {
 
     public long getIssuedDate() {
         return issuedDate;
-    }
-
-    void setIssuedDate(long issuedDate) {
-        this.issuedDate = issuedDate;
     }
 
     public long getLastUpdate() {
@@ -57,5 +59,20 @@ public abstract class Asset implements IEntitySnapshot {
     @Override
     public int hashCode() {
         return Objects.hash(uuid);
+    }
+
+    @Override
+    public void restoreState(IMemento iMemento) {
+        AbstractMemento mem = (AbstractMemento) iMemento;
+
+        this.lastUpdate = mem.lastUpdate;
+    }
+
+    static abstract class AbstractMemento implements IMemento {
+        private final long lastUpdate;
+
+        public AbstractMemento(Asset asset) {
+            this.lastUpdate = asset.lastUpdate;
+        }
     }
 }
