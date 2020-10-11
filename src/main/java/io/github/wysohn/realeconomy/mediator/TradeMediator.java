@@ -5,15 +5,14 @@ import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuerProvider;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
-import io.github.wysohn.realeconomy.manager.asset.listing.Order;
-import io.github.wysohn.realeconomy.manager.asset.listing.OrderId;
+import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.lang.ref.Reference;
+import java.sql.SQLException;
 
 @Singleton
 public class TradeMediator extends Mediator {
@@ -45,25 +44,38 @@ public class TradeMediator extends Mediator {
 
     }
 
-    public OrderId listAsset(IOrderIssuer issuer,
-                             AssetSignature signature,
-                             int stock, double price, Currency currency) {
+    /**
+     * List new asset for sell. Upon successful listing, id of order will be automatically
+     * added to the issuer's info.
+     *
+     * @param issuer    the one issuing this offer
+     * @param signature the asset signature
+     * @param price     offer price
+     * @param currency  currency type of price
+     * @param stock     number of stocks to sell
+     */
+    public void listAsset(IOrderIssuer issuer,
+                          AssetSignature signature,
+                          double price,
+                          Currency currency,
+                          int stock) {
         Validation.assertNotNull(issuer);
         Validation.assertNotNull(signature);
-        Validation.validate(stock, s -> s > 0, "Negative or 0 stock not allowed.");
         Validation.validate(price, p -> p > 0.0, "Negative or 0.0 price not allowed.");
         Validation.assertNotNull(currency);
+        Validation.validate(stock, s -> s > 0, "Negative or 0 stock not allowed.");
 
-        Order order = new Order(
-                issuer.getUuid(),
-                price,
-                currency.getKey(),
-                stock);
+        assetListingManager.newListing(signature);
 
-        assetListingManager.getOrNew(signature)
-                .map(Reference::get)
-                .ifPresent(assetListing -> assetListing.addSell(order));
-
-        return order.getOrderId();
+        try {
+            assetListingManager.addOrder(signature,
+                    OrderType.SELL,
+                    issuer,
+                    price,
+                    currency,
+                    stock);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 }

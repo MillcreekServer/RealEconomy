@@ -1,0 +1,1 @@
+DELETE FROM sell_orders WHERE id = ?;
