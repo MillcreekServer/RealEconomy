@@ -6,17 +6,13 @@ import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
-import io.github.wysohn.rapidframework3.core.paging.DataProviderProxy;
-import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
-import io.github.wysohn.rapidframework3.utils.sql.SQLSession;
-import io.github.wysohn.realeconomy.inject.annotation.OrderSQL;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
-import io.github.wysohn.realeconomy.main.Metrics;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
@@ -26,9 +22,11 @@ import javax.inject.Singleton;
 import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -42,20 +40,8 @@ import java.util.logging.Logger;
  */
 @Singleton
 public class AssetListingManager extends AbstractManagerElementCaching<UUID, AssetListing> {
-    private final IPluginResourceProvider resourceProvider;
-    private final SQLSession ordersSession;
-
+    private final IOrderPlacementHandler orderPlacementHandler;
     private final Map<AssetSignature, UUID> signatureUUIDMap = new HashMap<>();
-    private final Map<UUID, DataProvider<OrderInfo>> dataProviderMap = new HashMap<>();
-
-    private String INSERT_BUY;
-    private String INSERT_SELL;
-    private String INSERT_LOG;
-    private String DELETE_BUY;
-    private String DELETE_SELL;
-    private String SELECT_MATCH_ORDERS;
-    private String SELECT_SELL_ORDERS;
-
 
     @Inject
     public AssetListingManager(@Named("pluginName") String pluginName,
@@ -65,12 +51,10 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                                IShutdownHandle shutdownHandle,
                                ISerializer serializer,
                                ITypeAsserter asserter,
-                               IPluginResourceProvider resourceProvider,
-                               @OrderSQL SQLSession orderSql,
+                               IOrderPlacementHandler orderPlacementHandler,
                                Injector injector) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, AssetListing.class);
-        this.resourceProvider = resourceProvider;
-        this.ordersSession = orderSql;
+        this.orderPlacementHandler = orderPlacementHandler;
     }
 
     @Override
@@ -91,16 +75,12 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
     @Override
     public void enable() throws Exception {
         super.enable();
-
-        INSERT_BUY = Metrics.resourceToString(resourceProvider, "insert_buy_order.sql");
-        INSERT_SELL = Metrics.resourceToString(resourceProvider, "insert_sell_order.sql");
-        INSERT_LOG = Metrics.resourceToString(resourceProvider, "insert_trade_log.sql");
-        DELETE_BUY = Metrics.resourceToString(resourceProvider, "delete_buy_order.sql");
-        DELETE_SELL = Metrics.resourceToString(resourceProvider, "delete_sell_order.sql");
-        SELECT_MATCH_ORDERS = Metrics.resourceToString(resourceProvider, "select_match_orders.sql");
-        SELECT_SELL_ORDERS = Metrics.resourceToString(resourceProvider, "select_sell_orders.sql");
-
         forEach(listing -> signatureUUIDMap.put(listing.getSignature(), listing.getKey()));
+    }
+
+    @Override
+    public void disable() throws Exception {
+        super.disable();
     }
 
     /**
@@ -166,165 +146,38 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                          double price,
                          Currency currency,
                          int stock) throws SQLException {
-        if (!signatureUUIDMap.containsKey(signature))
-            throw new RuntimeException("Invalid signature.");
-
         Validation.assertNotNull(type);
         Validation.assertNotNull(issuer);
         Validation.validate(price, val -> val > 0.0, "Price cannot be 0 or less.");
         Validation.assertNotNull(currency);
         Validation.validate(stock, val -> val > 0, "Stock cannot be 0 or less.");
 
+        if (!signatureUUIDMap.containsKey(signature))
+            throw new RuntimeException("Invalid signature.");
         AssetListing listing = fromSignature(signature);
 
-        String sql;
-        if (type == OrderType.BUY) {
-            sql = INSERT_BUY;
-        } else if (type == OrderType.SELL) {
-            sql = INSERT_SELL;
-        } else {
-            throw new RuntimeException("Unknown order type " + type);
-        }
-
-        ordersSession.execute(sql, pstmt -> {
-            try {
-                pstmt.setString(1, listing.getKey().toString());
-                pstmt.setString(2, issuer.getUuid().toString());
-                pstmt.setDouble(3, price);
-                pstmt.setString(4, currency.getKey().toString());
-                pstmt.setInt(5, stock);
-                pstmt.setInt(6, stock);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        }, issuer::addOrderId);
-
-        ordersSession.commit();
+        orderPlacementHandler.addOrder(listing.getKey(),
+                type,
+                issuer,
+                price,
+                currency,
+                stock);
     }
 
-    public void cancelOrder(int orderId, OrderType type, Consumer<Long> callback) throws SQLException {
+    public void cancelOrder(int orderId, OrderType type, Consumer<Integer> callback) throws SQLException {
         Validation.validate(orderId, val -> val > 0, "orderId must be larger than 0.");
         Validation.assertNotNull(type);
 
-        String sql;
-        if (type == OrderType.BUY) {
-            sql = DELETE_BUY;
-        } else if (type == OrderType.SELL) {
-            sql = DELETE_SELL;
-        } else {
-            throw new RuntimeException("Unknown order type " + type);
-        }
-
-        ordersSession.execute(sql, (pstmt) -> {
-            try {
-                pstmt.setInt(1, orderId);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        }, callback);
-
-        ordersSession.commit();
+        orderPlacementHandler.cancelOrder(orderId,
+                type,
+                callback);
     }
 
     public void peekMatchingOrder(Consumer<TradeInfo> consumer) {
-        String sql = SELECT_MATCH_ORDERS;
-
-        try (ResultSet resultSet = ordersSession.query(sql, pstmt -> {
-        })) {
-            if (resultSet.next()) {
-                consumer.accept(TradeInfo.read(resultSet));
-            } else {
-                consumer.accept(null);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
+        orderPlacementHandler.peekMatchingOrders(consumer);
     }
 
     public DataProvider<OrderInfo> getListedOrderProvider(Currency currency) {
-        return new DataProviderProxy<>(range -> {
-
-        }, () -> {
-            try (ResultSet resultSet = ordersSession.query("SELECT COUNT(id) as rows FROM sell_orders;", pstmt -> {
-            })) {
-                if (resultSet.next()) {
-                    return resultSet.getInt("rows");
-                } else {
-                    return 0;
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        });
-    }
-
-    private class OrderDataProvider implements DataProvider<OrderInfo> {
-        private final UUID currencyUuid;
-        private final int querySize;
-
-        private final int currentSize = 0;
-        private int head = 0;
-        private final OrderInfo[] infoCache;
-        private long lastUpdate = -1L;
-
-        public OrderDataProvider(UUID currencyUuid, int querySize) {
-            this.currencyUuid = currencyUuid;
-            this.querySize = querySize;
-            this.infoCache = new OrderInfo[querySize];
-        }
-
-        public OrderDataProvider(UUID currencyUuid) {
-            this(currencyUuid, 1000);
-        }
-
-        @Override
-        public int size() {
-
-
-            return currentSize;
-        }
-
-        @Override
-        public List<OrderInfo> get(int index, int size) {
-            // update if
-            // 1 second passed, index is less than current range, or index is over the current range.
-            if (lastUpdate + 1000L < System.currentTimeMillis()
-                    || index < head
-                    || index >= head + querySize) {
-                if (index < head) {
-                    head = Math.max(0, head - querySize);
-                } else {
-                    head += querySize;
-                }
-
-                update();
-            }
-
-            return infoCache[index - head];
-        }
-
-        private void update() {
-            lastUpdate = System.currentTimeMillis();
-
-            Arrays.fill(infoCache, null);
-            ordersSession.query(SELECT_SELL_ORDERS, pstmt -> {
-                try {
-                    pstmt.setString(1, currencyUuid.toString());
-                    pstmt.setInt(2, head);
-                    pstmt.setInt(3, querySize);
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            }, resultSet -> {
-                try {
-                    int i = 0;
-                    while (resultSet.next()) {
-                        infoCache[i++] = OrderInfo.read(resultSet);
-                    }
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            });
-        }
+        return orderPlacementHandler.getListedOrderProvider(currency);
     }
 }

@@ -5,10 +5,4 @@ INSERT INTO buy_orders(listing_uuid,
   currencyUuid,
   amount,
   maximum)
-VALUES (?,
-  CURRENT_TIME(),
-  ?,
-  ?,
-  ?,
-  ?,
-  ?);
+VALUES (?, ?, ?, ?, ?, ?, ?);

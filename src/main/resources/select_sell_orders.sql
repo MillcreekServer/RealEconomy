@@ -1,6 +1,6 @@
 /*query by currency*/
-SELECT * FROM sell_orders
+SELECT order_id, listing_uuid, timestamp, issuer, MIN(price) as min_price, currencyUuid, amount, maximum
+FROM sell_orders
 WHERE currencyUuid = ?
-    AND id > ?
-ORDER BY id DESC
-LIMIT ?;
+GROUP BY listing_uuid
+LIMIT ?, ?;

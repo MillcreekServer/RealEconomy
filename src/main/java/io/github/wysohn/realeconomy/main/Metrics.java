@@ -30,6 +30,7 @@ public class Metrics {
             String buffer = null;
             while ((buffer = br.readLine()) != null) {
                 builder.append(buffer);
+                builder.append('\n');
             }
         }
         return builder.toString();

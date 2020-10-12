@@ -6,7 +6,7 @@ INSERT INTO sell_orders(listing_uuid,
     amount,
     maximum)
 VALUES (?,
-    CURRENT_TIME(),
+    ?,
     ?,
     ?,
     ?,

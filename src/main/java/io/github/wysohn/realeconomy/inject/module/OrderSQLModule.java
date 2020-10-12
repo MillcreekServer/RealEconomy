@@ -13,6 +13,8 @@ import java.io.File;
 import java.sql.SQLException;
 
 public class OrderSQLModule extends AbstractModule {
+    public static final String ORDER_ID = "order_id";
+
     @Provides
     @Singleton
     @OrderSQL
@@ -21,27 +23,29 @@ public class OrderSQLModule extends AbstractModule {
                           IShutdownHandle shutdownHandle) throws SQLException {
         return SQLSession.Builder.sqlite(new File(pluginDir, "orders.db"))
                 .createTable("buy_orders", tableInitializer -> tableInitializer.ifNotExist()
-                        .field("id", "integer",
+                        .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
                         .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
-                        .field("price", "double precision", SQLSession.Attribute.NOT_NULL)
+                        .field("price", "double precision",
+                                SQLSession.Attribute.KEY, SQLSession.Attribute.NOT_NULL)
                         .field("currencyUuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
                 .createTable("sell_orders", tableInitializer -> tableInitializer.ifNotExist()
-                        .field("id", "integer",
+                        .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
                         .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
-                        .field("price", "double precision", SQLSession.Attribute.NOT_NULL)
+                        .field("price", "double precision",
+                                SQLSession.Attribute.KEY, SQLSession.Attribute.NOT_NULL)
                         .field("currencyUuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
                 .createTable("trade_logs", tableInitializer -> tableInitializer.ifNotExist()
-                        .field("id", "integer",
+                        .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
                         .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)

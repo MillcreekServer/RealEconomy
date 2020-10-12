@@ -1,1 +1,1 @@
-DELETE FROM sell_orders WHERE id = ?;
+DELETE FROM sell_orders WHERE order_id = ?;

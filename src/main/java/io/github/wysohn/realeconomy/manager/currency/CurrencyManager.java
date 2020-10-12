@@ -5,9 +5,9 @@ import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCachi
 import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
-import io.github.wysohn.rapidframework3.core.language.DataProviderProxy;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
-import io.github.wysohn.rapidframework3.interfaces.language.DataProvider;
+import io.github.wysohn.rapidframework3.core.paging.DataProviderProxy;
+import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
@@ -162,12 +162,14 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
     }
 
     public DataProvider<Currency> currenciesPagination() {
-        if (currenciesProvider == null)
-            currenciesProvider = new DataProviderProxy<>(() -> {
+        if (currenciesProvider == null) {
+            currenciesProvider = new DataProviderProxy<>(range -> {
                 List<Currency> copy = new ArrayList<>();
                 forEach(copy::add);
-                return copy;
-            }).sortOnUpdate(Comparator.comparing(Currency::getUseCount, Comparator.reverseOrder()));
+                copy.sort(Comparator.comparing(Currency::getUseCount, Comparator.reverseOrder()));
+                return copy.subList(range.index, Math.min(copy.size(), range.index + range.size));
+            }, this::getCacheSize);
+        }
         return currenciesProvider;
     }
 

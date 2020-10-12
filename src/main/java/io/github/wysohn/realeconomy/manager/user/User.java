@@ -1,9 +1,9 @@
 package io.github.wysohn.realeconomy.manager.user;
 
 import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
-import io.github.wysohn.rapidframework3.core.language.DataProviderProxy;
+import io.github.wysohn.rapidframework3.core.paging.DataProviderProxy;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
-import io.github.wysohn.rapidframework3.interfaces.language.DataProvider;
+import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
@@ -78,14 +78,20 @@ public class User extends BukkitPlayer implements IBankUser {
     }
 
     public DataProvider<Pair<UUID, BigDecimal>> balancesPagination() {
-        if (balanceProvider == null)
-            balanceProvider = new DataProviderProxy<>(() -> {
+        if (balanceProvider == null) {
+            balanceProvider = new DataProviderProxy<>(range -> {
                 List<Pair<UUID, BigDecimal>> copy = new ArrayList<>();
                 synchronized (wallet) {
                     wallet.forEach((uuid, bigDecimal) -> copy.add(Pair.of(uuid, bigDecimal)));
                 }
-                return copy;
-            }).sortOnUpdate(Comparator.comparing(pair -> pair.value, Comparator.reverseOrder()));
+                copy.sort((a, b) -> b.value.compareTo(a.value));
+                return copy.subList(range.index, Math.min(copy.size(), range.index + range.size));
+            }, () -> {
+                synchronized (wallet) {
+                    return wallet.size();
+                }
+            });
+        }
         return balanceProvider;
     }
 

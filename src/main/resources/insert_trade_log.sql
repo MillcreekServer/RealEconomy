@@ -6,7 +6,7 @@ INSERT INTO trade_logs(listing_uuid,
   currencyUuid,
   amount)
 VALUES (?,
-  CURRENT_TIME(),
+  ?,
   ?,
   ?,
   ?,
