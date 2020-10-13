@@ -177,7 +177,11 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         orderPlacementHandler.peekMatchingOrders(consumer);
     }
 
-    public DataProvider<OrderInfo> getListedOrderProvider(Currency currency) {
-        return orderPlacementHandler.getListedOrderProvider(currency);
+    public DataProvider<OrderInfo> getListedOrderProvider(AssetSignature signature) {
+        if (!signatureUUIDMap.containsKey(signature))
+            throw new RuntimeException("Invalid signature.");
+        AssetListing listing = fromSignature(signature);
+
+        return orderPlacementHandler.getListedOrderProvider(listing.getKey());
     }
 }

@@ -39,8 +39,10 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         orderPlacementHandler.INSERT_LOG = Metrics.resourceToString(resourceProvider, "insert_trade_log.sql");
         orderPlacementHandler.DELETE_BUY = Metrics.resourceToString(resourceProvider, "delete_buy_order.sql");
         orderPlacementHandler.DELETE_SELL = Metrics.resourceToString(resourceProvider, "delete_sell_order.sql");
-        orderPlacementHandler.SELECT_MATCH_ORDERS = Metrics.resourceToString(resourceProvider, "select_match_orders.sql");
-        orderPlacementHandler.SELECT_SELL_ORDERS = Metrics.resourceToString(resourceProvider, "select_sell_orders.sql");
+        orderPlacementHandler.SELECT_MATCH_ORDERS
+                = Metrics.resourceToString(resourceProvider, "select_match_orders.sql");
+        orderPlacementHandler.SELECT_SELL_ORDERS
+                = Metrics.resourceToString(resourceProvider, "select_sell_orders.sql");
         return orderPlacementHandler;
     }
 
@@ -135,27 +137,27 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         }
 
         @Override
-        public DataProvider<OrderInfo> getListedOrderProvider(Currency currency) {
-            return dataProviderMap.computeIfAbsent(currency.getKey(), c -> {
+        public DataProvider<OrderInfo> getListedOrderProvider(UUID listingUuid) {
+            return dataProviderMap.computeIfAbsent(listingUuid, c -> {
                 OrderDataProvider orderDataProvider = new OrderDataProvider(c);
                 return new DataProviderProxy<>(orderDataProvider, orderDataProvider);
             });
         }
 
         private class OrderDataProvider implements Function<Range, List<OrderInfo>>, Supplier<Integer> {
-            private final UUID currencyUuid;
+            private final UUID listingUuid;
 
-            public OrderDataProvider(UUID currencyUuid) {
-                this.currencyUuid = currencyUuid;
+            public OrderDataProvider(UUID listingUuid) {
+                this.listingUuid = listingUuid;
             }
 
             @Override
             public Integer get() {
                 List<Integer> out = ordersSession.query("SELECT COUNT(" + OrderSQLModule.ORDER_ID + ") as rows" +
                         " FROM sell_orders" +
-                        " WHERE currencyUuid = ?;", pstmt -> {
+                        " WHERE listing_uuid = ?;", pstmt -> {
                     try {
-                        pstmt.setString(1, currencyUuid.toString());
+                        pstmt.setString(1, listingUuid.toString());
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
@@ -175,7 +177,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
             public List<OrderInfo> apply(Range range) {
                 List<OrderInfo> orderInfos = ordersSession.query(SELECT_SELL_ORDERS, pstmt -> {
                     try {
-                        pstmt.setString(1, currencyUuid.toString());
+                        pstmt.setString(1, listingUuid.toString());
                         pstmt.setInt(2, range.index);
                         pstmt.setInt(3, range.size);
                     } catch (SQLException ex) {

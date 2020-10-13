@@ -3,7 +3,7 @@ INSERT INTO trade_logs(listing_uuid,
   seller,
   buyer,
   price,
-  currencyUuid,
+  currency_uuid,
   amount)
 VALUES (?,
   ?,

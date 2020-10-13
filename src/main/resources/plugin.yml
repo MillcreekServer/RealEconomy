@@ -8,29 +8,29 @@ permissions:
 name: RealEconomy
 main: io.github.wysohn.realeconomy.main.RealEconomy
 softdepend:
-  - RapidFramework
-  - Vault
-  - PlaceholderAPI
-  - ProtocolLib
-  - WorldGuard
-  - SmartInvs
-  - ScoreboardScreen
-  - Citizens
+- RapidFramework
+- Vault
+- PlaceholderAPI
+- ProtocolLib
+- WorldGuard
+- SmartInvs
+- ScoreboardScreen
+- Citizens
 version: 1.0.0
 commands:
   realeconomy:
     aliases:
-      - rea
-      - eco
-      - re
-      - reale
+    - rea
+    - eco
+    - re
+    - reale
     description: description
   balance:
     aliases:
-      - bal
-      - money
+    - bal
+    - money
     description: shortcut command of /eco balance
   pay:
     description: shortcut command of /eco pay
 authors: [
-]
+  ]

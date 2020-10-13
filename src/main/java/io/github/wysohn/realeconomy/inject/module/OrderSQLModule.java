@@ -30,7 +30,7 @@ public class OrderSQLModule extends AbstractModule {
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("price", "double precision",
                                 SQLSession.Attribute.KEY, SQLSession.Attribute.NOT_NULL)
-                        .field("currencyUuid", "char(36)", SQLSession.Attribute.NOT_NULL)
+                        .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
                 .createTable("sell_orders", tableInitializer -> tableInitializer.ifNotExist()
@@ -41,7 +41,7 @@ public class OrderSQLModule extends AbstractModule {
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("price", "double precision",
                                 SQLSession.Attribute.KEY, SQLSession.Attribute.NOT_NULL)
-                        .field("currencyUuid", "char(36)", SQLSession.Attribute.NOT_NULL)
+                        .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
                 .createTable("trade_logs", tableInitializer -> tableInitializer.ifNotExist()
@@ -52,7 +52,7 @@ public class OrderSQLModule extends AbstractModule {
                         .field("seller", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("buyer", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("price", "double precision", SQLSession.Attribute.NOT_NULL)
-                        .field("currencyUuid", "char(36)", SQLSession.Attribute.NOT_NULL)
+                        .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL))
                 .build();
     }

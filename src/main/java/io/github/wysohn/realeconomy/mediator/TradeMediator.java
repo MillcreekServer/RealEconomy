@@ -44,6 +44,12 @@ public class TradeMediator extends Mediator {
 
     }
 
+    public void getPrice(Currency currency){
+        Validation.assertNotNull(currency);
+
+        assetListingManager.getListedOrderProvider()
+    }
+
     /**
      * List new asset for sell. Upon successful listing, id of order will be automatically
      * added to the issuer's info.
@@ -54,7 +60,7 @@ public class TradeMediator extends Mediator {
      * @param currency  currency type of price
      * @param stock     number of stocks to sell
      */
-    public void listAsset(IOrderIssuer issuer,
+    public void sellAsset(IOrderIssuer issuer,
                           AssetSignature signature,
                           double price,
                           Currency currency,

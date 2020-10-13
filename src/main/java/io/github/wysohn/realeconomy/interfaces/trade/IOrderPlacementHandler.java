@@ -25,5 +25,5 @@ public interface IOrderPlacementHandler {
 
     void peekMatchingOrders(Consumer<TradeInfo> consumer);
 
-    DataProvider<OrderInfo> getListedOrderProvider(Currency currency);
+    DataProvider<OrderInfo> getListedOrderProvider(UUID listingUuid);
 }
