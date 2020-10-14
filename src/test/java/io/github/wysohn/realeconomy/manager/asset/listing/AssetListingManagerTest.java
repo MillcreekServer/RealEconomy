@@ -79,6 +79,8 @@ public class AssetListingManagerTest {
 
     @Test
     public void addOrder() throws Exception {
+        new File("build/tmp/plugindir/orders.db").delete();
+
         AssetListingManager assetListingManager = Guice.createInjector(moduleList)
                 .getInstance(AssetListingManager.class);
         assetListingManager.enable();

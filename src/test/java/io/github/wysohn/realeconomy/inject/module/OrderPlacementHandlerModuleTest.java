@@ -20,7 +20,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.sql.*;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -222,7 +221,7 @@ public class OrderPlacementHandlerModuleTest {
                 30);
 
         DataProvider<OrderInfo> provider =
-                orderPlacementHandler.getListedOrderProvider(currency);
+                orderPlacementHandler.getListedOrderProvider();
 
         List<OrderInfo> expected = new ArrayList<>();
         expected.add(OrderInfo.create(3,
@@ -260,28 +259,26 @@ public class OrderPlacementHandlerModuleTest {
         expected.sort(Comparator.comparingInt(OrderInfo::getOrderId));
         actual.sort(Comparator.comparingInt(OrderInfo::getOrderId));
         assertEquals(expected, actual);
-    }
 
-    @Test
-    public void readAll() throws SQLException, ClassNotFoundException {
-        Class.forName("org.sqlite.JDBC");
-        File file = new File("build/tmp/orderprovider/orders.db");
-        Connection connection = DriverManager.getConnection(
-                "jdbc:sqlite:" + file.getAbsolutePath());
-        try (PreparedStatement pstmt = connection.prepareStatement("SELECT order_id, listing_uuid, timestamp, issuer, MIN(price) as min_price, currencyUuid, amount, maximum\n" +
-                "FROM sell_orders\n" +
-                "GROUP BY listing_uuid;")) {
-            ResultSet rs = pstmt.executeQuery();
-            ResultSetMetaData meta = rs.getMetaData();
-            int columns = meta.getColumnCount();
-            while (rs.next()) {
-                for (int i = 1; i <= columns; i++) {
-                    System.out.print(rs.getObject(i));
-                    System.out.print(" ");
-                }
-                System.out.println();
-            }
-        }
+        DataProvider<OrderInfo> providerFiltered =
+                orderPlacementHandler.getListedOrderProvider(listingUuid1);
+
+        List<OrderInfo> expected2 = new ArrayList<>();
+        expected2.add(OrderInfo.create(3,
+                listingUuid1,
+                orderIssuer.getUuid(),
+                1001.32,
+                currencyUuid,
+                20,
+                20));
+        List<OrderInfo> actual2 = new ArrayList<>();
+        actual2.add(providerFiltered.get(0, 100).stream()
+                .findFirst()
+                .orElseThrow(RuntimeException::new));
+
+        expected2.sort(Comparator.comparingInt(OrderInfo::getOrderId));
+        actual2.sort(Comparator.comparingInt(OrderInfo::getOrderId));
+        assertEquals(expected2, actual2);
     }
 
     private static class OrderIssuer implements IOrderIssuer {

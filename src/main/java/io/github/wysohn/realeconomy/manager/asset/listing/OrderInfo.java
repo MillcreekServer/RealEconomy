@@ -104,7 +104,7 @@ public class OrderInfo {
         //long timestamp = rs.getTimestamp("timestamp").getTime();
         UUID issuer = UUID.fromString(rs.getString("issuer"));
         double price = rs.getDouble("min_price");
-        UUID currencyUuid = UUID.fromString(rs.getString("currencyUuid"));
+        UUID currencyUuid = UUID.fromString(rs.getString("currency_uuid"));
         int amount = rs.getInt("amount");
         int max = rs.getInt("maximum");
 

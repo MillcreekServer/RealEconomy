@@ -43,10 +43,15 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 = Metrics.resourceToString(resourceProvider, "select_match_orders.sql");
         orderPlacementHandler.SELECT_SELL_ORDERS
                 = Metrics.resourceToString(resourceProvider, "select_sell_orders.sql");
+        orderPlacementHandler.SELECT_SELL_ORDERS_ALL
+                = Metrics.resourceToString(resourceProvider, "select_sell_orders_all.sql");
         return orderPlacementHandler;
     }
 
     private static class OrderPlacementHandler implements IOrderPlacementHandler {
+        // fake UUID just to store all search data in dataProviderMap
+        private static final UUID ALL_LISTINGS_UUID = UUID.fromString("f02a94b0-dde1-4ee3-9496-ea21b27de956");
+
         private final SQLSession ordersSession;
         private final Map<UUID, DataProvider<OrderInfo>> dataProviderMap = new HashMap<>();
 
@@ -57,6 +62,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         private String DELETE_SELL;
         private String SELECT_MATCH_ORDERS;
         private String SELECT_SELL_ORDERS;
+        private String SELECT_SELL_ORDERS_ALL;
 
         public OrderPlacementHandler(SQLSession ordersSession) {
             this.ordersSession = ordersSession;
@@ -112,7 +118,12 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
-            }, index -> callback.accept(orderId));
+            }, index -> {
+                if (index > 0)
+                    callback.accept(orderId);
+                else
+                    callback.accept(0);
+            });
 
             ordersSession.commit();
         }
@@ -138,32 +149,45 @@ public class OrderPlacementHandlerModule extends AbstractModule {
 
         @Override
         public DataProvider<OrderInfo> getListedOrderProvider(UUID listingUuid) {
+            boolean queryAll = false;
+            if (listingUuid == null) {
+                queryAll = true;
+                // replace so we can use it to store data for all asset listings
+                listingUuid = ALL_LISTINGS_UUID;
+            }
+
+            boolean finalQueryAll = queryAll;
             return dataProviderMap.computeIfAbsent(listingUuid, c -> {
-                OrderDataProvider orderDataProvider = new OrderDataProvider(c);
+                OrderDataProvider orderDataProvider = new OrderDataProvider(c, finalQueryAll);
                 return new DataProviderProxy<>(orderDataProvider, orderDataProvider);
             });
         }
 
         private class OrderDataProvider implements Function<Range, List<OrderInfo>>, Supplier<Integer> {
-            private final UUID listingUuid;
+            private static final String COLUMN_COUNT = "rows";
 
-            public OrderDataProvider(UUID listingUuid) {
+            private final UUID listingUuid;
+            private final boolean queryAll;
+
+            public OrderDataProvider(UUID listingUuid, boolean queryAll) {
                 this.listingUuid = listingUuid;
+                this.queryAll = queryAll;
             }
 
             @Override
             public Integer get() {
-                List<Integer> out = ordersSession.query("SELECT COUNT(" + OrderSQLModule.ORDER_ID + ") as rows" +
+                List<Integer> out = ordersSession.query("SELECT COUNT(" + OrderSQLModule.ORDER_ID + ") as " + COLUMN_COUNT +
                         " FROM sell_orders" +
-                        " WHERE listing_uuid = ?;", pstmt -> {
+                        (queryAll ? "" : "WHERE listing_uuid = ?;"), pstmt -> {
                     try {
-                        pstmt.setString(1, listingUuid.toString());
+                        if (!queryAll)
+                            pstmt.setString(1, listingUuid.toString());
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
                 }, resultSet -> {
                     try {
-                        return resultSet.getInt("rows");
+                        return resultSet.getInt(COLUMN_COUNT);
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                         return 0;
@@ -175,11 +199,15 @@ public class OrderPlacementHandlerModule extends AbstractModule {
 
             @Override
             public List<OrderInfo> apply(Range range) {
-                List<OrderInfo> orderInfos = ordersSession.query(SELECT_SELL_ORDERS, pstmt -> {
+                String sql = queryAll ? SELECT_SELL_ORDERS_ALL : SELECT_SELL_ORDERS;
+
+                return ordersSession.query(sql, pstmt -> {
                     try {
-                        pstmt.setString(1, listingUuid.toString());
-                        pstmt.setInt(2, range.index);
-                        pstmt.setInt(3, range.size);
+                        int i = 1;
+                        if (!queryAll)
+                            pstmt.setString(i++, listingUuid.toString());
+                        pstmt.setInt(i++, range.index);
+                        pstmt.setInt(i++, range.size);
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
@@ -191,8 +219,6 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                         return null;
                     }
                 });
-
-                return orderInfos;
             }
         }
     }

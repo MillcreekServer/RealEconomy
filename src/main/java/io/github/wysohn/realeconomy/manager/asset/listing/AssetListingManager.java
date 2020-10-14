@@ -132,6 +132,9 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
     /**
      * Add order for the given signature. The given signature must be listed already using
      * {@link #newListing(AssetSignature)}
+     * <p>
+     * This is a thread-safe operation, yet it will be blocked while trade matching is under progress.
+     * Typically, the search process is around 100ms, so this method is better not called in server thread.
      *
      * @param signature asset signature
      * @param type      trade type
@@ -164,6 +167,18 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 stock);
     }
 
+    /**
+     * Cancel the previously submitted order. This is valid until the trade is not yet finalized.
+     * <p>
+     * This is a thread-safe operation, yet it will be blocked while trade matching is under progress.
+     * Typically, the search process is around 100ms, so this method is better not called in server thread.
+     *
+     * @param orderId  the order id to cancel
+     * @param type     the order type
+     * @param callback callback function. Provides same id provided in 'orderId' upon successful cancellation,
+     *                 or 0 if failed.
+     * @throws SQLException something went wrong with SQL operation.
+     */
     public void cancelOrder(int orderId, OrderType type, Consumer<Integer> callback) throws SQLException {
         Validation.validate(orderId, val -> val > 0, "orderId must be larger than 0.");
         Validation.assertNotNull(type);
@@ -173,10 +188,24 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 callback);
     }
 
+    /**
+     * Peek one best pair of buy/sell order which can be traded.
+     * <p>
+     * This is a thread-safe operation, yet it's a resource intensive operation, so it's better to not call
+     * this method in server thread.
+     *
+     * @param consumer
+     */
     public void peekMatchingOrder(Consumer<TradeInfo> consumer) {
         orderPlacementHandler.peekMatchingOrders(consumer);
     }
 
+    /**
+     * Get DataProvider of given asset signature.
+     *
+     * @param signature the asset signature. It can be null to search for all listings.
+     * @return the DataProvider.
+     */
     public DataProvider<OrderInfo> getListedOrderProvider(AssetSignature signature) {
         if (!signatureUUIDMap.containsKey(signature))
             throw new RuntimeException("Invalid signature.");

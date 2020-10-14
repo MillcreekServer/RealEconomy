@@ -246,7 +246,7 @@ dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
     compile 'org.spigotmc:spigot-api:1.16.+'
-    compile "io.github.wysohn:rapidframework:3.9.4"
+    compile "io.github.wysohn:rapidframework:3.10.0"
     compile "org.xerial:sqlite-jdbc:3.32.3.2"
 
     testCompile 'junit:junit:4.+'
