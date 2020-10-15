@@ -190,7 +190,7 @@ public class BankingMediatorTest {
         when(currency.getKey()).thenReturn(currencyUuid);
         when(serverBank.getBaseCurrency()).thenReturn(currency);
         when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
-        when(account.getBalanceMap()).thenReturn(balances);
+        when(account.getCurrencyMap()).thenReturn(balances);
 
         mediator.balance(user, BankingTypeRegistry.CHECKING);
 
@@ -246,7 +246,7 @@ public class BankingMediatorTest {
         when(currency.getKey()).thenReturn(currencyUuid);
         when(serverBank.getBaseCurrency()).thenReturn(currency);
         when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
-        when(account.getBalanceMap()).thenReturn(balances);
+        when(account.getCurrencyMap()).thenReturn(balances);
 
         when(transactionHandler.deposit(anyMap(), any(), any())).thenReturn(true);
         assertEquals(BankingMediator.Result.OK, mediator.deposit(user,
@@ -308,7 +308,7 @@ public class BankingMediatorTest {
         when(currency.getKey()).thenReturn(currencyUuid);
         when(serverBank.getBaseCurrency()).thenReturn(currency);
         when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
-        when(account.getBalanceMap()).thenReturn(balances);
+        when(account.getCurrencyMap()).thenReturn(balances);
 
         when(transactionHandler.withdraw(anyMap(), any(), any())).thenReturn(true);
         assertEquals(BankingMediator.Result.OK, mediator.withdraw(user,

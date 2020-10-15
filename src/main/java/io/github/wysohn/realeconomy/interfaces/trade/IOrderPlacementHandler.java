@@ -17,6 +17,7 @@ public interface IOrderPlacementHandler {
      * <p>
      * For simplicity, this method must be thread-safe, so the callers do not have to worry about
      * the SQL concurrency issue.
+     * {@link #commitOrders()} must be invoked to finalize the transaction.
      *
      * @param listingUuid uuid of asset listing specified in
      *                    {@link io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager}. This method doesn't manually
@@ -40,6 +41,7 @@ public interface IOrderPlacementHandler {
      * <p>
      * For simplicity, this method must be thread-safe, so the callers do not have to worry about
      * the SQL concurrency issue.
+     * {@link #commitOrders()} must be invoked to finalize the transaction.
      *
      * @param orderId  the order id (which is stored by {@link IOrderIssuer#addOrderId(OrderType, int)}
      * @param type     the order type
@@ -49,6 +51,21 @@ public interface IOrderPlacementHandler {
     void cancelOrder(int orderId,
                      OrderType type,
                      Consumer<Integer> callback) throws SQLException;
+
+    /**
+     * Commit the scheduled order operations invoked by
+     * {@link #addOrder(UUID, OrderType, IOrderIssuer, double, Currency, int)} and
+     * {@link #cancelOrder(int, OrderType, Consumer)}.
+     */
+    void commitOrders();
+
+    /**
+     * Rollback any changes made by
+     * {@link #addOrder(UUID, OrderType, IOrderIssuer, double, Currency, int)} and
+     * {@link #cancelOrder(int, OrderType, Consumer)}
+     * and rollback to the previous state saved by last {@link #commitOrders()} call.
+     */
+    void rollbackOrders();
 
     /**
      * Get the best buy/sell order pair so that they can be matched up.

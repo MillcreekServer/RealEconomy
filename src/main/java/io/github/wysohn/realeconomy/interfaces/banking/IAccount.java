@@ -4,10 +4,10 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
-public interface IAccount {
+public interface IAccount extends IAssetHolder {
     IBankingType getType();
 
-    Map<UUID, BigDecimal> getBalanceMap();
+    Map<UUID, BigDecimal> getCurrencyMap();
 
     IAccount clone();
 }

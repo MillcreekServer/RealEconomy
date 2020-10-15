@@ -195,7 +195,7 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
                 .withdraw(2552.34)
                 .commit();
         assertEquals(BigDecimal.valueOf(39800.55).subtract(BigDecimal.valueOf(2552.34)),
-                bank.getAccount(user, BankingTypeRegistry.CHECKING).getBalanceMap().get(currencyUuid));
+                bank.getAccount(user, BankingTypeRegistry.CHECKING).getCurrencyMap().get(currencyUuid));
     }
 
     @Test
@@ -227,7 +227,7 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         // transaction failure should revert account back to original state
         assertEquals(BigDecimal.valueOf(10.0),
                 bank.getAccount(user, BankingTypeRegistry.CHECKING)
-                        .getBalanceMap()
+                        .getCurrencyMap()
                         .get(currencyUuid));
     }
 

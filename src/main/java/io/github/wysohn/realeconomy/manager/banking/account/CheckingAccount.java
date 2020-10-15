@@ -13,7 +13,7 @@ public class CheckingAccount implements IAccount {
     public final Map<UUID, BigDecimal> balances = new HashMap<>();
 
     @Override
-    public Map<UUID, BigDecimal> getBalanceMap() {
+    public Map<UUID, BigDecimal> getCurrencyMap() {
         return balances;
     }
 

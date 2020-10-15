@@ -15,6 +15,7 @@ public class TradeInfo {
     private final double bid;
     private final int amount;
     private final UUID currencyUuid;
+    private final UUID listingUuid;
 
     private TradeInfo(int sellId,
                       UUID seller,
@@ -24,7 +25,8 @@ public class TradeInfo {
                       UUID buyer,
                       double bid,
                       int amount,
-                      UUID currencyUuid) {
+                      UUID currencyUuid,
+                      UUID listingUuid) {
         this.sellId = sellId;
         this.seller = seller;
         this.ask = ask;
@@ -34,6 +36,7 @@ public class TradeInfo {
         this.bid = bid;
         this.amount = amount;
         this.currencyUuid = currencyUuid;
+        this.listingUuid = listingUuid;
     }
 
     public int getSellId() {
@@ -72,6 +75,10 @@ public class TradeInfo {
         return currencyUuid;
     }
 
+    public UUID getListingUuid() {
+        return listingUuid;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -85,12 +92,13 @@ public class TradeInfo {
                 amount == tradeInfo.amount &&
                 seller.equals(tradeInfo.seller) &&
                 buyer.equals(tradeInfo.buyer) &&
-                currencyUuid.equals(tradeInfo.currencyUuid);
+                currencyUuid.equals(tradeInfo.currencyUuid) &&
+                listingUuid.equals(tradeInfo.listingUuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sellId, seller, ask, stock, buyId, buyer, bid, amount, currencyUuid);
+        return Objects.hash(sellId, seller, ask, stock, buyId, buyer, bid, amount, currencyUuid, listingUuid);
     }
 
     @Override
@@ -105,6 +113,7 @@ public class TradeInfo {
                 ", bid=" + bid +
                 ", amount=" + amount +
                 ", currencyUuid=" + currencyUuid +
+                ", listingUuid=" + listingUuid +
                 '}';
     }
 
@@ -118,12 +127,13 @@ public class TradeInfo {
         double bid = rs.getDouble("bid");
         int amount = rs.getInt("amount");
         UUID currencyUuid = UUID.fromString(rs.getString("currency"));
-        return new TradeInfo(sellId, sellerUuid, ask, stock, buyId, buyerUuid, bid, amount, currencyUuid);
+        UUID listingUuid = UUID.fromString(rs.getString("listing_uuid"));
+        return new TradeInfo(sellId, sellerUuid, ask, stock, buyId, buyerUuid, bid, amount, currencyUuid, listingUuid);
     }
 
     public static TradeInfo create(int sellId, UUID seller, double ask, int stock,
                                    int buyId, UUID buyer, double bid, int amount,
-                                   UUID currencyUuid) {
-        return new TradeInfo(sellId, seller, ask, stock, buyId, buyer, bid, amount, currencyUuid);
+                                   UUID currencyUuid, UUID listingUuid) {
+        return new TradeInfo(sellId, seller, ask, stock, buyId, buyer, bid, amount, currencyUuid, listingUuid);
     }
 }

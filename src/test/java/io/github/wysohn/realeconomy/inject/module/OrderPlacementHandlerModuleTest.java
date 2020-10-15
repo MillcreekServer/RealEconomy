@@ -137,7 +137,8 @@ public class OrderPlacementHandlerModuleTest {
                 orderIssuer.getUuid(),
                 3000.0,
                 30,
-                currencyUuid)));
+                currencyUuid,
+                listingUuid)));
     }
 
     @Test

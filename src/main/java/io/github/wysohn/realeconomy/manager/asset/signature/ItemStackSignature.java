@@ -17,8 +17,7 @@ import java.util.UUID;
 public class ItemStackSignature extends PhysicalAssetSignature {
     private final ItemStack itemStack;
 
-    public ItemStackSignature(UUID issuerUuid, ItemStack itemStack) {
-        super(issuerUuid);
+    public ItemStackSignature(ItemStack itemStack) {
         this.itemStack = itemStack;
     }
 
@@ -34,7 +33,7 @@ public class ItemStackSignature extends PhysicalAssetSignature {
 
     @Override
     public AssetSignature clone() {
-        return new ItemStackSignature(getIssuerUuid(), itemStack.clone());
+        return new ItemStackSignature(itemStack.clone());
     }
 
     @Override

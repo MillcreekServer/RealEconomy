@@ -265,7 +265,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
             @Override
             public void run() {
-                if (transactionHandler.deposit(account.getBalanceMap(),
+                if (transactionHandler.deposit(account.getCurrencyMap(),
                         value,
                         Objects.requireNonNull(getBaseCurrency()))) {
                     if (!AbstractBank.this.deposit(value, Objects.requireNonNull(getBaseCurrency()))) {
@@ -285,7 +285,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
             @Override
             public void run() {
                 if (AbstractBank.this.withdraw(value, Objects.requireNonNull(getBaseCurrency()))) {
-                    if (!transactionHandler.withdraw(account.getBalanceMap(),
+                    if (!transactionHandler.withdraw(account.getCurrencyMap(),
                             value,
                             Objects.requireNonNull(getBaseCurrency()))) {
                         throw new RuntimeException("Account withdraw refused.");

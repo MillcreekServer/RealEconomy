@@ -133,6 +133,8 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
      * Add order for the given signature. The given signature must be listed already using
      * {@link #newListing(AssetSignature)}
      * <p>
+     * this must be finalized using {@link #commitOrders()}
+     * <p>
      * This is a thread-safe operation, yet it will be blocked while trade matching is under progress.
      * Typically, the search process is around 100ms, so this method is better not called in server thread.
      *
@@ -172,6 +174,8 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
      * <p>
      * This is a thread-safe operation, yet it will be blocked while trade matching is under progress.
      * Typically, the search process is around 100ms, so this method is better not called in server thread.
+     * <p>
+     * this must be finalized using {@link #commitOrders()}
      *
      * @param orderId  the order id to cancel
      * @param type     the order type
@@ -186,6 +190,14 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         orderPlacementHandler.cancelOrder(orderId,
                 type,
                 callback);
+    }
+
+    public void commitOrders() {
+        orderPlacementHandler.commitOrders();
+    }
+
+    public void rollbackOrders() {
+        orderPlacementHandler.rollbackOrders();
     }
 
     /**

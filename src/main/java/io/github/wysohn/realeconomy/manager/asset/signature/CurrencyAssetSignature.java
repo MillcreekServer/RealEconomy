@@ -8,11 +8,10 @@ public abstract class CurrencyAssetSignature extends AssetSignature {
     private final double rate;
 
     private CurrencyAssetSignature() {
-        this(null, null, 0.0, 0.0);
+        this(null, 0.0, 0.0);
     }
 
-    public CurrencyAssetSignature(UUID issuerUuid, UUID currencyUuid, double faceValue, double rate) {
-        super(issuerUuid);
+    public CurrencyAssetSignature(UUID currencyUuid, double faceValue, double rate) {
         this.currencyUuid = currencyUuid;
         this.faceValue = faceValue;
         this.rate = rate;

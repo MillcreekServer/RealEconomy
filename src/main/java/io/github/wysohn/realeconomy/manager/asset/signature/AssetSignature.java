@@ -3,22 +3,23 @@ package io.github.wysohn.realeconomy.manager.asset.signature;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * A class that represent the detailed information about an Asset.
  * Children class must be immutable in order to provide concurrent access from multiple threads.
  */
 public abstract class AssetSignature {
-    private final UUID issuerUuid;
-
-    public AssetSignature(UUID issuerUuid) {
-        this.issuerUuid = issuerUuid;
-    }
-
-    public UUID getIssuerUuid() {
-        return issuerUuid;
-    }
+    /**
+     * Check whether this asset is something that can be physically owned.
+     * For example, when selling an item, item is the asset, and it is a physical entity.
+     * Therefore, it has to be removed from the owner's container before added to the buyer's container.
+     * However, some assets may not be physically owned. Bond, for example, the owner
+     * does not necessarily have to physically 'own' the Bond in order to sell it.
+     * However, upon sold, Bond will be virtually held by the buyer.
+     *
+     * @return
+     */
+    public abstract boolean isPhysical();
 
     public abstract AssetSignature clone();
 

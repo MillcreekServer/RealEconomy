@@ -155,7 +155,7 @@ public class BankingMediator extends Mediator {
                 .map(CachedElement::getKey)
                 .map(currencyUuid -> {
                     IAccount account = bank.getAccount(user, type);
-                    return account.getBalanceMap().get(currencyUuid);
+                    return account.getCurrencyMap().get(currencyUuid);
                 })
                 .orElse(BigDecimal.ZERO);
     }
@@ -178,7 +178,7 @@ public class BankingMediator extends Mediator {
             return Result.NO_ACCOUNT;
 
         //TODO wrong implementation. must use bank#accountTransaction()
-        if (transactionHandler.deposit(account.getBalanceMap(), amount, bank.getBaseCurrency())) {
+        if (transactionHandler.deposit(account.getCurrencyMap(), amount, bank.getBaseCurrency())) {
             return Result.OK;
         } else {
             return Result.FAIL_DEPOSIT;
@@ -203,7 +203,7 @@ public class BankingMediator extends Mediator {
             return Result.NO_ACCOUNT;
 
         //TODO wrong implementation. must use bank#accountTransaction()
-        if (transactionHandler.withdraw(account.getBalanceMap(), amount, bank.getBaseCurrency())) {
+        if (transactionHandler.withdraw(account.getCurrencyMap(), amount, bank.getBaseCurrency())) {
             return Result.OK;
         } else {
             return Result.FAIL_WITHDRAW;
