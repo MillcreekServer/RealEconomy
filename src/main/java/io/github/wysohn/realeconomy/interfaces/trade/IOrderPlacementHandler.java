@@ -37,6 +37,19 @@ public interface IOrderPlacementHandler {
                   int stock) throws SQLException;
 
     /**
+     * Edit the current amount of the order. This can be useful when the order is not fully consumed, yet the order of
+     * id must be maintained to give fair opportunity (cause if we just delete the order and then add the
+     * order again, the order will be placed at the very end of the queue) for all buyers.
+     *
+     * @param orderId   the order id (which is stored by {@link IOrderIssuer#addOrderId(OrderType, int)}
+     * @param type      the order type
+     * @param newAmount new adjusted amount. This does not have any validation, so caller must verify it.
+     */
+    void editOrder(int orderId,
+                   OrderType type,
+                   int newAmount) throws SQLException;
+
+    /**
      * Cancel the order that was already scheduled. This is valid only if the order is not yet processed.
      * <p>
      * For simplicity, this method must be thread-safe, so the callers do not have to worry about
@@ -57,7 +70,7 @@ public interface IOrderPlacementHandler {
      * {@link #addOrder(UUID, OrderType, IOrderIssuer, double, Currency, int)} and
      * {@link #cancelOrder(int, OrderType, Consumer)}.
      */
-    void commitOrders();
+    void commitOrders() throws SQLException;
 
     /**
      * Rollback any changes made by
@@ -65,7 +78,7 @@ public interface IOrderPlacementHandler {
      * {@link #cancelOrder(int, OrderType, Consumer)}
      * and rollback to the previous state saved by last {@link #commitOrders()} call.
      */
-    void rollbackOrders();
+    void rollbackOrders() throws SQLException;
 
     /**
      * Get the best buy/sell order pair so that they can be matched up.

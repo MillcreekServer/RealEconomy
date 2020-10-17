@@ -5,14 +5,17 @@ import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
+import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +23,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -320,6 +324,46 @@ public class OrderPlacementHandlerModuleTest {
         @Override
         public UUID getUuid() {
             return uuid;
+        }
+
+        @Override
+        public BigDecimal balance(Currency currency) {
+            return null;
+        }
+
+        @Override
+        public boolean deposit(BigDecimal value, Currency currency) {
+            return false;
+        }
+
+        @Override
+        public boolean withdraw(BigDecimal value, Currency currency) {
+            return false;
+        }
+
+        @Override
+        public IMemento saveState() {
+            return null;
+        }
+
+        @Override
+        public void restoreState(IMemento savedState) {
+
+        }
+
+        @Override
+        public void addAsset(Asset asset) {
+
+        }
+
+        @Override
+        public int removeAsset(AssetSignature signature, int amount) {
+            return 0;
+        }
+
+        @Override
+        public DataProvider<Asset> assetDataProvider() {
+            return null;
         }
     }
 }

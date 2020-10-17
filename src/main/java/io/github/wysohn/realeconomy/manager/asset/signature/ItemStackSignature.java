@@ -62,4 +62,6 @@ public class ItemStackSignature extends PhysicalAssetSignature {
 
         return hash;
     }
+
+    public static final String KEY_AMOUNT = "amount";
 }

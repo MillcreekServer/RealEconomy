@@ -1,13 +1,11 @@
 package io.github.wysohn.realeconomy.manager.asset;
 
-import io.github.wysohn.rapidframework3.interfaces.IMemento;
-import io.github.wysohn.rapidframework3.interfaces.entity.IEntitySnapshot;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public abstract class Asset implements IEntitySnapshot {
+public abstract class Asset {
     private final UUID uuid;
     private final AssetSignature signature;
     private final long issuedDate;
@@ -48,6 +46,8 @@ public abstract class Asset implements IEntitySnapshot {
         this.lastUpdate = lastUpdate;
     }
 
+    public abstract Asset clone();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -59,20 +59,5 @@ public abstract class Asset implements IEntitySnapshot {
     @Override
     public int hashCode() {
         return Objects.hash(uuid);
-    }
-
-    @Override
-    public void restoreState(IMemento iMemento) {
-        AbstractMemento mem = (AbstractMemento) iMemento;
-
-        this.lastUpdate = mem.lastUpdate;
-    }
-
-    static abstract class AbstractMemento implements IMemento {
-        private final long lastUpdate;
-
-        public AbstractMemento(Asset asset) {
-            this.lastUpdate = asset.lastUpdate;
-        }
     }
 }

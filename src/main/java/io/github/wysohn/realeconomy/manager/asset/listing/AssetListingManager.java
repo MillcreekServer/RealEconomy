@@ -169,6 +169,16 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 stock);
     }
 
+    public void editOrder(int orderId, OrderType type, int newAmount) throws SQLException {
+        Validation.validate(orderId, val -> val > 0, "orderId must be larger than 0.");
+        Validation.assertNotNull(type);
+        Validation.validate(newAmount, val -> val > 0, "amount must be larger than 0. Maybe delete instead?");
+
+        orderPlacementHandler.editOrder(orderId,
+                type,
+                newAmount);
+    }
+
     /**
      * Cancel the previously submitted order. This is valid until the trade is not yet finalized.
      * <p>
@@ -192,11 +202,11 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 callback);
     }
 
-    public void commitOrders() {
+    public void commitOrders() throws SQLException {
         orderPlacementHandler.commitOrders();
     }
 
-    public void rollbackOrders() {
+    public void rollbackOrders() throws SQLException {
         orderPlacementHandler.rollbackOrders();
     }
 

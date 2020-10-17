@@ -13,6 +13,8 @@ import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
+import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
@@ -21,6 +23,7 @@ import javax.inject.Singleton;
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
@@ -109,7 +112,11 @@ public class TradeMediator extends Mediator {
                 assetListingManager.commitOrders();
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                assetListingManager.rollbackOrders();
+                try {
+                    assetListingManager.rollbackOrders();
+                } catch (SQLException ex2) {
+                    ex2.printStackTrace();
+                }
             }
         });
     }
@@ -149,7 +156,11 @@ public class TradeMediator extends Mediator {
                 assetListingManager.commitOrders();
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                assetListingManager.rollbackOrders();
+                try {
+                    assetListingManager.rollbackOrders();
+                } catch (SQLException ex2) {
+                    ex2.printStackTrace();
+                }
             }
         });
     }
@@ -199,16 +210,6 @@ public class TradeMediator extends Mediator {
                     IMemento buyerState = buyer.saveState();
                     IMemento sellerState = seller.saveState();
                     TradeResult result = FailSensitiveTradeResult.of(() -> {
-                        // delete the orders
-                        try {
-                            assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index ->
-                                    buyer.removeOrderId(OrderType.BUY, index));
-                            assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.BUY, index ->
-                                    seller.removeOrderId(OrderType.SELL, index));
-                        } catch (SQLException ex) {
-                            throw new RuntimeException("Trade Info: " + tradeInfo, ex);
-                        }
-
                         // get listing info
                         AssetListing listing = assetListingManager.get(tradeInfo.getListingUuid())
                                 .map(Reference::get)
@@ -216,7 +217,11 @@ public class TradeMediator extends Mediator {
 
                         // order exist but listing doesn't? Weird.
                         if (listing == null) {
-                            assetListingManager.commitOrders();
+                            try {
+                                assetListingManager.commitOrders();
+                            } catch (SQLException ex) {
+                                ex.printStackTrace();
+                            }
                             logger.warning("Found broken orders. They are deleted.");
                             logger.warning("Trade Info: " + tradeInfo);
                             return TradeResult.INVALID_INFO;
@@ -231,9 +236,14 @@ public class TradeMediator extends Mediator {
                                 .orElse(null);
 
                         // weird currency found.
-                        if (currency == null) {
-                            assetListingManager.commitOrders();
-                            logger.warning("Cannot proceed with unknown Currency. Orders are deleted.");
+                        CentralBank bank = null;
+                        if (currency == null || (bank = currency.ownerBank()) == null) {
+                            try {
+                                assetListingManager.commitOrders();
+                            } catch (SQLException ex) {
+                                ex.printStackTrace();
+                            }
+                            logger.warning("Cannot proceed with unknown Currency or bank not found. Orders are deleted.");
                             logger.warning("Trade Info: " + tradeInfo);
                             return TradeResult.INVALID_INFO;
                         }
@@ -258,10 +268,22 @@ public class TradeMediator extends Mediator {
                                 return TradeResult.DEPOSIT_REFUSED;
 
                             // give asset to the buyer
-                            buyer.addAsset(signature, amountsRemoved);
+                            int finalAmountsRemoved = amountsRemoved;
+                            buyer.addAsset(signature.create(new HashMap<String, Object>() {{
+                                put(ItemStackSignature.KEY_AMOUNT, finalAmountsRemoved);
+                            }}));
+
+                            try {
+                                assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index ->
+                                        buyer.removeOrderId(OrderType.BUY, index));
+                                assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index ->
+                                        seller.removeOrderId(OrderType.SELL, index));
+                            } catch (SQLException ex) {
+                                throw new RuntimeException("Trade Info: " + tradeInfo, ex);
+                            }
 
                             // if there are left overs, re-register the sell order
-                            int leftOvers = amount - amountsRemoved;
+                            int leftOvers = amount - finalAmountsRemoved;
                             if (leftOvers > 0) {
                                 try {
                                     assetListingManager.addOrder(signature,
@@ -277,13 +299,21 @@ public class TradeMediator extends Mediator {
                         }
 
                         // finalize SQL transaction
-                        assetListingManager.commitOrders();
+                        try {
+                            assetListingManager.commitOrders();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
                         return TradeResult.OK;
                     }).handleException(Throwable::printStackTrace).onFail(() -> {
                         buyer.restoreState(buyerState);
                         seller.restoreState(sellerState);
 
-                        assetListingManager.rollbackOrders();
+                        try {
+                            assetListingManager.rollbackOrders();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
                     }).run();
 
                     //TODO some kind of message queue to inform the trade result

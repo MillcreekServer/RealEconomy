@@ -4,6 +4,7 @@ import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.interfaces.language.ILang;
+import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
@@ -12,6 +13,7 @@ import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.banking.*;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
+import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
@@ -20,7 +22,7 @@ import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.util.*;
 
-public abstract class AbstractBank extends CachedElement<UUID> implements IFinancialEntity {
+public abstract class AbstractBank extends CachedElement<UUID> implements IFinancialEntity, IAssetHolder {
     public static final String BANK_MARK = "\u2608";
 
     private transient final Object transactionLock = new Object();
@@ -32,6 +34,8 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     @Inject
     private CurrencyManager currencyManager;
     @Inject
+    private IAssetHandler assetHandler;
+    @Inject
     @MinCapital
     protected BigDecimal minimum;
     @Inject
@@ -41,7 +45,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     // Currency uuid -> value
     private final Map<UUID, BigDecimal> capitals = new HashMap<>();
     private final Map<UUID, Map<IBankingType, IAccount>> accounts = new HashMap<>();
-    private final Map<UUID, Asset> assetMap = new HashMap<>();
+    private final List<Asset> ownedAssets = new ArrayList<>();
 
     private UUID bankOwnerUuid;
     private UUID baseCurrencyUuid;
@@ -297,20 +301,19 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         }
     }
 
-    public Asset getAsset(UUID uuid) {
-        return assetMap.get(uuid);
+    @Override
+    public void addAsset(Asset asset) {
+        assetHandler.addAsset(ownedAssets, asset);
     }
 
-    public Asset putAsset(UUID uuid, Asset asset) {
-        final Asset put = assetMap.put(uuid, asset);
-        notifyObservers();
-        return put;
+    @Override
+    public int removeAsset(AssetSignature signature, int amount) {
+        return assetHandler.removeAsset(ownedAssets, signature, amount);
     }
 
-    public Asset removeAsset(UUID uuid) {
-        final Asset remove = assetMap.remove(uuid);
-        notifyObservers();
-        return remove;
+    @Override
+    public DataProvider<Asset> assetDataProvider() {
+        return assetHandler.assetDataProvider(ownedAssets);
     }
 
     @Override

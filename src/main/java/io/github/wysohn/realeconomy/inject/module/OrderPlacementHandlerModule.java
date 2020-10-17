@@ -37,6 +37,8 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         orderPlacementHandler.INSERT_BUY = Metrics.resourceToString(resourceProvider, "insert_buy_order.sql");
         orderPlacementHandler.INSERT_SELL = Metrics.resourceToString(resourceProvider, "insert_sell_order.sql");
         orderPlacementHandler.INSERT_LOG = Metrics.resourceToString(resourceProvider, "insert_trade_log.sql");
+        orderPlacementHandler.UPDATE_BUY = Metrics.resourceToString(resourceProvider, "update_buy_orders.sql");
+        orderPlacementHandler.UPDATE_SELL = Metrics.resourceToString(resourceProvider, "update_sell_orders.sql");
         orderPlacementHandler.DELETE_BUY = Metrics.resourceToString(resourceProvider, "delete_buy_order.sql");
         orderPlacementHandler.DELETE_SELL = Metrics.resourceToString(resourceProvider, "delete_sell_order.sql");
         orderPlacementHandler.SELECT_MATCH_ORDERS
@@ -58,6 +60,8 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         private String INSERT_BUY;
         private String INSERT_SELL;
         private String INSERT_LOG;
+        private String UPDATE_BUY;
+        private String UPDATE_SELL;
         private String DELETE_BUY;
         private String DELETE_SELL;
         private String SELECT_MATCH_ORDERS;
@@ -97,8 +101,28 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                     ex.printStackTrace();
                 }
             }, index -> issuer.addOrderId(type, index.intValue()));
+        }
 
-            ordersSession.commit();
+        @Override
+        public void editOrder(int orderId, OrderType type, int newAmount) throws SQLException {
+            String sql;
+            if (type == OrderType.BUY) {
+                sql = UPDATE_BUY;
+            } else if (type == OrderType.SELL) {
+                sql = UPDATE_SELL;
+            } else {
+                throw new RuntimeException("Unknown order type " + type);
+            }
+
+            ordersSession.execute(sql, pstmt -> {
+                try {
+                    pstmt.setInt(1, newAmount);
+                    pstmt.setInt(2, orderId);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, index -> {
+            });
         }
 
         @Override
@@ -124,8 +148,16 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 else
                     callback.accept(0);
             });
+        }
 
+        @Override
+        public void commitOrders() throws SQLException {
             ordersSession.commit();
+        }
+
+        @Override
+        public void rollbackOrders() throws SQLException {
+            ordersSession.rollback();
         }
 
         @Override

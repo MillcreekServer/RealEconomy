@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
-public interface IAccount extends IAssetHolder {
+public interface IAccount {
     IBankingType getType();
 
     Map<UUID, BigDecimal> getCurrencyMap();
