@@ -217,11 +217,6 @@ public class TradeMediator extends Mediator {
 
                         // order exist but listing doesn't? Weird.
                         if (listing == null) {
-                            try {
-                                assetListingManager.commitOrders();
-                            } catch (SQLException ex) {
-                                ex.printStackTrace();
-                            }
                             logger.warning("Found broken orders. They are deleted.");
                             logger.warning("Trade Info: " + tradeInfo);
                             return TradeResult.INVALID_INFO;
@@ -229,7 +224,7 @@ public class TradeMediator extends Mediator {
                         AssetSignature signature = listing.getSignature();
 
                         // amount, price, currency
-                        int amount = tradeInfo.getStock(); // use the seller stock
+                        int amount = Math.min(tradeInfo.getStock(), tradeInfo.getAmount()); // use smaller of buy/sell
                         double price = tradeInfo.getAsk(); // use the seller defined price
                         Currency currency = currencyManager.get(tradeInfo.getCurrencyUuid())
                                 .map(Reference::get)
@@ -238,22 +233,17 @@ public class TradeMediator extends Mediator {
                         // weird currency found.
                         CentralBank bank = null;
                         if (currency == null || (bank = currency.ownerBank()) == null) {
-                            try {
-                                assetListingManager.commitOrders();
-                            } catch (SQLException ex) {
-                                ex.printStackTrace();
-                            }
                             logger.warning("Cannot proceed with unknown Currency or bank not found. Orders are deleted.");
                             logger.warning("Trade Info: " + tradeInfo);
                             return TradeResult.INVALID_INFO;
                         }
 
                         // take asset from seller
-                        int amountsRemoved = 1;
+                        int amountsRemoved;
                         if (signature.isPhysical()) // take only if physically present asset
                             amountsRemoved = seller.removeAsset(signature, amount);
                         else
-                            amount = 1;
+                            amountsRemoved = 1;
 
                         // trade only if at least one asset is removed successfully
                         if (amountsRemoved > 0) {
@@ -268,33 +258,37 @@ public class TradeMediator extends Mediator {
                                 return TradeResult.DEPOSIT_REFUSED;
 
                             // give asset to the buyer
-                            int finalAmountsRemoved = amountsRemoved;
                             buyer.addAsset(signature.create(new HashMap<String, Object>() {{
-                                put(ItemStackSignature.KEY_AMOUNT, finalAmountsRemoved);
+                                put(ItemStackSignature.KEY_AMOUNT, amountsRemoved);
                             }}));
 
+                            // adjust the removed amount
                             try {
-                                assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index ->
-                                        buyer.removeOrderId(OrderType.BUY, index));
-                                assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index ->
-                                        seller.removeOrderId(OrderType.SELL, index));
+                                int newStock = tradeInfo.getStock() - amountsRemoved;
+                                if (newStock == 0) {
+                                    assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index ->
+                                            seller.removeOrderId(OrderType.SELL, index));
+                                } else if (newStock > 0) {
+                                    assetListingManager.editOrder(tradeInfo.getSellId(),
+                                            OrderType.SELL,
+                                            newStock);
+                                } else {
+                                    throw new RuntimeException("new stock became negative. How?");
+                                }
+
+                                int newAmount = tradeInfo.getAmount() - amountsRemoved;
+                                if (newAmount == 0) {
+                                    assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index ->
+                                            buyer.removeOrderId(OrderType.BUY, index));
+                                } else if (newAmount > 0) {
+                                    assetListingManager.editOrder(tradeInfo.getBuyId(),
+                                            OrderType.BUY,
+                                            newStock);
+                                } else {
+                                    throw new RuntimeException("new amount became negative. How?");
+                                }
                             } catch (SQLException ex) {
                                 throw new RuntimeException("Trade Info: " + tradeInfo, ex);
-                            }
-
-                            // if there are left overs, re-register the sell order
-                            int leftOvers = amount - finalAmountsRemoved;
-                            if (leftOvers > 0) {
-                                try {
-                                    assetListingManager.addOrder(signature,
-                                            OrderType.SELL,
-                                            seller,
-                                            price,
-                                            currency,
-                                            leftOvers);
-                                } catch (SQLException ex) {
-                                    throw new RuntimeException("Trade Info: " + tradeInfo, ex);
-                                }
                             }
                         }
 
