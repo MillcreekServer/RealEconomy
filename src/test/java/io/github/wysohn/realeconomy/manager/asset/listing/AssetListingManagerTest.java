@@ -6,13 +6,16 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
+import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.module.OrderPlacementHandlerModule;
 import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -22,6 +25,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -130,6 +134,10 @@ public class AssetListingManagerTest {
 
     private static class OrderIssuer implements IOrderIssuer {
         private final Map<OrderType, Set<Integer>> orderMap = new EnumMap<>(OrderType.class);
+        private final Map<UUID, BigDecimal> wallet = new HashMap<>();
+        private final Set<Integer> buyOrderIdSet = new HashSet<>();
+        private final Set<Integer> sellOrderIdSet = new HashSet<>();
+        private final List<Asset> ownedAssets = new ArrayList<>();
 
         private final UUID uuid;
 
@@ -166,6 +174,48 @@ public class AssetListingManagerTest {
         @Override
         public UUID getUuid() {
             return uuid;
+        }
+
+        @Override
+        public BigDecimal balance(Currency currency) {
+            return wallet.get(currency.getKey());
+        }
+
+        @Override
+        public boolean deposit(BigDecimal value, Currency currency) {
+            return wallet.put(currency.getKey(),
+                    wallet.getOrDefault(currency.getKey(), BigDecimal.ZERO).add(value)) != null;
+        }
+
+        @Override
+        public boolean withdraw(BigDecimal value, Currency currency) {
+            return wallet.put(currency.getKey(),
+                    wallet.getOrDefault(currency.getKey(), BigDecimal.ZERO).subtract(value)) != null;
+        }
+
+        @Override
+        public IMemento saveState() {
+            return null;
+        }
+
+        @Override
+        public void restoreState(IMemento savedState) {
+
+        }
+
+        @Override
+        public void addAsset(Asset asset) {
+            ownedAssets.add(asset);
+        }
+
+        @Override
+        public int removeAsset(AssetSignature signature, int amount) {
+            return amount;
+        }
+
+        @Override
+        public DataProvider<Asset> assetDataProvider() {
+            return null;
         }
     }
 }

@@ -16,7 +16,10 @@ import io.github.wysohn.rapidframework3.core.player.AbstractPlayerWrapper;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.command.IArgumentMapper;
 import io.github.wysohn.rapidframework3.utils.Pair;
-import io.github.wysohn.realeconomy.inject.module.*;
+import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
+import io.github.wysohn.realeconomy.inject.module.CapitalLimitModule;
+import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
+import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
@@ -74,7 +77,6 @@ public class RealEconomy extends AbstractBukkitPlugin {
         ));
         pluginMainBuilder.addModule(new TypeAsserterModule());
         pluginMainBuilder.addModule(new CapitalLimitModule());
-        pluginMainBuilder.addModule(new TransactionHandlerModule());
         pluginMainBuilder.addModule(new OrderSQLModule());
         pluginMainBuilder.addModule(new NamespacedKeyModule());
         //TODO and some other modules as your need...

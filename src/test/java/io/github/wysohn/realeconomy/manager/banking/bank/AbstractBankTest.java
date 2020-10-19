@@ -9,16 +9,13 @@ import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
-import io.github.wysohn.realeconomy.inject.module.TransactionHandlerModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
-import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
-import modules.MockTransactionHandlerModule;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,7 +34,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
     List<Module> moduleList = new LinkedList<>();
     private IBankOwnerProvider provider;
-    private ITransactionHandler transactionHandler;
     private ICurrencyOwnerProvider currencyOwnerProvider;
 
     @Before
@@ -48,7 +44,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         provider = mock(IBankOwnerProvider.class);
         when(provider.get(any())).thenReturn(mock(IBankOwner.class));
 
-        transactionHandler = mock(ITransactionHandler.class);
         currencyOwnerProvider = mock(ICurrencyOwnerProvider.class);
 
         moduleList.add(new AbstractModule() {
@@ -79,8 +74,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
     @Test
     public void getBankOwner() {
-        moduleList.add(new MockTransactionHandlerModule());
-
         AbstractBank bank = new TempBank();
         addFakeObserver(bank);
         Guice.createInjector(moduleList).injectMembers(bank);
@@ -97,7 +90,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
     @Test
     public void getBaseCurrency() {
-        moduleList.add(new MockTransactionHandlerModule());
 
         AbstractBank bank = new TempBank();
         addFakeObserver(bank);
@@ -114,8 +106,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
     @Test
     public void saveState() {
-        moduleList.add(new TransactionHandlerModule());
-
         AbstractBank bank = new TempBank();
         addFakeObserver(bank);
         Guice.createInjector(moduleList).injectMembers(bank);
@@ -123,8 +113,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         UUID uuid = UUID.randomUUID();
         Currency currency = mock(Currency.class);
         when(currency.getKey()).thenReturn(uuid);
-        when(transactionHandler.deposit(anyMap(), any(), any())).thenReturn(true);
-        when(transactionHandler.withdraw(anyMap(), any(), any())).thenReturn(true);
 
         assertTrue(bank.deposit(123246873.11212154, currency));
         IMemento savedState = bank.saveState();
@@ -136,8 +124,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
     @Test
     public void putAccount() {
-        moduleList.add(new MockTransactionHandlerModule());
-
         AbstractBank bank = new TempBank();
         addFakeObserver(bank);
         Guice.createInjector(moduleList).injectMembers(bank);
@@ -154,7 +140,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
     @Test
     public void removeAccount() {
-        moduleList.add(new MockTransactionHandlerModule());
 
         AbstractBank bank = new TempBank();
         addFakeObserver(bank);
@@ -174,8 +159,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
     @Test
     public void accountTransaction() {
-        moduleList.add(new TransactionHandlerModule());
-
         AbstractBank bank = new TempBank();
         addFakeObserver(bank);
         Guice.createInjector(moduleList).injectMembers(bank);
@@ -200,8 +183,6 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
     @Test
     public void accountTransactionFailure() {
-        moduleList.add(new TransactionHandlerModule());
-
         AbstractBank bank = new TempBank();
         addFakeObserver(bank);
         Guice.createInjector(moduleList).injectMembers(bank);

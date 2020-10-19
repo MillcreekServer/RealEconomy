@@ -4,44 +4,29 @@ import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
 import io.github.wysohn.rapidframework3.utils.Validation;
-import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
-import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
-import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-@Singleton
-public class TransactionHandler implements ITransactionHandler {
-    private final BigDecimal maximum;
-    private final BigDecimal minimum;
+public class TransactionUtil {
 
-    @Inject
-    public TransactionHandler(
-            @MaxCapital BigDecimal maximum,
-            @MinCapital BigDecimal minimum) {
-        this.maximum = maximum;
-        this.minimum = minimum;
-    }
-
-    @Override
-    public BigDecimal balance(Map<UUID, BigDecimal> capitals, Currency currency) {
+    public static BigDecimal balance(Map<UUID, BigDecimal> capitals, Currency currency) {
         return Optional.of(currency)
                 .map(CachedElement::getKey)
                 .map(capitals::get)
                 .orElse(BigDecimal.ZERO);
     }
 
-    @Override
-    public boolean deposit(Map<UUID, BigDecimal> capitals, BigDecimal value, Currency currency) {
+    public static boolean deposit(BigDecimal maximum,
+                                  Map<UUID, BigDecimal> capitals,
+                                  BigDecimal value,
+                                  Currency currency) {
         if (value.signum() < 0)
             throw new RuntimeException("Cannot use negative value.");
 
@@ -61,11 +46,11 @@ public class TransactionHandler implements ITransactionHandler {
         return aBoolean;
     }
 
-    @Override
-    public boolean withdraw(Map<UUID, BigDecimal> capitals,
-                            BigDecimal value,
-                            Currency currency,
-                            boolean allowNegative) {
+    public static boolean withdraw(BigDecimal minimum,
+                                   Map<UUID, BigDecimal> capitals,
+                                   BigDecimal value,
+                                   Currency currency,
+                                   boolean allowNegative) {
         if (value.signum() < 0)
             throw new RuntimeException("Cannot use negative value.");
 
@@ -88,8 +73,14 @@ public class TransactionHandler implements ITransactionHandler {
         return aBoolean;
     }
 
-    @Override
-    public Result send(IFinancialEntity from, IFinancialEntity to, BigDecimal amount, Currency currency) {
+    public static boolean withdraw(BigDecimal minimum,
+                                   Map<UUID, BigDecimal> capitals,
+                                   BigDecimal value,
+                                   Currency currency) {
+        return withdraw(minimum, capitals, value, currency, false);
+    }
+
+    public static Result send(IFinancialEntity from, IFinancialEntity to, BigDecimal amount, Currency currency) {
         Validation.assertNotNull(amount);
         Validation.assertNotNull(currency);
         Validation.validate(amount, val -> val.signum() >= 0, "Cannot use negative value.");
@@ -132,5 +123,9 @@ public class TransactionHandler implements ITransactionHandler {
         public static FailSensitiveTaskResult of(Supplier<Result> task, Result expected) {
             return new FailSensitiveTaskResult(task, expected);
         }
+    }
+
+    public enum Result {
+        NO_OWNER, FROM_WITHDRAW_REFUSED, TO_DEPOSIT_REFUSED, OK
     }
 }

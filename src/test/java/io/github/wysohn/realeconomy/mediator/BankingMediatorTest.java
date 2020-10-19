@@ -9,7 +9,6 @@ import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
 import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
-import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -32,7 +31,6 @@ public class BankingMediatorTest {
     private CentralBank serverBank;
     private CurrencyManager currencyManager;
     private CentralBankingManager centralBankingManager;
-    private ITransactionHandler transactionHandler;
 
     @Before
     public void init() {
@@ -40,7 +38,6 @@ public class BankingMediatorTest {
         currencyManager = mock(CurrencyManager.class);
         when(currencyManager.newCurrency(anyString(), anyString(), any())).thenReturn(CurrencyManager.Result.OK);
         centralBankingManager = mock(CentralBankingManager.class);
-        transactionHandler = mock(ITransactionHandler.class);
 
         moduleList.add(new AbstractModule() {
             @Provides
@@ -63,11 +60,6 @@ public class BankingMediatorTest {
             @MinCapital
             BigDecimal min() {
                 return BigDecimal.valueOf(-Double.MAX_VALUE);
-            }
-
-            @Provides
-            ITransactionHandler transactionHandler() {
-                return transactionHandler;
             }
         });
     }
@@ -241,19 +233,18 @@ public class BankingMediatorTest {
         UUID currencyUuid = UUID.randomUUID();
         Currency currency = mock(Currency.class);
         IAccount account = mock(IAccount.class);
-        Map<UUID, BigDecimal> balances = mock(Map.class);
+        Map<UUID, BigDecimal> balances = new HashMap<>();
 
         when(currency.getKey()).thenReturn(currencyUuid);
         when(serverBank.getBaseCurrency()).thenReturn(currency);
         when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
         when(account.getCurrencyMap()).thenReturn(balances);
 
-        when(transactionHandler.deposit(anyMap(), any(), any())).thenReturn(true);
         assertEquals(BankingMediator.Result.OK, mediator.deposit(user,
                 BankingTypeRegistry.CHECKING,
                 BigDecimal.TEN));
 
-        when(transactionHandler.deposit(anyMap(), any(), any())).thenReturn(false);
+        balances.put(currencyUuid, BigDecimal.valueOf(Double.MAX_VALUE));
         assertEquals(BankingMediator.Result.FAIL_DEPOSIT, mediator.deposit(user,
                 BankingTypeRegistry.CHECKING,
                 BigDecimal.TEN));
@@ -303,19 +294,19 @@ public class BankingMediatorTest {
         UUID currencyUuid = UUID.randomUUID();
         Currency currency = mock(Currency.class);
         IAccount account = mock(IAccount.class);
-        Map<UUID, BigDecimal> balances = mock(Map.class);
+        Map<UUID, BigDecimal> balances = new HashMap<>();
 
         when(currency.getKey()).thenReturn(currencyUuid);
         when(serverBank.getBaseCurrency()).thenReturn(currency);
         when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
         when(account.getCurrencyMap()).thenReturn(balances);
 
-        when(transactionHandler.withdraw(anyMap(), any(), any())).thenReturn(true);
+        balances.put(currencyUuid, BigDecimal.valueOf(Double.MAX_VALUE));
         assertEquals(BankingMediator.Result.OK, mediator.withdraw(user,
                 BankingTypeRegistry.CHECKING,
                 BigDecimal.TEN));
 
-        when(transactionHandler.withdraw(anyMap(), any(), any())).thenReturn(false);
+        balances.put(currencyUuid, BigDecimal.ZERO);
         assertEquals(BankingMediator.Result.FAIL_WITHDRAW, mediator.withdraw(user,
                 BankingTypeRegistry.CHECKING,
                 BigDecimal.TEN));

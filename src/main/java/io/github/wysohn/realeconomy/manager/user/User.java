@@ -6,12 +6,14 @@ import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
-import io.github.wysohn.realeconomy.interfaces.banking.IAssetHandler;
+import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
+import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
-import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.banking.AssetUtil;
+import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import javax.inject.Inject;
@@ -20,11 +22,13 @@ import java.util.*;
 
 public class User extends BukkitPlayer implements IBankUser {
     @Inject
-    private ITransactionHandler transactionHandler;
-    @Inject
     private ITaskSupervisor task;
     @Inject
-    private IAssetHandler assetHandler;
+    @MinCapital
+    private BigDecimal minimum;
+    @Inject
+    @MaxCapital
+    private BigDecimal maximum;
 
     private final Map<UUID, BigDecimal> wallet = new HashMap<>();
     private final Set<Integer> buyOrderIdSet = new HashSet<>();
@@ -49,14 +53,14 @@ public class User extends BukkitPlayer implements IBankUser {
     @Override
     public BigDecimal balance(Currency currency) {
         synchronized (wallet) {
-            return transactionHandler.balance(wallet, currency);
+            return TransactionUtil.balance(wallet, currency);
         }
     }
 
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
         synchronized (wallet) {
-            final boolean deposit = transactionHandler.deposit(wallet, value, currency);
+            final boolean deposit = TransactionUtil.deposit(maximum, wallet, value, currency);
             notifyObservers();
             return deposit;
         }
@@ -65,7 +69,7 @@ public class User extends BukkitPlayer implements IBankUser {
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
         synchronized (wallet) {
-            final boolean withdraw = transactionHandler.withdraw(wallet, value, currency);
+            final boolean withdraw = TransactionUtil.withdraw(minimum, wallet, value, currency);
             notifyObservers();
             return withdraw;
         }
@@ -164,17 +168,17 @@ public class User extends BukkitPlayer implements IBankUser {
 
     @Override
     public void addAsset(Asset asset) {
-        assetHandler.addAsset(ownedAssets, asset);
+        AssetUtil.addAsset(ownedAssets, asset);
     }
 
     @Override
     public int removeAsset(AssetSignature signature, int amount) {
-        return assetHandler.removeAsset(ownedAssets, signature, amount);
+        return AssetUtil.removeAsset(ownedAssets, signature, amount);
     }
 
     @Override
     public DataProvider<Asset> assetDataProvider() {
-        return assetHandler.assetDataProvider(ownedAssets);
+        return AssetUtil.assetDataProvider(ownedAssets);
     }
 
     @Override

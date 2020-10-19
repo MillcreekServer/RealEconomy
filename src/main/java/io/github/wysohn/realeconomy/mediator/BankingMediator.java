@@ -5,10 +5,15 @@ import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
+import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
-import io.github.wysohn.realeconomy.interfaces.banking.*;
+import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
+import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -33,22 +38,22 @@ public class BankingMediator extends Mediator {
     }
 
     private final BigDecimal maxCapital;
+    private final BigDecimal minCapital;
     private final CurrencyManager currencyManager;
     private final CentralBankingManager centralBankingManager;
-    private final ITransactionHandler transactionHandler;
 
     private final Map<UUID, AbstractBank> usingBanks = new HashMap<>();
 
     @Inject
     public BankingMediator(
             @MaxCapital BigDecimal maxCapital,
+            @MinCapital BigDecimal minCapital,
             CurrencyManager currencyManager,
-            CentralBankingManager centralBankingManager,
-            ITransactionHandler transactionHandler) {
+            CentralBankingManager centralBankingManager) {
         this.maxCapital = maxCapital;
+        this.minCapital = minCapital;
         this.currencyManager = currencyManager;
         this.centralBankingManager = centralBankingManager;
-        this.transactionHandler = transactionHandler;
     }
 
     @Override
@@ -178,7 +183,7 @@ public class BankingMediator extends Mediator {
             return Result.NO_ACCOUNT;
 
         //TODO wrong implementation. must use bank#accountTransaction()
-        if (transactionHandler.deposit(account.getCurrencyMap(), amount, bank.getBaseCurrency())) {
+        if (TransactionUtil.deposit(maxCapital, account.getCurrencyMap(), amount, bank.getBaseCurrency())) {
             return Result.OK;
         } else {
             return Result.FAIL_DEPOSIT;
@@ -203,7 +208,7 @@ public class BankingMediator extends Mediator {
             return Result.NO_ACCOUNT;
 
         //TODO wrong implementation. must use bank#accountTransaction()
-        if (transactionHandler.withdraw(account.getCurrencyMap(), amount, bank.getBaseCurrency())) {
+        if (TransactionUtil.withdraw(minCapital, account.getCurrencyMap(), amount, bank.getBaseCurrency())) {
             return Result.OK;
         } else {
             return Result.FAIL_WITHDRAW;
@@ -211,7 +216,7 @@ public class BankingMediator extends Mediator {
     }
 
     /**
-     * {@link ITransactionHandler#send(IFinancialEntity, IFinancialEntity, BigDecimal, Currency)}
+     * {@link TransactionUtil#send(IFinancialEntity, IFinancialEntity, BigDecimal, Currency)}
      *
      * @param from
      * @param to
@@ -219,13 +224,13 @@ public class BankingMediator extends Mediator {
      * @param currency
      * @return
      */
-    public ITransactionHandler.Result send(
+    public TransactionUtil.Result send(
             IFinancialEntity from,
             IFinancialEntity to,
             BigDecimal amount,
             Currency currency) {
 
-        return transactionHandler.send(from, to, amount, currency);
+        return TransactionUtil.send(from, to, amount, currency);
     }
 
     public AbstractBank getUsingBank(IBankUser user) {

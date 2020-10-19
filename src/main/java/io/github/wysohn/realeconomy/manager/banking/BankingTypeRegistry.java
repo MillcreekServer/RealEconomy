@@ -3,6 +3,7 @@ package io.github.wysohn.realeconomy.manager.banking;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.banking.account.CheckingAccount;
+import io.github.wysohn.realeconomy.manager.banking.account.TradingAccount;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,13 @@ public class BankingTypeRegistry {
             "CHECKING",
             RealEconomyLangs.BankingType_Checking,
             CheckingAccount::new);
+
+    public static final IBankingType TRADING = new BankingTypeAdapter<>(
+            UUID.fromString("393d21ee-6225-4afa-9db5-1d386ee2530b"),
+            "TRADING",
+            RealEconomyLangs.BankingType_Trading,
+            TradingAccount::new
+    );
 
     public static IBankingType fromUuid(UUID uuid) {
         return BANKING_TYPES.get(uuid);

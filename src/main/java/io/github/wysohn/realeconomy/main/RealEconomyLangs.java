@@ -7,6 +7,7 @@ public enum RealEconomyLangs implements ILang {
     Currencies("Currencies"),
 
     BankingType_Checking("Checking Account"),
+    BankingType_Trading("Trading Account"),
 
     Command_Common_UserNotFound("&cNo player found with name &6${string}&c."),
     Command_Common_BankNotFound("&cNo bank found with name &6${string}&c."),

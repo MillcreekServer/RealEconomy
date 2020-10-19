@@ -11,11 +11,9 @@ import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
-import io.github.wysohn.realeconomy.interfaces.banking.ITransactionHandler;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
-import modules.MockTransactionHandlerModule;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,7 +25,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class CentralBankTest extends AbstractBukkitManagerTest {
     CurrencyManager currencyManager;
@@ -66,10 +65,6 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
 
     @Test
     public void deposit() {
-        MockTransactionHandlerModule module = new MockTransactionHandlerModule();
-        ITransactionHandler transactionHandler = module.transactionHandler;
-        moduleList.add(module);
-
         UUID uuid = UUID.randomUUID();
         CentralBank bank = new CentralBank(uuid);
         addFakeObserver(bank);
@@ -86,17 +81,10 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         assertEquals(BigDecimal.valueOf(-20304.33), bank.getLiquidity());
         // always max for base currency
         assertEquals(BigDecimal.valueOf(Double.MAX_VALUE), bank.balance(currency));
-
-        // should never invoke the parent method
-        verify(transactionHandler, never()).deposit(anyMap(), any(), any());
     }
 
     @Test
     public void depositNonBase() {
-        MockTransactionHandlerModule module = new MockTransactionHandlerModule();
-        ITransactionHandler transactionHandler = module.transactionHandler;
-        moduleList.add(module);
-
         UUID uuid = UUID.randomUUID();
         CentralBank bank = new CentralBank(uuid);
         addFakeObserver(bank);
@@ -112,21 +100,12 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         when(currency.getKey()).thenReturn(currencyUuid);
         when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
 
-        when(transactionHandler.deposit(anyMap(), any(), any())).thenReturn(true);
-
         bank.deposit(BigDecimal.valueOf(20304.33), currency);
         assertEquals(BigDecimal.ZERO, bank.getLiquidity());
-
-        verify(transactionHandler, times(1))
-                .deposit(anyMap(), eq(BigDecimal.valueOf(20304.33)), eq(currency));
     }
 
     @Test
     public void withdraw() {
-        MockTransactionHandlerModule module = new MockTransactionHandlerModule();
-        ITransactionHandler transactionHandler = module.transactionHandler;
-        moduleList.add(module);
-
         UUID uuid = UUID.randomUUID();
         CentralBank bank = new CentralBank(uuid);
         addFakeObserver(bank);
@@ -143,17 +122,10 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         assertEquals(BigDecimal.valueOf(30567.22), bank.getLiquidity());
         // always max for base currency
         assertEquals(BigDecimal.valueOf(Double.MAX_VALUE), bank.balance(currency));
-
-        // should never invoke the parent method
-        verify(transactionHandler, never()).withdraw(anyMap(), any(), any());
     }
 
     @Test
     public void withdrawNonBase() {
-        MockTransactionHandlerModule module = new MockTransactionHandlerModule();
-        ITransactionHandler transactionHandler = module.transactionHandler;
-        moduleList.add(module);
-
         UUID uuid = UUID.randomUUID();
         CentralBank bank = new CentralBank(uuid);
         addFakeObserver(bank);
@@ -169,22 +141,12 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         when(currency.getKey()).thenReturn(currencyUuid);
         when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
 
-        when(transactionHandler.withdraw(anyMap(), any(), any())).thenReturn(true);
-
         bank.withdraw(BigDecimal.valueOf(30567.22), currency);
         assertEquals(BigDecimal.valueOf(0), bank.getLiquidity());
-
-        // should never invoke the parent method
-        verify(transactionHandler, times(1))
-                .withdraw(anyMap(), eq(BigDecimal.valueOf(30567.22)), eq(currency), anyBoolean());
     }
 
     @Test
     public void properties() {
-        MockTransactionHandlerModule module = new MockTransactionHandlerModule();
-        ITransactionHandler transactionHandler = module.transactionHandler;
-        moduleList.add(module);
-
         UUID uuid = UUID.randomUUID();
         CentralBank bank = new CentralBank(uuid);
         addFakeObserver(bank);

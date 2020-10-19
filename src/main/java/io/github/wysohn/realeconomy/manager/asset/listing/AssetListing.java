@@ -9,7 +9,6 @@ import java.util.UUID;
 
 public class AssetListing extends CachedElement<UUID> {
     private AssetSignature signature;
-    private UUID issuerUuid;
 
     private AssetListing() {
         this(null);
@@ -27,16 +26,6 @@ public class AssetListing extends CachedElement<UUID> {
 
     public AssetSignature getSignature() {
         return signature;
-    }
-
-    public void setIssuerUuid(UUID issuerUuid) {
-        this.issuerUuid = issuerUuid;
-
-        notifyObservers();
-    }
-
-    public UUID getIssuerUuid() {
-        return issuerUuid;
     }
 
     public Asset create(Map<String, Object> metaData) {

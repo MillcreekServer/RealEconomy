@@ -6,7 +6,7 @@ import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 
 import java.util.Collection;
 
-public interface IOrderIssuer extends IPluginObject, IFinancialEntity, IAssetHolder {
+public interface IOrderIssuer extends IPluginObject, IFinancialEntity {
     boolean addOrderId(OrderType type, int orderId);
 
     boolean hasOrderId(OrderType type, int orderId);

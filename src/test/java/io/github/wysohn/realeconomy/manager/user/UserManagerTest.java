@@ -14,7 +14,6 @@ import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckBalance;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckCurrency;
 import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
-import io.github.wysohn.realeconomy.inject.module.TransactionHandlerModule;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.main.RealEconomy;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
@@ -88,7 +87,6 @@ public class UserManagerTest {
         }));
         moduleList.add(new TaskSupervisorModule(taskSupervisor));
 
-        moduleList.add(new TransactionHandlerModule());
         moduleList.add(new NamespacedKeyModule());
         moduleList.add(new AbstractModule() {
             @Provides

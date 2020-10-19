@@ -6,14 +6,16 @@ import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
 import io.github.wysohn.rapidframework3.utils.Validation;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
-import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuerProvider;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
-import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
+import io.github.wysohn.realeconomy.manager.asset.signature.PhysicalAssetSignature;
+import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -36,7 +38,7 @@ public class TradeMediator extends Mediator {
     private final Logger logger;
     private final CurrencyManager currencyManager;
     private final AssetListingManager assetListingManager;
-    private final IOrderIssuerProvider orderIssuerProvider;
+    private final IBankUserProvider bankUserProvider;
 
     private TradeBroker tradeBroker;
 
@@ -44,11 +46,11 @@ public class TradeMediator extends Mediator {
     public TradeMediator(@PluginLogger Logger logger,
                          CurrencyManager currencyManager,
                          AssetListingManager assetListingManager,
-                         IOrderIssuerProvider orderIssuerProvider) {
+                         IBankUserProvider bankUserProvider) {
         this.logger = logger;
         this.currencyManager = currencyManager;
         this.assetListingManager = assetListingManager;
-        this.orderIssuerProvider = orderIssuerProvider;
+        this.bankUserProvider = bankUserProvider;
     }
 
     @Override
@@ -182,8 +184,8 @@ public class TradeMediator extends Mediator {
 
                 assetListingManager.peekMatchingOrder(tradeInfo -> {
                     // get buy/sell pair
-                    IOrderIssuer buyer = orderIssuerProvider.get(tradeInfo.getBuyer());
-                    IOrderIssuer seller = orderIssuerProvider.get(tradeInfo.getSeller());
+                    IBankUser buyer = bankUserProvider.get(tradeInfo.getBuyer());
+                    IBankUser seller = bankUserProvider.get(tradeInfo.getSeller());
 
                     // cannot proceed if either trading end is not found
                     if (buyer == null) {
@@ -191,6 +193,7 @@ public class TradeMediator extends Mediator {
                         try {
                             assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index -> {
                             });
+                            assetListingManager.commitOrders();
                         } catch (SQLException ex) {
                             ex.printStackTrace();
                         }
@@ -199,8 +202,56 @@ public class TradeMediator extends Mediator {
                     if (seller == null) {
                         // delete order so other orders can be processed.
                         try {
-                            assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.BUY, index -> {
+                            assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index -> {
                             });
+                            assetListingManager.commitOrders();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                        return;
+                    }
+
+                    Currency currency = currencyManager.get(tradeInfo.getCurrencyUuid())
+                            .map(Reference::get)
+                            .orElse(null);
+
+                    // weird currency found.
+                    CentralBank bank = null;
+                    if (currency == null || (bank = currency.ownerBank()) == null) {
+                        try {
+                            assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index -> {
+                            });
+                            assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index -> {
+                            });
+                            assetListingManager.commitOrders();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+
+                        logger.warning("Cannot proceed with unknown Currency or bank not found. Orders are deleted.");
+                        logger.warning("Trade Info: " + tradeInfo);
+                        return;
+                    }
+
+                    // check if trading account exist
+                    if (!bank.hasAccount(buyer, BankingTypeRegistry.TRADING)) {
+                        // delete order so other orders can be processed.
+                        try {
+                            assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index -> {
+                            });
+                            assetListingManager.commitOrders();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                        return;
+                    }
+
+                    if (!bank.hasAccount(seller, BankingTypeRegistry.TRADING)) {
+                        // delete order so other orders can be processed.
+                        try {
+                            assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index -> {
+                            });
+                            assetListingManager.commitOrders();
                         } catch (SQLException ex) {
                             ex.printStackTrace();
                         }
@@ -209,6 +260,8 @@ public class TradeMediator extends Mediator {
 
                     IMemento buyerState = buyer.saveState();
                     IMemento sellerState = seller.saveState();
+                    IMemento bankState = bank.saveState();
+                    CentralBank finalBank = bank;
                     TradeResult result = FailSensitiveTradeResult.of(() -> {
                         // get listing info
                         AssetListing listing = assetListingManager.get(tradeInfo.getListingUuid())
@@ -223,25 +276,14 @@ public class TradeMediator extends Mediator {
                         }
                         AssetSignature signature = listing.getSignature();
 
-                        // amount, price, currency
+                        // amount, price
                         int amount = Math.min(tradeInfo.getStock(), tradeInfo.getAmount()); // use smaller of buy/sell
                         double price = tradeInfo.getAsk(); // use the seller defined price
-                        Currency currency = currencyManager.get(tradeInfo.getCurrencyUuid())
-                                .map(Reference::get)
-                                .orElse(null);
 
-                        // weird currency found.
-                        CentralBank bank = null;
-                        if (currency == null || (bank = currency.ownerBank()) == null) {
-                            logger.warning("Cannot proceed with unknown Currency or bank not found. Orders are deleted.");
-                            logger.warning("Trade Info: " + tradeInfo);
-                            return TradeResult.INVALID_INFO;
-                        }
-
-                        // take asset from seller
+                        // take asset from seller account
                         int amountsRemoved;
                         if (signature.isPhysical()) // take only if physically present asset
-                            amountsRemoved = seller.removeAsset(signature, amount);
+                            amountsRemoved = finalBank.removeAccountAsset(seller, signature, amount);
                         else
                             amountsRemoved = 1;
 
@@ -249,17 +291,17 @@ public class TradeMediator extends Mediator {
                         if (amountsRemoved > 0) {
                             BigDecimal payTotal = BigDecimal.valueOf(price).multiply(BigDecimal.valueOf(amountsRemoved));
 
-                            // take currency from buyer
-                            if (!buyer.withdraw(payTotal, currency))
+                            // take currency from buyer account
+                            if (!finalBank.withdrawAccount(buyer, BankingTypeRegistry.TRADING, payTotal, currency))
                                 return TradeResult.WITHDRAW_REFUSED;
 
-                            // give currency to the seller
-                            if (!seller.deposit(payTotal, currency))
+                            // give currency to the seller account
+                            if (!finalBank.depositAccount(seller, BankingTypeRegistry.TRADING, payTotal, currency))
                                 return TradeResult.DEPOSIT_REFUSED;
 
-                            // give asset to the buyer
-                            buyer.addAsset(signature.create(new HashMap<String, Object>() {{
-                                put(ItemStackSignature.KEY_AMOUNT, amountsRemoved);
+                            // give asset to the buyer account
+                            finalBank.addAccountAsset(buyer, signature.create(new HashMap<String, Object>() {{
+                                put(PhysicalAssetSignature.KEY_AMOUNT, amountsRemoved);
                             }}));
 
                             // adjust the removed amount
@@ -302,6 +344,7 @@ public class TradeMediator extends Mediator {
                     }).handleException(Throwable::printStackTrace).onFail(() -> {
                         buyer.restoreState(buyerState);
                         seller.restoreState(sellerState);
+                        finalBank.restoreState(bankState);
 
                         try {
                             assetListingManager.rollbackOrders();
@@ -329,6 +372,6 @@ public class TradeMediator extends Mediator {
     }
 
     public enum TradeResult {
-        INVALID_INFO, WITHDRAW_REFUSED, DEPOSIT_REFUSED, OK
+        INVALID_INFO, WITHDRAW_REFUSED, DEPOSIT_REFUSED, NO_ACCOUNT_BUYER, NO_ACCOUNT_SELLER, OK
     }
 }

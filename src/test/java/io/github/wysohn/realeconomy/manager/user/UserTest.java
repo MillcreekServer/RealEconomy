@@ -11,7 +11,6 @@ import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
-import io.github.wysohn.realeconomy.inject.module.TransactionHandlerModule;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import org.junit.Before;
@@ -38,7 +37,6 @@ public class UserTest extends AbstractBukkitManagerTest {
         taskSupervisor = mock(ITaskSupervisor.class);
         currencyOwnerProvider = mock(ICurrencyOwnerProvider.class);
 
-        moduleList.add(new TransactionHandlerModule());
         moduleList.add(new TaskSupervisorModule(taskSupervisor));
         moduleList.add(new AbstractModule() {
             @Provides

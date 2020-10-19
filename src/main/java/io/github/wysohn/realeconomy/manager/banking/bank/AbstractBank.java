@@ -2,10 +2,8 @@ package io.github.wysohn.realeconomy.manager.banking.bank;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
-import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
-import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
@@ -14,6 +12,10 @@ import io.github.wysohn.realeconomy.interfaces.banking.*;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.banking.AssetUtil;
+import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
+import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
+import io.github.wysohn.realeconomy.manager.banking.account.TradingAccount;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
@@ -28,13 +30,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     private transient final Object transactionLock = new Object();
 
     @Inject
-    private ITransactionHandler transactionHandler;
-    @Inject
     private Set<IBankOwnerProvider> ownerProviders;
     @Inject
     private CurrencyManager currencyManager;
-    @Inject
-    private IAssetHandler assetHandler;
     @Inject
     @MinCapital
     protected BigDecimal minimum;
@@ -97,13 +95,13 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
     @Override
     public BigDecimal balance(Currency currency) {
-        return transactionHandler.balance(capitals, currency);
+        return TransactionUtil.balance(capitals, currency);
     }
 
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
         synchronized (transactionLock) {
-            final boolean aBoolean = transactionHandler.deposit(capitals, value, currency);
+            final boolean aBoolean = TransactionUtil.deposit(maximum, capitals, value, currency);
             notifyObservers();
             return aBoolean;
         }
@@ -112,29 +110,22 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
         synchronized (transactionLock) {
-            final boolean aBoolean = transactionHandler.withdraw(capitals, value, currency, true);
+            final boolean aBoolean = TransactionUtil.withdraw(minimum, capitals, value, currency, true);
             notifyObservers();
             return aBoolean;
         }
     }
 
-    /**
-     * Get a snapshot of the Account. Changes made to the IAccount instance provided does
-     * not have any effect. To make modification, use {@link #accountTransaction(IBankUser, IBankingType)}.
-     *
-     * @param user the owner of account.
-     * @param type the account type to get from this bank.
-     * @return
-     */
-    public IAccount getAccount(IBankUser user, IBankingType type) {
+    public boolean hasAccount(IBankUser user, IBankingType type) {
+        Validation.assertNotNull(user);
         Validation.assertNotNull(type);
 
-        return Optional.ofNullable(user)
-                .map(IPluginObject::getUuid)
-                .map(accounts::get)
-                .map(accountMap -> accountMap.get(type))
-                .map(IAccount::clone)
-                .orElse(null);
+        Validation.assertNotNull(user);
+        if (!accounts.containsKey(user.getUuid()))
+            return false;
+
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        return accountMap.containsKey(type);
     }
 
     /**
@@ -177,19 +168,36 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         return deleted;
     }
 
-    /**
-     * Begin a transaction for the specified user. You may perform any number of
-     * transaction using the Transaction instance, yet none of the changes will have
-     * effect until you invoke {@link Transaction#commit()}. If something goes wrong
-     * while processing the transaction, account's state will be reverted.
-     *
-     * @param user the user
-     * @param type type of account
-     * @return Transaction instance
-     * @throws RuntimeException This does not check if the user has an account already.
-     *                          So if no account is found, exception will be thrown.
-     */
-    public Transaction accountTransaction(IBankUser user, IBankingType type) {
+    public void addAccountAsset(IBankUser user, Asset asset) {
+        Validation.assertNotNull(user);
+        if (!accounts.containsKey(user.getUuid()))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        if (!accountMap.containsKey(BankingTypeRegistry.TRADING))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        TradingAccount account = (TradingAccount) accountMap.get(BankingTypeRegistry.TRADING);
+        account.addAsset(asset);
+        notifyObservers();
+    }
+
+    public int removeAccountAsset(IBankUser user, AssetSignature signature, int amount) {
+        Validation.assertNotNull(user);
+        if (!accounts.containsKey(user.getUuid()))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        if (!accountMap.containsKey(BankingTypeRegistry.TRADING))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        TradingAccount account = (TradingAccount) accountMap.get(BankingTypeRegistry.TRADING);
+        int i = account.removeAsset(signature, amount);
+        notifyObservers();
+        return i;
+    }
+
+    public boolean depositAccount(IBankUser user, IBankingType type, BigDecimal amount, Currency currency) {
         Validation.assertNotNull(user);
         if (!accounts.containsKey(user.getUuid()))
             throw new RuntimeException("Account of " + user + " does not exist.");
@@ -198,122 +206,46 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         if (!accountMap.containsKey(type))
             throw new RuntimeException("Account of " + user + " does not exist.");
 
-        return new Transaction(accountMap.get(type));
+        IAccount account = accountMap.get(type);
+        boolean deposit = TransactionUtil.deposit(maximum, account.getCurrencyMap(), amount, currency);
+        notifyObservers();
+        return deposit;
     }
 
-    public class Transaction {
-        private final IAccount account;
-        private final List<Node> transactions = new ArrayList<>();
+    public boolean depositAccount(IBankUser user, IBankingType type, double amount, Currency currency) {
+        return depositAccount(user, type, BigDecimal.valueOf(amount), currency);
+    }
 
-        private Transaction(IAccount account) {
-            this.account = account;
-        }
+    public boolean withdrawAccount(IBankUser user, IBankingType type, BigDecimal amount, Currency currency) {
+        Validation.assertNotNull(user);
+        if (!accounts.containsKey(user.getUuid()))
+            throw new RuntimeException("Account of " + user + " does not exist.");
 
-        public Transaction deposit(BigDecimal value) {
-            transactions.add(new DepositNode(value));
-            return this;
-        }
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        if (!accountMap.containsKey(type))
+            throw new RuntimeException("Account of " + user + " does not exist.");
 
-        public Transaction deposit(double value) {
-            return this.deposit(BigDecimal.valueOf(value));
-        }
+        IAccount account = accountMap.get(type);
+        return TransactionUtil.withdraw(minimum, account.getCurrencyMap(), amount, currency, true);
+    }
 
-        public Transaction withdraw(BigDecimal value) {
-            transactions.add(new WithdrawNode(value));
-            return this;
-        }
-
-        public Transaction withdraw(double value) {
-            return this.withdraw(BigDecimal.valueOf(value));
-        }
-
-        public void commit() {
-            synchronized (transactionLock) {
-                IMemento savedState = saveState();
-                FailSensitiveTask.of(() -> {
-                    for (Runnable transaction : transactions) {
-                        try {
-                            transaction.run();
-                        } catch (Exception ex) {
-                            throw new RuntimeException("Transaction failure", ex);
-                        }
-                    }
-                    notifyObservers();
-                    return true;
-                }).handleException(Throwable::printStackTrace)
-                        .onFail(() -> restoreState(savedState))
-                        .run();
-            }
-        }
-
-        private abstract class Node implements Runnable {
-            protected final BigDecimal value;
-
-            public Node(BigDecimal value) {
-                this.value = value;
-            }
-
-            @Override
-            public String toString() {
-                return "[" + getKey() + ":" + getStringKey() + "] "
-                        + account + ", "
-                        + getClass().getSimpleName() + ", "
-                        + value;
-            }
-        }
-
-        private class DepositNode extends Node {
-            public DepositNode(BigDecimal value) {
-                super(value);
-            }
-
-            @Override
-            public void run() {
-                if (transactionHandler.deposit(account.getCurrencyMap(),
-                        value,
-                        Objects.requireNonNull(getBaseCurrency()))) {
-                    if (!AbstractBank.this.deposit(value, Objects.requireNonNull(getBaseCurrency()))) {
-                        throw new RuntimeException("Bank deposit refused.");
-                    }
-                } else {
-                    throw new RuntimeException("Account deposit refused.");
-                }
-            }
-        }
-
-        private class WithdrawNode extends Node {
-            public WithdrawNode(BigDecimal value) {
-                super(value);
-            }
-
-            @Override
-            public void run() {
-                if (AbstractBank.this.withdraw(value, Objects.requireNonNull(getBaseCurrency()))) {
-                    if (!transactionHandler.withdraw(account.getCurrencyMap(),
-                            value,
-                            Objects.requireNonNull(getBaseCurrency()))) {
-                        throw new RuntimeException("Account withdraw refused.");
-                    }
-                } else {
-                    throw new RuntimeException("Bank withdraw refused.");
-                }
-            }
-        }
+    public boolean withdrawAccount(IBankUser user, IBankingType type, double amount, Currency currency) {
+        return withdrawAccount(user, type, BigDecimal.valueOf(amount), currency);
     }
 
     @Override
     public void addAsset(Asset asset) {
-        assetHandler.addAsset(ownedAssets, asset);
+        AssetUtil.addAsset(ownedAssets, asset);
     }
 
     @Override
     public int removeAsset(AssetSignature signature, int amount) {
-        return assetHandler.removeAsset(ownedAssets, signature, amount);
+        return AssetUtil.removeAsset(ownedAssets, signature, amount);
     }
 
     @Override
     public DataProvider<Asset> assetDataProvider() {
-        return assetHandler.assetDataProvider(ownedAssets);
+        return AssetUtil.assetDataProvider(ownedAssets);
     }
 
     @Override

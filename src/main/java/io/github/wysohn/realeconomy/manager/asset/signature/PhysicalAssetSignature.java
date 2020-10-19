@@ -5,4 +5,6 @@ public abstract class PhysicalAssetSignature extends AssetSignature {
     public boolean isPhysical() {
         return true;
     }
+
+    public static final String KEY_AMOUNT = "amount";
 }
