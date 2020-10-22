@@ -18,8 +18,8 @@ public enum RealEconomyLangs implements ILang {
     Command_Common_DepositRefused("&cDeposit refused. Contact administrator if you believe it's a bug."),
     Command_Common_SendSuccess("&d${string} &f=> &6${string} ${string} &f=> &d${string}&a."),
 
-    Command_Balance_Desc("Check your wallet."),
-    Command_Balance_Usage("&d/eco bal 1",
+    Command_Wallet_Desc("Check your wallet."),
+    Command_Wallet_Usage("&d/eco bal 1",
             " &8- &7First page of your wallet."),
 
     Command_Pay_Desc("Pay your currency to someone else."),
@@ -43,6 +43,10 @@ public enum RealEconomyLangs implements ILang {
             " &8- &7check summary of the bank owned by server",
             "&d/eco bank MyBank info",
             " &8- &7check summary of MyBank"),
+
+    Command_Items_Desc("List all selling items."),
+    Command_Items_Usage("&d/eco items" +
+            " &8- &7list all items currently selling"),
 
     Bank_Owner("&9Owner"),
     Bank_BaseCurrency("&9BaseCurrency"),

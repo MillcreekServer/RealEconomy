@@ -282,7 +282,7 @@ public class TradeMediator extends Mediator {
 
                         // take asset from seller account
                         int amountsRemoved;
-                        if (signature.isPhysical()) // take only if physically present asset
+                        if (signature.isPhysical()) // amount varies only for physical assets
                             amountsRemoved = finalBank.removeAccountAsset(seller, signature, amount);
                         else
                             amountsRemoved = 1;

@@ -8,7 +8,6 @@ import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
-import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
 import io.github.wysohn.rapidframework3.utils.Pair;
@@ -201,21 +200,6 @@ public class AssetListingManagerTest {
         @Override
         public void restoreState(IMemento savedState) {
 
-        }
-
-        @Override
-        public void addAsset(Asset asset) {
-            ownedAssets.add(asset);
-        }
-
-        @Override
-        public int removeAsset(AssetSignature signature, int amount) {
-            return amount;
-        }
-
-        @Override
-        public DataProvider<Asset> assetDataProvider() {
-            return null;
         }
     }
 }

@@ -11,11 +11,9 @@ import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
-import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
-import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import org.junit.Before;
 import org.junit.Test;
@@ -349,21 +347,6 @@ public class OrderPlacementHandlerModuleTest {
         @Override
         public void restoreState(IMemento savedState) {
 
-        }
-
-        @Override
-        public void addAsset(Asset asset) {
-
-        }
-
-        @Override
-        public int removeAsset(AssetSignature signature, int amount) {
-            return 0;
-        }
-
-        @Override
-        public DataProvider<Asset> assetDataProvider() {
-            return null;
         }
     }
 }

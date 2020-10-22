@@ -132,10 +132,10 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         UUID uuid = UUID.randomUUID();
         when(user.getUuid()).thenReturn(uuid);
 
-        assertNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+        assertFalse(bank.hasAccount(user, BankingTypeRegistry.CHECKING));
         assertTrue(bank.putAccount(user, BankingTypeRegistry.CHECKING));
         assertFalse(bank.putAccount(user, BankingTypeRegistry.CHECKING));
-        assertNotNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+        assertTrue(bank.hasAccount(user, BankingTypeRegistry.CHECKING));
     }
 
     @Test
@@ -149,12 +149,12 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         UUID uuid = UUID.randomUUID();
         when(user.getUuid()).thenReturn(uuid);
 
-        assertNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+        assertFalse(bank.hasAccount(user, BankingTypeRegistry.CHECKING));
         assertTrue(bank.putAccount(user, BankingTypeRegistry.CHECKING));
-        assertNotNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+        assertTrue(bank.hasAccount(user, BankingTypeRegistry.CHECKING));
         assertTrue(bank.removeAccount(user, BankingTypeRegistry.CHECKING));
         assertFalse(bank.removeAccount(user, BankingTypeRegistry.CHECKING));
-        assertNull(bank.getAccount(user, BankingTypeRegistry.CHECKING));
+        assertFalse(bank.hasAccount(user, BankingTypeRegistry.CHECKING));
     }
 
     @Test
@@ -173,12 +173,10 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
         bank.setBaseCurrency(currency);
         assertTrue(bank.putAccount(user, BankingTypeRegistry.CHECKING));
-        bank.accountTransaction(user, BankingTypeRegistry.CHECKING)
-                .deposit(39800.55)
-                .withdraw(2552.34)
-                .commit();
+        bank.depositAccount(user, BankingTypeRegistry.CHECKING, 39800.55, currency);
+        bank.withdrawAccount(user, BankingTypeRegistry.CHECKING, 2552.34, currency);
         assertEquals(BigDecimal.valueOf(39800.55).subtract(BigDecimal.valueOf(2552.34)),
-                bank.getAccount(user, BankingTypeRegistry.CHECKING).getCurrencyMap().get(currencyUuid));
+                bank.balanceOfAccount(user, BankingTypeRegistry.CHECKING));
     }
 
     @Test
@@ -197,19 +195,11 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
         bank.setBaseCurrency(currency);
         assertTrue(bank.putAccount(user, BankingTypeRegistry.CHECKING));
-        bank.accountTransaction(user, BankingTypeRegistry.CHECKING)
-                .deposit(10.0)
-                .commit();
-        bank.accountTransaction(user, BankingTypeRegistry.CHECKING)
-                .deposit(39800.55)
-                .withdraw(2552.34)
-                .deposit(BigDecimal.valueOf(Double.MAX_VALUE)) // max limit
-                .commit();
+        bank.depositAccount(user, BankingTypeRegistry.CHECKING, 10.0, currency);
+        bank.depositAccount(user, BankingTypeRegistry.CHECKING, BigDecimal.valueOf(Double.MAX_VALUE), currency);// max limit
         // transaction failure should revert account back to original state
         assertEquals(BigDecimal.valueOf(10.0),
-                bank.getAccount(user, BankingTypeRegistry.CHECKING)
-                        .getCurrencyMap()
-                        .get(currencyUuid));
+                bank.balanceOfAccount(user, BankingTypeRegistry.CHECKING));
     }
 
 

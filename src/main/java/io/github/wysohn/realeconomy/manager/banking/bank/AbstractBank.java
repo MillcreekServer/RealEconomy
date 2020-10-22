@@ -48,6 +48,8 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     private UUID bankOwnerUuid;
     private UUID baseCurrencyUuid;
 
+    private boolean operating = true;
+
     public AbstractBank(UUID key) {
         super(key);
     }
@@ -88,6 +90,15 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         }
     }
 
+    public boolean isOperating() {
+        return operating;
+    }
+
+    public void setOperating(boolean operating) {
+        this.operating = operating;
+        notifyObservers();
+    }
+
     @Override
     public UUID getUuid() {
         return getKey();
@@ -100,6 +111,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         synchronized (transactionLock) {
             final boolean aBoolean = TransactionUtil.deposit(maximum, capitals, value, currency);
             notifyObservers();
@@ -109,6 +123,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         synchronized (transactionLock) {
             final boolean aBoolean = TransactionUtil.withdraw(minimum, capitals, value, currency, true);
             notifyObservers();
@@ -134,6 +151,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
      * @return true if newly created; false if the account type already exist
      */
     public boolean putAccount(IBankUser user, IBankingType type) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         Validation.assertNotNull(user);
         Validation.assertNotNull(type);
 
@@ -157,6 +177,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
      * @return true if deleted; false if account didn't exist in the first place.
      */
     public boolean removeAccount(IBankUser user, IBankingType type) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         Validation.assertNotNull(user);
 
         Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
@@ -169,6 +192,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     }
 
     public void addAccountAsset(IBankUser user, Asset asset) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         Validation.assertNotNull(user);
         if (!accounts.containsKey(user.getUuid()))
             throw new RuntimeException("Account of " + user + " does not exist.");
@@ -183,6 +209,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     }
 
     public int removeAccountAsset(IBankUser user, AssetSignature signature, int amount) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         Validation.assertNotNull(user);
         if (!accounts.containsKey(user.getUuid()))
             throw new RuntimeException("Account of " + user + " does not exist.");
@@ -193,11 +222,15 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
         TradingAccount account = (TradingAccount) accountMap.get(BankingTypeRegistry.TRADING);
         int i = account.removeAsset(signature, amount);
-        notifyObservers();
+        if (i > 0)
+            notifyObservers();
         return i;
     }
 
     public boolean depositAccount(IBankUser user, IBankingType type, BigDecimal amount, Currency currency) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         Validation.assertNotNull(user);
         if (!accounts.containsKey(user.getUuid()))
             throw new RuntimeException("Account of " + user + " does not exist.");
@@ -208,7 +241,8 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
         IAccount account = accountMap.get(type);
         boolean deposit = TransactionUtil.deposit(maximum, account.getCurrencyMap(), amount, currency);
-        notifyObservers();
+        if (deposit)
+            notifyObservers();
         return deposit;
     }
 
@@ -217,6 +251,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
     }
 
     public boolean withdrawAccount(IBankUser user, IBankingType type, BigDecimal amount, Currency currency) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         Validation.assertNotNull(user);
         if (!accounts.containsKey(user.getUuid()))
             throw new RuntimeException("Account of " + user + " does not exist.");
@@ -226,6 +263,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
             throw new RuntimeException("Account of " + user + " does not exist.");
 
         IAccount account = accountMap.get(type);
+        notifyObservers();
         return TransactionUtil.withdraw(minimum, account.getCurrencyMap(), amount, currency, true);
     }
 
@@ -233,13 +271,36 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         return withdrawAccount(user, type, BigDecimal.valueOf(amount), currency);
     }
 
+    public BigDecimal balanceOfAccount(IBankUser user, IBankingType type) {
+        return balanceOfAccount(user, type, getBaseCurrency());
+    }
+
+    public BigDecimal balanceOfAccount(IBankUser user, IBankingType type, Currency currency) {
+        Validation.assertNotNull(user);
+        if (!accounts.containsKey(user.getUuid()))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        if (!accountMap.containsKey(type))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        IAccount account = accountMap.get(type);
+        return TransactionUtil.balance(account.getCurrencyMap(), currency);
+    }
+
     @Override
     public void addAsset(Asset asset) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         AssetUtil.addAsset(ownedAssets, asset);
     }
 
     @Override
     public int removeAsset(AssetSignature signature, int amount) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
         return AssetUtil.removeAsset(ownedAssets, signature, amount);
     }
 

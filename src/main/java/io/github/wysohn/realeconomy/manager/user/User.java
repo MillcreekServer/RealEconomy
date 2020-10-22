@@ -11,8 +11,6 @@ import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
-import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
-import io.github.wysohn.realeconomy.manager.banking.AssetUtil;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
@@ -164,21 +162,6 @@ public class User extends BukkitPlayer implements IBankUser {
             default:
                 throw new RuntimeException("Unknown order type " + type);
         }
-    }
-
-    @Override
-    public void addAsset(Asset asset) {
-        AssetUtil.addAsset(ownedAssets, asset);
-    }
-
-    @Override
-    public int removeAsset(AssetSignature signature, int amount) {
-        return AssetUtil.removeAsset(ownedAssets, signature, amount);
-    }
-
-    @Override
-    public DataProvider<Asset> assetDataProvider() {
-        return AssetUtil.assetDataProvider(ownedAssets);
     }
 
     @Override

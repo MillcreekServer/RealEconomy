@@ -1,6 +1,7 @@
 package io.github.wysohn.realeconomy.mediator;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.utils.Validation;
@@ -8,7 +9,6 @@ import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
-import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
@@ -31,12 +31,14 @@ import java.util.UUID;
 @Singleton
 public class BankingMediator extends Mediator {
     private static final UUID SERVER_BANK_UUID = UUID.fromString("567738eb-15f8-4550-bed2-49be1e57ebb7");
+    public static final String KEY_SERVER_BANK_ENABLE = "serverBank.enable";
     private static CentralBank serverBank;
 
     public static CentralBank getServerBank() {
         return serverBank;
     }
 
+    private final ManagerConfig config;
     private final BigDecimal maxCapital;
     private final BigDecimal minCapital;
     private final CurrencyManager currencyManager;
@@ -46,10 +48,12 @@ public class BankingMediator extends Mediator {
 
     @Inject
     public BankingMediator(
+            ManagerConfig config,
             @MaxCapital BigDecimal maxCapital,
             @MinCapital BigDecimal minCapital,
             CurrencyManager currencyManager,
             CentralBankingManager centralBankingManager) {
+        this.config = config;
         this.maxCapital = maxCapital;
         this.minCapital = minCapital;
         this.currencyManager = currencyManager;
@@ -58,13 +62,20 @@ public class BankingMediator extends Mediator {
 
     @Override
     public void enable() throws Exception {
+        if (!config.get(KEY_SERVER_BANK_ENABLE).isPresent())
+            config.put(KEY_SERVER_BANK_ENABLE, true);
+
         serverBank = centralBankingManager.getOrNew(SERVER_BANK_UUID)
                 .map(Reference::get)
                 .orElseThrow(RuntimeException::new);
         if (serverBank.getBaseCurrency() == null) {
             serverBank.setStringKey("*");
-            currencyManager.newCurrency("default", "DFT", serverBank);
+            currencyManager.newCurrency("server", "SRV", serverBank);
         }
+
+        serverBank.setOperating(config.get(KEY_SERVER_BANK_ENABLE)
+                .map(Boolean.class::cast)
+                .orElse(false));
     }
 
     @Override
@@ -139,7 +150,7 @@ public class BankingMediator extends Mediator {
     }
 
     public boolean openAccount(IBankUser user, IBankingType type) {
-        return this.openAccount(serverBank, user, type);
+        return this.openAccount(getUsingBank(user), user, type);
     }
 
     public boolean openAccount(AbstractBank bank, IBankUser user, IBankingType type) {
@@ -147,7 +158,7 @@ public class BankingMediator extends Mediator {
     }
 
     public BigDecimal balance(IBankUser user, IBankingType type) {
-        return this.balance(serverBank, user, type);
+        return this.balance(getUsingBank(user), user, type);
     }
 
     public BigDecimal balance(AbstractBank bank, IBankUser user, IBankingType type) {
@@ -158,15 +169,12 @@ public class BankingMediator extends Mediator {
         return Optional.of(bank)
                 .map(AbstractBank::getBaseCurrency)
                 .map(CachedElement::getKey)
-                .map(currencyUuid -> {
-                    IAccount account = bank.getAccount(user, type);
-                    return account.getCurrencyMap().get(currencyUuid);
-                })
+                .map(currencyUuid -> bank.balanceOfAccount(user, type))
                 .orElse(BigDecimal.ZERO);
     }
 
     public Result deposit(IBankUser user, IBankingType type, BigDecimal amount) {
-        return deposit(serverBank, user, type, amount);
+        return deposit(getUsingBank(user), user, type, amount);
     }
 
     public Result deposit(AbstractBank bank, IBankUser user, IBankingType type, BigDecimal amount) {
@@ -178,12 +186,10 @@ public class BankingMediator extends Mediator {
         if (bank.getBaseCurrency() == null)
             return Result.NO_CURRENCY_SET;
 
-        IAccount account = bank.getAccount(user, type);
-        if (account == null)
+        if (!bank.hasAccount(user, type))
             return Result.NO_ACCOUNT;
 
-        //TODO wrong implementation. must use bank#accountTransaction()
-        if (TransactionUtil.deposit(maxCapital, account.getCurrencyMap(), amount, bank.getBaseCurrency())) {
+        if (bank.depositAccount(user, type, amount, bank.getBaseCurrency())) {
             return Result.OK;
         } else {
             return Result.FAIL_DEPOSIT;
@@ -203,12 +209,10 @@ public class BankingMediator extends Mediator {
         if (bank.getBaseCurrency() == null)
             return Result.NO_CURRENCY_SET;
 
-        IAccount account = bank.getAccount(user, type);
-        if (account == null)
+        if (!bank.hasAccount(user, type))
             return Result.NO_ACCOUNT;
 
-        //TODO wrong implementation. must use bank#accountTransaction()
-        if (TransactionUtil.withdraw(minCapital, account.getCurrencyMap(), amount, bank.getBaseCurrency())) {
+        if (bank.withdrawAccount(user, type, amount, bank.getBaseCurrency())) {
             return Result.OK;
         } else {
             return Result.FAIL_WITHDRAW;
@@ -233,11 +237,18 @@ public class BankingMediator extends Mediator {
         return TransactionUtil.send(from, to, amount, currency);
     }
 
+    public boolean isInBank(IBankUser user) {
+        return Optional.ofNullable(user)
+                .map(IPluginObject::getUuid)
+                .map(usingBanks::containsKey)
+                .orElse(false);
+    }
+
     public AbstractBank getUsingBank(IBankUser user) {
         return Optional.ofNullable(user)
                 .map(IPluginObject::getUuid)
                 .map(usingBanks::get)
-                .orElse(serverBank);
+                .orElse(serverBank.isOperating() ? serverBank : null);
     }
 
     public boolean enterBank(IBankUser user, AbstractBank bank) {

@@ -15,12 +15,15 @@ import io.github.wysohn.rapidframework3.core.paging.Pagination;
 import io.github.wysohn.rapidframework3.core.player.AbstractPlayerWrapper;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.command.IArgumentMapper;
+import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
 import io.github.wysohn.realeconomy.inject.module.CapitalLimitModule;
 import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
 import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
+import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
+import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -29,6 +32,7 @@ import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.manager.user.UserManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
@@ -84,10 +88,10 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
     @Override
     protected void registerCommands(List<SubCommand.Builder> list) {
-        list.add(new SubCommand.Builder("balance", -1)
-                .withAlias("bal")
-                .withDescription(RealEconomyLangs.Command_Balance_Desc)
-                .addUsage(RealEconomyLangs.Command_Balance_Usage)
+        list.add(new SubCommand.Builder("wallet", -1)
+                .withAlias("bal", "balance", "money")
+                .withDescription(RealEconomyLangs.Command_Wallet_Desc)
+                .addUsage(RealEconomyLangs.Command_Wallet_Usage)
                 .addTabCompleter(0, TabCompleters.hint("[page]"))
                 .addArgumentMapper(0, ArgumentMappers.INTEGER)
                 .action((sender, args) -> {
@@ -106,7 +110,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                             target.balancesPagination(),
                             7,
                             getMain().lang().parseFirst(sender, RealEconomyLangs.Wallet),
-                            "/realeconomy balance").show(sender, page, (sen, pair, i) ->
+                            "/realeconomy wallet").show(sender, page, (sen, pair, i) ->
                             MessageBuilder.forMessage(toFormattedBalance(pair))
                                     .append(" ")
                                     .append(toCurrencyName(pair))
@@ -116,8 +120,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 })
         );
         list.add(new SubCommand.Builder("pay", 3)
-                .withDescription(RealEconomyLangs.Command_Balance_Desc)
-                .addUsage(RealEconomyLangs.Command_Balance_Usage)
+                .withDescription(RealEconomyLangs.Command_Wallet_Desc)
+                .addUsage(RealEconomyLangs.Command_Wallet_Usage)
                 .addTabCompleter(0, TabCompleters.PLAYER)
                 .addTabCompleter(1, TabCompleters.hint("<amount>"))
                 .addTabCompleter(2, TabCompleters.hint("<currency>"))
@@ -266,8 +270,37 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                     return true;
                 }));
+        list.add(new SubCommand.Builder("items", 1)
+                .addTabCompleter(0, TabCompleters.hint("[page]"))
+                .addArgumentMapper(0, ArgumentMappers.INTEGER)
+                .action((sender, args) -> {
+                    int page = args.get(0)
+                            .map(Integer.class::cast)
+                            .filter(val -> val > 0)
+                            .map(val -> val - 1)
+                            .orElse(0);
 
-        getMain().comm().linkMainCommand("balance", "realeconomy", "balance");
+                    getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator -> {
+                        getMain().getManager(AssetListingManager.class).ifPresent(assetListingManager -> {
+                            DataProvider<OrderInfo> dataProvider = tradeMediator.getPrice();
+                            //TODO use GUI
+
+                            new Pagination<>(getMain().lang(),
+                                    dataProvider,
+                                    7,
+                                    "items",
+                                    "/economy items").show(sender, page, (sen, info, i) ->
+                                    //TODO signature, price, currency, order_id
+                                    MessageBuilder.forMessage(info.toString())
+                                            .build());
+                        });
+                    });
+                    return true;
+                }));
+
+        getMain().comm().linkMainCommand("bal", "realeconomy", "wallet");
+        getMain().comm().linkMainCommand("balance", "realeconomy", "wallet");
+        getMain().comm().linkMainCommand("money", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("pay", "realeconomy", "pay");
     }
 

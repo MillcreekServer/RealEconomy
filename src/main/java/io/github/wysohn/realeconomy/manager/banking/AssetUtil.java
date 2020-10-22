@@ -13,7 +13,7 @@ import java.util.Objects;
 public class AssetUtil {
 
     public static void addAsset(List<Asset> ownedAssets, Asset asset) {
-        ownedAssets.add(asset);
+        ownedAssets.add(asset.clone());
     }
 
     public static int removeAsset(List<Asset> ownedAssets, AssetSignature signature, int amount) {

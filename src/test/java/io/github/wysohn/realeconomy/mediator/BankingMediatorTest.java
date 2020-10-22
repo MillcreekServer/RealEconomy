@@ -181,12 +181,9 @@ public class BankingMediatorTest {
         when(user.getUuid()).thenReturn(uuid);
         when(currency.getKey()).thenReturn(currencyUuid);
         when(serverBank.getBaseCurrency()).thenReturn(currency);
-        when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
         when(account.getCurrencyMap()).thenReturn(balances);
 
-        mediator.balance(user, BankingTypeRegistry.CHECKING);
-
-        verify(balances).get(currencyUuid);
+        assertEquals(BigDecimal.ZERO, mediator.balance(user, BankingTypeRegistry.CHECKING));
     }
 
     @Test
@@ -237,17 +234,16 @@ public class BankingMediatorTest {
 
         when(currency.getKey()).thenReturn(currencyUuid);
         when(serverBank.getBaseCurrency()).thenReturn(currency);
-        when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
+        when(serverBank.hasAccount(eq(user), eq(BankingTypeRegistry.CHECKING))).thenReturn(true);
         when(account.getCurrencyMap()).thenReturn(balances);
 
-        assertEquals(BankingMediator.Result.OK, mediator.deposit(user,
+        mediator.deposit(user,
                 BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN));
-
-        balances.put(currencyUuid, BigDecimal.valueOf(Double.MAX_VALUE));
-        assertEquals(BankingMediator.Result.FAIL_DEPOSIT, mediator.deposit(user,
-                BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN));
+                BigDecimal.TEN);
+        verify(serverBank).depositAccount(eq(user),
+                eq(BankingTypeRegistry.CHECKING),
+                eq(BigDecimal.TEN),
+                eq(currency));
     }
 
     @Test
@@ -298,17 +294,15 @@ public class BankingMediatorTest {
 
         when(currency.getKey()).thenReturn(currencyUuid);
         when(serverBank.getBaseCurrency()).thenReturn(currency);
-        when(serverBank.getAccount(user, BankingTypeRegistry.CHECKING)).thenReturn(account);
+        when(serverBank.hasAccount(eq(user), eq(BankingTypeRegistry.CHECKING))).thenReturn(true);
         when(account.getCurrencyMap()).thenReturn(balances);
 
-        balances.put(currencyUuid, BigDecimal.valueOf(Double.MAX_VALUE));
-        assertEquals(BankingMediator.Result.OK, mediator.withdraw(user,
+        mediator.withdraw(user,
                 BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN));
-
-        balances.put(currencyUuid, BigDecimal.ZERO);
-        assertEquals(BankingMediator.Result.FAIL_WITHDRAW, mediator.withdraw(user,
-                BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN));
+                BigDecimal.TEN);
+        verify(serverBank).withdrawAccount(eq(user),
+                eq(BankingTypeRegistry.CHECKING),
+                eq(BigDecimal.TEN),
+                eq(currency));
     }
 }
