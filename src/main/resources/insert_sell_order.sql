@@ -1,4 +1,5 @@
 INSERT INTO sell_orders(listing_uuid,
+    category_id,
     timestamp,
     issuer,
     price,
@@ -6,6 +7,7 @@ INSERT INTO sell_orders(listing_uuid,
     amount,
     maximum)
 VALUES (?,
+    ?,
     ?,
     ?,
     ?,

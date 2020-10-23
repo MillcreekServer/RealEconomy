@@ -7,7 +7,9 @@ import io.github.wysohn.rapidframework3.core.paging.DataProviderProxy;
 import io.github.wysohn.rapidframework3.core.paging.Range;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
+import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.sql.SQLSession;
+import io.github.wysohn.rapidframework3.utils.trie.StringListTrie;
 import io.github.wysohn.realeconomy.inject.annotation.OrderSQL;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
@@ -19,10 +21,7 @@ import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -36,34 +35,58 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         OrderPlacementHandler orderPlacementHandler = new OrderPlacementHandler(orderSql);
         orderPlacementHandler.INSERT_BUY = Metrics.resourceToString(resourceProvider, "insert_buy_order.sql");
         orderPlacementHandler.INSERT_SELL = Metrics.resourceToString(resourceProvider, "insert_sell_order.sql");
+        orderPlacementHandler.INSERT_CATEGORY = Metrics.resourceToString(resourceProvider, "insert_category.sql");
         orderPlacementHandler.INSERT_LOG = Metrics.resourceToString(resourceProvider, "insert_trade_log.sql");
         orderPlacementHandler.UPDATE_BUY = Metrics.resourceToString(resourceProvider, "update_buy_orders.sql");
         orderPlacementHandler.UPDATE_SELL = Metrics.resourceToString(resourceProvider, "update_sell_orders.sql");
         orderPlacementHandler.DELETE_BUY = Metrics.resourceToString(resourceProvider, "delete_buy_order.sql");
         orderPlacementHandler.DELETE_SELL = Metrics.resourceToString(resourceProvider, "delete_sell_order.sql");
+        orderPlacementHandler.SELECT_CATEGORIES = Metrics.resourceToString(resourceProvider, "select_categories.sql");
         orderPlacementHandler.SELECT_MATCH_ORDERS
                 = Metrics.resourceToString(resourceProvider, "select_match_orders.sql");
         orderPlacementHandler.SELECT_SELL_ORDERS
                 = Metrics.resourceToString(resourceProvider, "select_sell_orders.sql");
         orderPlacementHandler.SELECT_SELL_ORDERS_ALL
                 = Metrics.resourceToString(resourceProvider, "select_sell_orders_all.sql");
+
+        List<Pair<String, Integer>> list = orderSql.query(orderPlacementHandler.SELECT_CATEGORIES, pstmt -> {
+        }, rs -> {
+            int category_id = 0;
+            try {
+                category_id = rs.getInt("category_id");
+                String category_value = rs.getString("category_value");
+                return Pair.of(category_value, category_id);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                return null;
+            }
+        });
+        list.stream()
+                .filter(Objects::nonNull)
+                .forEach(pair -> {
+                    orderPlacementHandler.categoryIdMap.put(pair.key, pair.value);
+                    orderPlacementHandler.categoryTrie.insert(pair.key);
+                });
+
         return orderPlacementHandler;
     }
 
     private static class OrderPlacementHandler implements IOrderPlacementHandler {
-        // fake UUID just to store all search data in dataProviderMap
-        private static final UUID ALL_LISTINGS_UUID = UUID.fromString("f02a94b0-dde1-4ee3-9496-ea21b27de956");
+        private final Map<String, Integer> categoryIdMap = new HashMap<>();
+        private final StringListTrie categoryTrie = new StringListTrie();
 
         private final SQLSession ordersSession;
-        private final Map<UUID, DataProvider<OrderInfo>> dataProviderMap = new HashMap<>();
+        private final Map<Integer, DataProvider<OrderInfo>> dataProviderMap = new HashMap<>();
 
         private String INSERT_BUY;
         private String INSERT_SELL;
+        private String INSERT_CATEGORY;
         private String INSERT_LOG;
         private String UPDATE_BUY;
         private String UPDATE_SELL;
         private String DELETE_BUY;
         private String DELETE_SELL;
+        private String SELECT_CATEGORIES;
         private String SELECT_MATCH_ORDERS;
         private String SELECT_SELL_ORDERS;
         private String SELECT_SELL_ORDERS_ALL;
@@ -74,6 +97,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
 
         @Override
         public void addOrder(UUID listingUuid,
+                             String category,
                              OrderType type,
                              IOrderIssuer issuer,
                              double price,
@@ -88,15 +112,29 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 throw new RuntimeException("Unknown order type " + type);
             }
 
+            if (!categoryIdMap.containsKey(category)) {
+                ordersSession.execute(INSERT_CATEGORY, pstmt -> {
+                    try {
+                        pstmt.setString(1, category);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }, key -> {
+                    categoryIdMap.put(category, key.intValue());
+                    categoryTrie.insert(category);
+                });
+            }
+
             ordersSession.execute(sql, pstmt -> {
                 try {
                     pstmt.setString(1, listingUuid.toString());
-                    pstmt.setLong(2, System.currentTimeMillis());
-                    pstmt.setString(3, issuer.getUuid().toString());
-                    pstmt.setDouble(4, price);
-                    pstmt.setString(5, currency.getKey().toString());
-                    pstmt.setInt(6, stock);
+                    pstmt.setString(2, category);
+                    pstmt.setLong(3, System.currentTimeMillis());
+                    pstmt.setString(4, issuer.getUuid().toString());
+                    pstmt.setDouble(5, price);
+                    pstmt.setString(6, currency.getKey().toString());
                     pstmt.setInt(7, stock);
+                    pstmt.setInt(8, stock);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
@@ -180,16 +218,23 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         }
 
         @Override
-        public DataProvider<OrderInfo> getListedOrderProvider(UUID listingUuid) {
+        public StringListTrie categoryList() {
+            return categoryTrie;
+        }
+
+        @Override
+        public DataProvider<OrderInfo> getListedOrderProvider(String category) {
             boolean queryAll = false;
-            if (listingUuid == null) {
+            if (category == null) {
                 queryAll = true;
-                // replace so we can use it to store data for all asset listings
-                listingUuid = ALL_LISTINGS_UUID;
             }
 
+            if (category != null && !categoryIdMap.containsKey(category))
+                throw new RuntimeException("Unknown category " + category);
+            int categoryId = category == null ? 0 : categoryIdMap.get(category);
+
             boolean finalQueryAll = queryAll;
-            return dataProviderMap.computeIfAbsent(listingUuid, c -> {
+            return dataProviderMap.computeIfAbsent(categoryId, c -> {
                 OrderDataProvider orderDataProvider = new OrderDataProvider(c, finalQueryAll);
                 return new DataProviderProxy<>(orderDataProvider, orderDataProvider);
             });
@@ -198,11 +243,11 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         private class OrderDataProvider implements Function<Range, List<OrderInfo>>, Supplier<Integer> {
             private static final String COLUMN_COUNT = "rows";
 
-            private final UUID listingUuid;
+            private final int categoryId;
             private final boolean queryAll;
 
-            public OrderDataProvider(UUID listingUuid, boolean queryAll) {
-                this.listingUuid = listingUuid;
+            public OrderDataProvider(int categoryId, boolean queryAll) {
+                this.categoryId = categoryId;
                 this.queryAll = queryAll;
             }
 
@@ -210,10 +255,10 @@ public class OrderPlacementHandlerModule extends AbstractModule {
             public Integer get() {
                 List<Integer> out = ordersSession.query("SELECT COUNT(" + OrderSQLModule.ORDER_ID + ") as " + COLUMN_COUNT +
                         " FROM sell_orders" +
-                        (queryAll ? "" : "WHERE listing_uuid = ?;"), pstmt -> {
+                        (queryAll ? "" : "WHERE " + OrderSQLModule.CATEGORY_ID + " = ?;"), pstmt -> {
                     try {
                         if (!queryAll)
-                            pstmt.setString(1, listingUuid.toString());
+                            pstmt.setInt(1, categoryId);
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
@@ -237,7 +282,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                     try {
                         int i = 1;
                         if (!queryAll)
-                            pstmt.setString(i++, listingUuid.toString());
+                            pstmt.setInt(i++, categoryId);
                         pstmt.setInt(i++, range.index);
                         pstmt.setInt(i++, range.size);
                     } catch (SQLException ex) {

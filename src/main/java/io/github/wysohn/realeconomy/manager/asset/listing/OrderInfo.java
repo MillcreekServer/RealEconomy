@@ -11,6 +11,7 @@ public class OrderInfo {
     private final int orderId;
     private final UUID listingUuid;
     // private final long timestamp;
+    private final int categoryId;
     private final UUID issuer;
     private final double price;
     private final UUID currencyUuid;
@@ -20,6 +21,7 @@ public class OrderInfo {
     private OrderInfo(int orderId,
                       UUID listingUuid,
                       //long timestamp,
+                      int categoryId,
                       UUID issuer,
                       double price,
                       UUID currencyUuid,
@@ -27,6 +29,7 @@ public class OrderInfo {
         this.orderId = orderId;
         this.listingUuid = listingUuid;
         // this.timestamp = timestamp;
+        this.categoryId = categoryId;
         this.issuer = issuer;
         this.price = price;
         this.currencyUuid = currencyUuid;
@@ -45,6 +48,10 @@ public class OrderInfo {
 //    public long getTimestamp() {
 //        return timestamp;
 //    }
+
+    public int getCategoryId() {
+        return categoryId;
+    }
 
     public UUID getIssuer() {
         return issuer;
@@ -102,18 +109,19 @@ public class OrderInfo {
         int orderId = rs.getInt(OrderSQLModule.ORDER_ID);
         UUID listing_uuid = UUID.fromString(rs.getString("listing_uuid"));
         //long timestamp = rs.getTimestamp("timestamp").getTime();
+        int categoryId = rs.getInt("category_id");
         UUID issuer = UUID.fromString(rs.getString("issuer"));
         double price = rs.getDouble("min_price");
         UUID currencyUuid = UUID.fromString(rs.getString("currency_uuid"));
         int amount = rs.getInt("amount");
         int max = rs.getInt("maximum");
 
-        return new OrderInfo(orderId, listing_uuid, issuer, price, currencyUuid, amount, max);
+        return new OrderInfo(orderId, listing_uuid, categoryId, issuer, price, currencyUuid, amount, max);
     }
 
-    public static OrderInfo create(int orderId, UUID listingUuid, UUID issuer,
+    public static OrderInfo create(int orderId, UUID listingUuid, int categoryId, UUID issuer,
                                    double price, UUID currencyUuid,
                                    int amount, int max) {
-        return new OrderInfo(orderId, listingUuid, issuer, price, currencyUuid, amount, max);
+        return new OrderInfo(orderId, listingUuid, categoryId, issuer, price, currencyUuid, amount, max);
     }
 }

@@ -14,6 +14,7 @@ import java.sql.SQLException;
 
 public class OrderSQLModule extends AbstractModule {
     public static final String ORDER_ID = "order_id";
+    public static final String CATEGORY_ID = "category_id";
 
     @Provides
     @Singleton
@@ -37,6 +38,7 @@ public class OrderSQLModule extends AbstractModule {
                         .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
                         .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
+                        .field(CATEGORY_ID, "integer")
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("price", "double precision",
@@ -44,6 +46,10 @@ public class OrderSQLModule extends AbstractModule {
                         .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
+                .createTable("category", tableInitializer -> tableInitializer.ifNotExist()
+                        .field(CATEGORY_ID, "integer",
+                                SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
+                        .field("category_value varchar(256) UNIQUE"))
                 .createTable("trade_logs", tableInitializer -> tableInitializer.ifNotExist()
                         .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)

@@ -47,6 +47,8 @@ public enum RealEconomyLangs implements ILang {
     Command_Items_Desc("List all selling items."),
     Command_Items_Usage("&d/eco items" +
             " &8- &7list all items currently selling"),
+    //signature, price, currency, order_id
+    Command_Items_Format("&d${string}&8: &6${double} ${string} &8[&bOrderId &d${integer}&8]"),
 
     Bank_Owner("&9Owner"),
     Bank_BaseCurrency("&9BaseCurrency"),

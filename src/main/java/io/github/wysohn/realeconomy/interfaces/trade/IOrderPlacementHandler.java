@@ -1,6 +1,7 @@
 package io.github.wysohn.realeconomy.interfaces.trade;
 
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
+import io.github.wysohn.rapidframework3.utils.trie.StringListTrie;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
@@ -22,6 +23,7 @@ public interface IOrderPlacementHandler {
      * @param listingUuid uuid of asset listing specified in
      *                    {@link io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager}. This method doesn't manually
      *                    check if the given UUID is actually valid.
+     * @param category    category of the asset
      * @param type        order type
      * @param issuer      the order issuer
      * @param price       price
@@ -30,6 +32,7 @@ public interface IOrderPlacementHandler {
      * @throws SQLException if some unexpected SQL error occurs.
      */
     void addOrder(UUID listingUuid,
+                  String category,
                   OrderType type,
                   IOrderIssuer issuer,
                   double price,
@@ -91,15 +94,22 @@ public interface IOrderPlacementHandler {
     void peekMatchingOrders(Consumer<TradeInfo> consumer);
 
     /**
+     * Get String Trie of categories for query.
+     *
+     * @return
+     */
+    StringListTrie categoryList();
+
+    /**
      * Get DataProvider for the currently listed selling orders.
      * <p>
      * For simplicity, this method must be thread-safe, so the callers do not have to worry about
      * the SQL concurrency issue.
      *
-     * @param listingUuid
+     * @param category
      * @return
      */
-    DataProvider<OrderInfo> getListedOrderProvider(UUID listingUuid);
+    DataProvider<OrderInfo> getListedOrderProvider(String category);
 
     default DataProvider<OrderInfo> getListedOrderProvider() {
         return getListedOrderProvider(null);
