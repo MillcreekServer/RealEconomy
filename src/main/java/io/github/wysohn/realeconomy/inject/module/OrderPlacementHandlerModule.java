@@ -125,10 +125,11 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 });
             }
 
+            int categoryId = categoryIdMap.get(category);
             ordersSession.execute(sql, pstmt -> {
                 try {
                     pstmt.setString(1, listingUuid.toString());
-                    pstmt.setString(2, category);
+                    pstmt.setInt(2, categoryId);
                     pstmt.setLong(3, System.currentTimeMillis());
                     pstmt.setString(4, issuer.getUuid().toString());
                     pstmt.setDouble(5, price);

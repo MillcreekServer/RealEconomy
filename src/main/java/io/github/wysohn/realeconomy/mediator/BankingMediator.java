@@ -32,6 +32,8 @@ import java.util.UUID;
 public class BankingMediator extends Mediator {
     private static final UUID SERVER_BANK_UUID = UUID.fromString("567738eb-15f8-4550-bed2-49be1e57ebb7");
     public static final String KEY_SERVER_BANK_ENABLE = "serverBank.enable";
+    public static final String SERVER_CURRENCY = "server";
+    public static final String SERVER_CURRENCY_CODE = "SRV";
     private static CentralBank serverBank;
 
     public static CentralBank getServerBank() {
@@ -70,7 +72,7 @@ public class BankingMediator extends Mediator {
                 .orElseThrow(RuntimeException::new);
         if (serverBank.getBaseCurrency() == null) {
             serverBank.setStringKey("*");
-            currencyManager.newCurrency("server", "SRV", serverBank);
+            currencyManager.newCurrency(SERVER_CURRENCY, SERVER_CURRENCY_CODE, serverBank);
         }
 
         serverBank.setOperating(config.get(KEY_SERVER_BANK_ENABLE)

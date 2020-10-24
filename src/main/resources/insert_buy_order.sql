@@ -1,8 +1,16 @@
 INSERT INTO buy_orders(listing_uuid,
-  timestamp,
-  issuer,
-  price,
-  currency_uuid,
-  amount,
-  maximum)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+    category_id,
+    timestamp,
+    issuer,
+    price,
+    currency_uuid,
+    amount,
+    maximum)
+VALUES (?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?);

@@ -21,6 +21,8 @@ public abstract class AssetSignature {
      */
     public abstract boolean isPhysical();
 
+    public abstract String category();
+
     public abstract AssetSignature clone();
 
     public abstract Asset create(Map<String, Object> metaData);

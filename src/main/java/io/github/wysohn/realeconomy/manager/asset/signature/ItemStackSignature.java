@@ -2,6 +2,7 @@ package io.github.wysohn.realeconomy.manager.asset.signature;
 
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
@@ -22,6 +23,11 @@ public class ItemStackSignature extends PhysicalAssetSignature {
 
     public ItemStackSignature(ItemStack itemStack) {
         this.itemStack = itemStack;
+    }
+
+    @Override
+    public String category() {
+        return TradeMediator.MATERIAL_CATEGORY_MAP.get(itemStack.getType());
     }
 
     /**

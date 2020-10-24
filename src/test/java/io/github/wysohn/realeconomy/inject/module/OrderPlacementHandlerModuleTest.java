@@ -15,6 +15,7 @@ import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -79,18 +80,21 @@ public class OrderPlacementHandlerModuleTest {
         when(currency.getKey()).thenReturn(currencyUuid);
 
         orderPlacementHandler.addOrder(listingUuid,
+                TradeMediator.MATERIAL_CATEGORY_DEFAULT,
                 OrderType.SELL,
                 orderIssuer,
                 2000.55,
                 currency,
                 20);
         orderPlacementHandler.addOrder(listingUuid,
+                TradeMediator.MATERIAL_CATEGORY_DEFAULT,
                 OrderType.SELL,
                 orderIssuer,
                 1034.55,
                 currency,
                 5);
         orderPlacementHandler.addOrder(listingUuid,
+                TradeMediator.MATERIAL_CATEGORY_DEFAULT,
                 OrderType.SELL,
                 orderIssuer,
                 2050.55,
@@ -104,6 +108,7 @@ public class OrderPlacementHandlerModuleTest {
         verify(consumer).accept(isNull(TradeInfo.class));
 
         orderPlacementHandler.addOrder(listingUuid,
+                TradeMediator.MATERIAL_CATEGORY_DEFAULT,
                 OrderType.BUY,
                 orderIssuer,
                 1000.0,
@@ -111,6 +116,7 @@ public class OrderPlacementHandlerModuleTest {
                 30);
 
         orderPlacementHandler.addOrder(listingUuid,
+                TradeMediator.MATERIAL_CATEGORY_DEFAULT,
                 OrderType.BUY,
                 orderIssuer,
                 3000.0,
@@ -118,6 +124,7 @@ public class OrderPlacementHandlerModuleTest {
                 30);
 
         orderPlacementHandler.addOrder(listingUuid,
+                TradeMediator.MATERIAL_CATEGORY_DEFAULT,
                 OrderType.BUY,
                 orderIssuer,
                 5000.0,
@@ -169,54 +176,63 @@ public class OrderPlacementHandlerModuleTest {
         when(currency.getKey()).thenReturn(currencyUuid);
 
         orderPlacementHandler.addOrder(listingUuid1,
+                "item1",
                 OrderType.SELL,
                 orderIssuer,
                 2000.55,
                 currency,
                 20);
         orderPlacementHandler.addOrder(listingUuid1,
+                "item1",
                 OrderType.SELL,
                 orderIssuer,
                 1045.33,
                 currency,
                 20);
         orderPlacementHandler.addOrder(listingUuid1,
+                "item1",
                 OrderType.SELL,
                 orderIssuer,
                 1001.32,
                 currency,
                 20);
         orderPlacementHandler.addOrder(listingUuid2,
+                "item2",
                 OrderType.SELL,
                 orderIssuer,
                 3463.55,
                 currency,
                 5);
         orderPlacementHandler.addOrder(listingUuid2,
+                "item2",
                 OrderType.SELL,
                 orderIssuer,
                 5534.55,
                 currency,
                 5);
         orderPlacementHandler.addOrder(listingUuid2,
+                "item2",
                 OrderType.SELL,
                 orderIssuer,
                 3940.23,
                 currency,
                 5);
         orderPlacementHandler.addOrder(listingUuid3,
+                "item3",
                 OrderType.SELL,
                 orderIssuer,
                 980.42,
                 currency,
                 30);
         orderPlacementHandler.addOrder(listingUuid3,
+                "item3",
                 OrderType.SELL,
                 orderIssuer,
                 1212.34,
                 currency,
                 30);
         orderPlacementHandler.addOrder(listingUuid3,
+                "item3",
                 OrderType.SELL,
                 orderIssuer,
                 1050.53,
@@ -229,6 +245,7 @@ public class OrderPlacementHandlerModuleTest {
         List<OrderInfo> expected = new ArrayList<>();
         expected.add(OrderInfo.create(3,
                 listingUuid1,
+                2,
                 orderIssuer.getUuid(),
                 1001.32,
                 currencyUuid,
@@ -236,6 +253,7 @@ public class OrderPlacementHandlerModuleTest {
                 20));
         expected.add(OrderInfo.create(4,
                 listingUuid2,
+                2,
                 orderIssuer.getUuid(),
                 3463.55,
                 currencyUuid,
@@ -243,6 +261,7 @@ public class OrderPlacementHandlerModuleTest {
                 5));
         expected.add(OrderInfo.create(7,
                 listingUuid3,
+                3,
                 orderIssuer.getUuid(),
                 980.42,
                 currencyUuid,
@@ -264,11 +283,12 @@ public class OrderPlacementHandlerModuleTest {
         assertEquals(expected, actual);
 
         DataProvider<OrderInfo> providerFiltered =
-                orderPlacementHandler.getListedOrderProvider(listingUuid1);
+                orderPlacementHandler.getListedOrderProvider("item1");
 
         List<OrderInfo> expected2 = new ArrayList<>();
         expected2.add(OrderInfo.create(3,
                 listingUuid1,
+                1,
                 orderIssuer.getUuid(),
                 1001.32,
                 currencyUuid,

@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
@@ -31,15 +32,25 @@ public class BankingMediatorTest {
     private CentralBank serverBank;
     private CurrencyManager currencyManager;
     private CentralBankingManager centralBankingManager;
+    private ManagerConfig config;
 
     @Before
     public void init() {
         serverBank = mock(CentralBank.class);
         currencyManager = mock(CurrencyManager.class);
+        config = mock(ManagerConfig.class);
+
+        when(serverBank.isOperating()).thenReturn(true);
         when(currencyManager.newCurrency(anyString(), anyString(), any())).thenReturn(CurrencyManager.Result.OK);
         centralBankingManager = mock(CentralBankingManager.class);
+        when(config.get(eq(BankingMediator.KEY_SERVER_BANK_ENABLE))).thenReturn(Optional.of(true));
 
         moduleList.add(new AbstractModule() {
+            @Provides
+            ManagerConfig config() {
+                return config;
+            }
+
             @Provides
             CurrencyManager currencyManager() {
                 return currencyManager;
@@ -80,8 +91,9 @@ public class BankingMediatorTest {
                 .thenReturn(Optional.of(new WeakReference<>(mock(CentralBank.class))));
 
         assertEquals(BankingMediator.Result.ALREADY_SET,
-                mediator.createCurrency(government, "dollar", "USD"));
-        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
+                mediator.createCurrency(government, BankingMediator.SERVER_CURRENCY, "USD"));
+        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
+                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
     }
 
     @Test
@@ -102,7 +114,8 @@ public class BankingMediatorTest {
 
         assertEquals(BankingMediator.Result.OK,
                 mediator.createCurrency(government, "dollar", "USD"));
-        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
+        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
+                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
         verify(currencyManager).newCurrency(eq("dollar"), eq("USD"), any(CentralBank.class));
         verify(centralBankingManager).getOrNew(eq(uuid));
     }
@@ -118,8 +131,9 @@ public class BankingMediatorTest {
                 .thenReturn(Optional.of(new WeakReference<>(mock(Currency.class))));
 
         assertEquals(BankingMediator.Result.DUP_NAME,
-                mediator.renameCurrency("dollar", "other"));
-        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
+                mediator.renameCurrency(BankingMediator.SERVER_CURRENCY, "other"));
+        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
+                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
         verify(currencyManager).get(eq("other"));
     }
 
@@ -132,14 +146,15 @@ public class BankingMediatorTest {
 
         when(currencyManager.get(eq("other")))
                 .thenReturn(Optional.empty());
-        when(currencyManager.get(eq("dollar")))
+        when(currencyManager.get(eq(BankingMediator.SERVER_CURRENCY)))
                 .thenReturn(Optional.empty());
 
         assertEquals(BankingMediator.Result.NOT_FOUND,
-                mediator.renameCurrency("dollar", "other"));
-        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
+                mediator.renameCurrency(BankingMediator.SERVER_CURRENCY, "other"));
+        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
+                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
         verify(currencyManager).get(eq("other"));
-        verify(currencyManager).get(eq("dollar"));
+        verify(currencyManager).get(eq(BankingMediator.SERVER_CURRENCY));
     }
 
     @Test
@@ -152,15 +167,16 @@ public class BankingMediatorTest {
         Currency currency = mock(Currency.class);
         when(currencyManager.get(eq("other")))
                 .thenReturn(Optional.empty());
-        when(currencyManager.get(eq("dollar")))
+        when(currencyManager.get(eq(BankingMediator.SERVER_CURRENCY)))
                 .thenReturn(Optional.of(new WeakReference<>(currency)));
 
         assertEquals(BankingMediator.Result.OK,
-                mediator.renameCurrency("dollar", "other"));
+                mediator.renameCurrency(BankingMediator.SERVER_CURRENCY, "other"));
 
-        verify(currencyManager).newCurrency(eq("default"), eq("DFT"), eq(BankingMediator.getServerBank()));
+        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
+                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
         verify(currencyManager).get(eq("other"));
-        verify(currencyManager, times(2)).get(eq("dollar"));
+        verify(currencyManager, times(2)).get(eq(BankingMediator.SERVER_CURRENCY));
         verify(currency).setStringKey("other");
     }
 

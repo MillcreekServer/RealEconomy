@@ -11,6 +11,7 @@ import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
+import io.github.wysohn.rapidframework3.utils.trie.StringListTrie;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
@@ -162,6 +163,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         AssetListing listing = fromSignature(signature);
 
         orderPlacementHandler.addOrder(listing.getKey(),
+                signature.category(),
                 type,
                 issuer,
                 price,
@@ -222,17 +224,19 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         orderPlacementHandler.peekMatchingOrders(consumer);
     }
 
+    public StringListTrie getCategoryTrie() {
+        return orderPlacementHandler.categoryList();
+    }
+
     /**
      * Get DataProvider of given asset signature.
      *
-     * @param signature the asset signature. It can be null to search for all listings.
+     * @param category the category to search for. It can be null to search for all listings.
      * @return the DataProvider.
+     * @throws RuntimeException if given category does not exist. Make sure to use only the values provided
+     *                          by {@link #getCategoryTrie()}
      */
-    public DataProvider<OrderInfo> getListedOrderProvider(AssetSignature signature) {
-        if (!signatureUUIDMap.containsKey(signature))
-            throw new RuntimeException("Invalid signature.");
-        AssetListing listing = fromSignature(signature);
-
-        return orderPlacementHandler.getListedOrderProvider(listing.getKey());
+    public DataProvider<OrderInfo> getListedOrderProvider(String category) {
+        return orderPlacementHandler.getListedOrderProvider(category);
     }
 }

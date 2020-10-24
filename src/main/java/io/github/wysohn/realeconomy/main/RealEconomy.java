@@ -40,10 +40,7 @@ import org.bukkit.Server;
 
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class RealEconomy extends AbstractBukkitPlugin {
 
@@ -272,17 +269,31 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     return true;
                 }));
         list.add(new SubCommand.Builder("items", 1)
+                .withDescription(RealEconomyLangs.Command_Items_Desc)
+                .addUsage(RealEconomyLangs.Command_Items_Usage)
                 .addTabCompleter(0, TabCompleters.hint("[page]"))
+                .addTabCompleter(1, part -> getMain().getManager(AssetListingManager.class)
+                        .map(AssetListingManager::getCategoryTrie)
+                        .map(trie -> trie.getAllStartsWith(part))
+                        .orElseGet(ArrayList::new))
                 .addArgumentMapper(0, ArgumentMappers.INTEGER)
+                .addArgumentMapper(1, arg -> getMain().getManager(AssetListingManager.class)
+                        .map(AssetListingManager::getCategoryTrie)
+                        .map(trie -> trie.find(arg))
+                        .orElseThrow(() -> new InvalidArgumentException(RealEconomyLangs.Command_Items_InvalidCategory,
+                                (s, m) -> m.addString(arg))))
                 .action((sender, args) -> {
                     int page = args.get(0)
                             .map(Integer.class::cast)
                             .filter(val -> val > 0)
                             .map(val -> val - 1)
                             .orElse(0);
+                    String category = args.get(1)
+                            .map(String.class::cast)
+                            .orElse(null);
 
                     getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator -> {
-                        DataProvider<OrderInfo> dataProvider = tradeMediator.getPrice();
+                        DataProvider<OrderInfo> dataProvider = tradeMediator.getPrice(category);
                         //TODO use GUI
 
                         new Pagination<>(getMain().lang(),

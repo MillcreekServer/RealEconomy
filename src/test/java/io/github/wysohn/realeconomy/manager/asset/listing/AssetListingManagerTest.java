@@ -4,12 +4,16 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
-import io.github.wysohn.rapidframework3.testmodules.*;
+import io.github.wysohn.rapidframework3.testmodules.MockConfigModule;
+import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
+import io.github.wysohn.rapidframework3.testmodules.MockSerializerModule;
+import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.module.OrderPlacementHandlerModule;
 import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;
@@ -18,6 +22,7 @@ import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,7 +52,6 @@ public class AssetListingManagerTest {
         moduleList.add(new OrderPlacementHandlerModule());
         moduleList.add(new MockLoggerModule());
         moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3)));
-        moduleList.add(new MockPluginDirectoryModule());
         moduleList.add(new MockSerializerModule(mockSerializer));
         moduleList.add(new MockShutdownModule(() -> {
 
@@ -70,6 +74,17 @@ public class AssetListingManagerTest {
 
     @Test
     public void newListing() throws Exception {
+        File dir = new File("build/tmp/newlisting/");
+        dir.mkdirs();
+        new File(dir, "orders.db").delete();
+        moduleList.add(new AbstractModule() {
+            @Provides
+            @PluginDirectory
+            File directory() {
+                return dir;
+            }
+        });
+
         AssetListingManager assetListingManager = Guice.createInjector(moduleList)
                 .getInstance(AssetListingManager.class);
         assetListingManager.enable();
@@ -82,7 +97,16 @@ public class AssetListingManagerTest {
 
     @Test
     public void addOrder() throws Exception {
-        new File("build/tmp/plugindir/orders.db").delete();
+        File dir = new File("build/tmp/addorder/");
+        dir.mkdirs();
+        new File(dir, "orders.db").delete();
+        moduleList.add(new AbstractModule() {
+            @Provides
+            @PluginDirectory
+            File directory() {
+                return dir;
+            }
+        });
 
         AssetListingManager assetListingManager = Guice.createInjector(moduleList)
                 .getInstance(AssetListingManager.class);
@@ -93,6 +117,7 @@ public class AssetListingManagerTest {
         Currency currency = mock(Currency.class);
 
         when(currency.getKey()).thenReturn(UUID.randomUUID());
+        when(signature.category()).thenReturn(TradeMediator.MATERIAL_CATEGORY_DEFAULT);
 
         assetListingManager.newListing(signature);
 

@@ -1,6 +1,7 @@
 package io.github.wysohn.realeconomy.mediator;
 
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
@@ -19,13 +20,17 @@ import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import org.bukkit.Material;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
@@ -33,9 +38,14 @@ import java.util.logging.Logger;
 
 @Singleton
 public class TradeMediator extends Mediator {
+    public static final Map<Material, String> MATERIAL_CATEGORY_MAP = new EnumMap<>(Material.class);
+    public static final String MATERIALS = "materials";
+    public static final String MATERIAL_CATEGORY_DEFAULT = "item";
+
     private final ExecutorService tradeExecutor = Executors.newSingleThreadExecutor();
 
     private final Logger logger;
+    private final ManagerConfig config;
     private final CurrencyManager currencyManager;
     private final AssetListingManager assetListingManager;
     private final IBankUserProvider bankUserProvider;
@@ -44,10 +54,12 @@ public class TradeMediator extends Mediator {
 
     @Inject
     public TradeMediator(@PluginLogger Logger logger,
+                         ManagerConfig config,
                          CurrencyManager currencyManager,
                          AssetListingManager assetListingManager,
                          IBankUserProvider bankUserProvider) {
         this.logger = logger;
+        this.config = config;
         this.currencyManager = currencyManager;
         this.assetListingManager = assetListingManager;
         this.bankUserProvider = bankUserProvider;
@@ -64,6 +76,21 @@ public class TradeMediator extends Mediator {
             tradeBroker.interrupt();
         tradeBroker = new TradeBroker();
         tradeBroker.start();
+
+        if (config.get(MATERIALS).isPresent()) {
+            Object materialSection = config.get(MATERIALS).get();
+            MATERIAL_CATEGORY_MAP.clear();
+            Arrays.stream(Material.values()).forEach(material -> {
+                MATERIAL_CATEGORY_MAP.put(material, config.get(materialSection, material.name())
+                        .map(String.class::cast)
+                        .orElse(MATERIAL_CATEGORY_DEFAULT));
+            });
+        } else {
+            Arrays.stream(Material.values()).forEach(material -> {
+                MATERIAL_CATEGORY_MAP.put(material, MATERIAL_CATEGORY_DEFAULT);
+                config.put(MATERIALS + "." + material, MATERIAL_CATEGORY_DEFAULT);
+            });
+        }
     }
 
     @Override
@@ -75,8 +102,8 @@ public class TradeMediator extends Mediator {
         return getPrice(null);
     }
 
-    public DataProvider<OrderInfo> getPrice(AssetSignature signature) {
-        return assetListingManager.getListedOrderProvider(signature);
+    public DataProvider<OrderInfo> getPrice(String category) {
+        return assetListingManager.getListedOrderProvider(category);
     }
 
     /**
