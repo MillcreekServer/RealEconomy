@@ -50,6 +50,20 @@ public enum RealEconomyLangs implements ILang {
     //signature, price, currency, order_id
     Command_Items_Format("&d${string}&8: &6${double} ${string} &8[&bOrderId &d${integer}&8]"),
 
+    Command_Buy_Desc("Buy a listed item."),
+    Command_Buy_Usage("&d/eco buy <order id> &8- &7purchase "),
+
+    Command_Sell_Desc("Sell an item."),
+    Command_Sell_Usage("&d/eco sell <price> <currency> &8- &7sell the item in hand for specified price."),
+
+    Command_Orders_Desc("List all orders issued by you."),
+    Command_Orders_Usage("&d/eco orders &8- &7list all orders."),
+
+    Command_Cancel_Desc("Cancel buy/sell order that has not processed yet."),
+    Command_Cancel_Usage("&d/eco cancel <type> <order id> &8- &7cancel the order with given id.",
+            "&dTypes&8: ${string}"),
+    Command_Cancel_InvalidOrderType("&6${string} &cis not a valid order type."),
+
     Bank_Owner("&9Owner"),
     Bank_BaseCurrency("&9BaseCurrency"),
     Bank_NumAccounts("&9Number of accounts"),

@@ -313,6 +313,49 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     });
                     return true;
                 }));
+        list.add(new SubCommand.Builder("buy")
+                .withDescription(RealEconomyLangs.Command_Buy_Desc)
+                .addUsage(RealEconomyLangs.Command_Buy_Usage)
+                .addTabCompleter(0, TabCompleters.hint("<order id>"))
+                .addArgumentMapper(0, ArgumentMappers.INTEGER)
+                .action((sender, args) -> {
+                    return true;
+                }));
+        list.add(new SubCommand.Builder("sell")
+                .withDescription(RealEconomyLangs.Command_Sell_Desc)
+                .addUsage(RealEconomyLangs.Command_Sell_Usage)
+                .addTabCompleter(0, TabCompleters.hint("<price>"))
+                .addTabCompleter(1, TabCompleters.hint("<currency>"))
+                .addArgumentMapper(0, ArgumentMappers.DOUBLE)
+                .addArgumentMapper(1, mapCurrency())
+                .action((sender, args) -> {
+                    return true;
+                }));
+        list.add(new SubCommand.Builder("orders")
+                .withDescription(RealEconomyLangs.Command_Orders_Desc)
+                .addUsage(RealEconomyLangs.Command_Orders_Usage)
+                .action((sender, args) -> {
+                    return true;
+                }));
+        list.add(new SubCommand.Builder("cancel")
+                .withDescription(RealEconomyLangs.Command_Cancel_Desc)
+                .addUsage(RealEconomyLangs.Command_Cancel_Usage)
+                .addTabCompleter(0, TabCompleters.simple("BUY", "SELL"))
+                .addTabCompleter(1, TabCompleters.hint("<order id>"))
+                .addArgumentMapper(0, arg -> {
+                    switch (arg) {
+                        case "BUY":
+                        case "SELL":
+                            return arg;
+                        default:
+                            throw new InvalidArgumentException(RealEconomyLangs.Command_Cancel_InvalidOrderType, (s, m) ->
+                                    m.addString(arg));
+                    }
+                })
+                .addArgumentMapper(1, ArgumentMappers.INTEGER)
+                .action((sender, args) -> {
+                    return true;
+                }));
 
         getMain().comm().linkMainCommand("bal", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("balance", "realeconomy", "wallet");
