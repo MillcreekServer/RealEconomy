@@ -4,12 +4,14 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.main.AbstractBukkitPlugin;
 import io.github.wysohn.rapidframework3.core.command.ArgumentMappers;
+import io.github.wysohn.rapidframework3.core.command.EnumArgumentMapper;
 import io.github.wysohn.rapidframework3.core.command.SubCommand;
 import io.github.wysohn.rapidframework3.core.command.TabCompleters;
 import io.github.wysohn.rapidframework3.core.exceptions.InvalidArgumentException;
 import io.github.wysohn.rapidframework3.core.inject.module.*;
 import io.github.wysohn.rapidframework3.core.language.DefaultLangs;
 import io.github.wysohn.rapidframework3.core.main.PluginMainBuilder;
+import io.github.wysohn.rapidframework3.core.message.Message;
 import io.github.wysohn.rapidframework3.core.message.MessageBuilder;
 import io.github.wysohn.rapidframework3.core.paging.Pagination;
 import io.github.wysohn.rapidframework3.core.player.AbstractPlayerWrapper;
@@ -17,6 +19,7 @@ import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.command.IArgumentMapper;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
+import io.github.wysohn.rapidframework3.utils.regex.CommonPatterns;
 import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
 import io.github.wysohn.realeconomy.inject.module.CapitalLimitModule;
 import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
@@ -25,6 +28,8 @@ import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
+import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -35,12 +40,17 @@ import io.github.wysohn.realeconomy.manager.user.UserManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
+import org.bukkit.inventory.ItemStack;
 
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RealEconomy extends AbstractBukkitPlugin {
 
@@ -313,47 +323,121 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     });
                     return true;
                 }));
-        list.add(new SubCommand.Builder("buy")
+        list.add(new SubCommand.Builder("buy", 3)
                 .withDescription(RealEconomyLangs.Command_Buy_Desc)
                 .addUsage(RealEconomyLangs.Command_Buy_Usage)
                 .addTabCompleter(0, TabCompleters.hint("<order id>"))
-                .addArgumentMapper(0, ArgumentMappers.INTEGER)
+                .addTabCompleter(1, TabCompleters.hint("<price>"))
+                .addTabCompleter(2, TabCompleters.hint("<currency>"))
+                .addTabCompleter(3, TabCompleters.hint("<amount>"))
+                .addArgumentMapper(0, mapOrderId())
+                .addArgumentMapper(1, mapPrice())
+                .addArgumentMapper(2, mapCurrency())
+                .addArgumentMapper(3, ArgumentMappers.INTEGER)
                 .action((sender, args) -> {
+                    int orderId = args.get(0).map(Integer.class::cast).orElse(-1);
+                    double price = args.get(1).map(Double.class::cast).orElse(-1.0);
+                    Currency currency = args.get(2).map(Currency.class::cast).orElse(null);
+                    int amount = args.get(3).map(Integer.class::cast)
+                            .filter(val -> val > 0 && val < 65536)
+                            .orElse(1);
+
+                    if (orderId < 0 || price < 0.0 || currency == null)
+                        return true;
+
+                    getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
+                            getUser(sender).ifPresent(user ->
+                                    tradeMediator.bidAsset(user,
+                                            orderId,
+                                            price,
+                                            currency,
+                                            amount)));
+
                     return true;
                 }));
-        list.add(new SubCommand.Builder("sell")
+        list.add(new SubCommand.Builder("sell", 2)
                 .withDescription(RealEconomyLangs.Command_Sell_Desc)
                 .addUsage(RealEconomyLangs.Command_Sell_Usage)
                 .addTabCompleter(0, TabCompleters.hint("<price>"))
                 .addTabCompleter(1, TabCompleters.hint("<currency>"))
-                .addArgumentMapper(0, ArgumentMappers.DOUBLE)
+                .addArgumentMapper(0, mapPrice())
                 .addArgumentMapper(1, mapCurrency())
                 .action((sender, args) -> {
+                    double price = args.get(0).map(Double.class::cast).orElse(-1.0);
+                    Currency currency = args.get(1).map(Currency.class::cast).orElse(null);
+
+                    if (price < 0.0 || currency == null)
+                        return true;
+
+                    getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
+                            getUser(sender).ifPresent(user -> {
+                                ItemStack itemStack = user.getSender().getInventory().getItemInMainHand();
+                                if (itemStack.getType() == Material.AIR) {
+                                    getMain().lang().sendMessage(sender, DefaultLangs.General_NothingOnYourHand);
+                                    return;
+                                }
+
+                                tradeMediator.sellAsset(user,
+                                        new ItemStackSignature(itemStack),
+                                        price,
+                                        currency,
+                                        itemStack.getAmount());
+                            }));
+
                     return true;
                 }));
-        list.add(new SubCommand.Builder("orders")
+        list.add(new SubCommand.Builder("orders", -1)
                 .withDescription(RealEconomyLangs.Command_Orders_Desc)
                 .addUsage(RealEconomyLangs.Command_Orders_Usage)
+                .addTabCompleter(0, TabCompleters.hint("[page]"))
+                .addArgumentMapper(0, ArgumentMappers.INTEGER)
                 .action((sender, args) -> {
+                    int page = args.get(0)
+                            .map(Integer.class::cast)
+                            .filter(val -> val > 0)
+                            .map(val -> val - 1)
+                            .orElse(0);
+
+                    //TODO use GUI
+                    getUser(sender).ifPresent(user -> {
+                        Pagination.list(getMain().lang(),
+                                Stream.concat(user.getOrderIds(OrderType.BUY).stream()
+                                                .map(id -> Pair.of(id, OrderType.BUY)),
+                                        user.getOrderIds(OrderType.SELL).stream()
+                                                .map(id -> Pair.of(id, OrderType.SELL)))
+                                        .collect(Collectors.toList()),
+                                7,
+                                "Orders",
+                                "/economy orders").show(sender, page, this::toOrderDetail);
+                    });
                     return true;
                 }));
-        list.add(new SubCommand.Builder("cancel")
+        list.add(new SubCommand.Builder("cancel", 2)
                 .withDescription(RealEconomyLangs.Command_Cancel_Desc)
                 .addUsage(RealEconomyLangs.Command_Cancel_Usage)
-                .addTabCompleter(0, TabCompleters.simple("BUY", "SELL"))
+                .addTabCompleter(0, TabCompleters.simple(Arrays.stream(OrderType.values())
+                        .map(Enum::name)
+                        .toArray(String[]::new)))
                 .addTabCompleter(1, TabCompleters.hint("<order id>"))
-                .addArgumentMapper(0, arg -> {
-                    switch (arg) {
-                        case "BUY":
-                        case "SELL":
-                            return arg;
-                        default:
-                            throw new InvalidArgumentException(RealEconomyLangs.Command_Cancel_InvalidOrderType, (s, m) ->
-                                    m.addString(arg));
-                    }
-                })
+                .addArgumentMapper(0, new EnumArgumentMapper<>(OrderType.class, true))
                 .addArgumentMapper(1, ArgumentMappers.INTEGER)
                 .action((sender, args) -> {
+                    OrderType type = args.get(0).map(OrderType.class::cast).orElse(null);
+                    int orderId = args.get(1).map(Integer.class::cast).orElse(-1);
+
+                    if (type == null || orderId < 0)
+                        return true;
+
+                    getUser(sender).ifPresent(user -> {
+                        if (!user.hasOrderId(type, orderId)) {
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Cancel_Ownership);
+                            return;
+                        }
+
+                        getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
+                                tradeMediator.cancelOrder(user, orderId, type));
+                    });
+
                     return true;
                 }));
 
@@ -361,6 +445,37 @@ public class RealEconomy extends AbstractBukkitPlugin {
         getMain().comm().linkMainCommand("balance", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("money", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("pay", "realeconomy", "pay");
+    }
+
+    private Message[] toOrderDetail(ICommandSender sender, Pair<Integer, OrderType> orderPair, int i) {
+        RealEconomyLangs lang;
+        if (orderPair.value == OrderType.BUY) {
+            lang = RealEconomyLangs.Command_Orders_Buys;
+        } else if (orderPair.value == OrderType.SELL) {
+            lang = RealEconomyLangs.Command_Orders_Sells;
+        } else {
+            throw new RuntimeException("Unknown order type " + orderPair.value);
+        }
+
+        OrderInfo orderInfo = getMain().getManager(AssetListingManager.class).map(assetListingManager -> {
+            try {
+                return assetListingManager.getInfo(orderPair.key, orderPair.value);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                return null;
+            }
+        }).orElse(null);
+
+        if (orderInfo == null) {
+            return MessageBuilder.forMessage(orderPair + "?").build();
+        } else {
+            return MessageBuilder.forMessage(getMain().lang().parseFirst(lang, (s, m) ->
+                    m.addInteger(orderPair.key)
+                            .addDouble(orderInfo.getPrice())
+                            .addString(Objects.toString(getCurrency(orderInfo.getCurrencyUuid()).orElse(null)))
+                            .addInteger(orderInfo.getAmount())))
+                    .build();
+        }
     }
 
     private AssetListing getSignature(UUID listingUuid) {
@@ -423,6 +538,35 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         .addString(Metrics.df.format(amount))
                         .addString(Objects.toString(currency))
                         .addString(Objects.toString(to == null ? currency.ownerBank() : to)));
+    }
+
+    private IArgumentMapper<Double> mapPrice() {
+        return (arg -> {
+            if (!CommonPatterns.DOUBLE.matcher(arg).matches())
+                throw new InvalidArgumentException(DefaultLangs.General_NotDecimal, (s, m) ->
+                        m.addString(arg));
+
+            double price = Double.parseDouble(arg);
+            if (price <= 0.0 || BigDecimal.valueOf(price).compareTo(CapitalLimitModule.MAX) > 0)
+                throw new InvalidArgumentException(RealEconomyLangs.Command_Common_PriceRange, (s, m) ->
+                        m.addDouble(CapitalLimitModule.MAX.doubleValue()));
+
+            return price;
+        });
+    }
+
+    private IArgumentMapper<Integer> mapOrderId() {
+        return (arg -> {
+            if (!CommonPatterns.INTEGER.matcher(arg).matches())
+                throw new InvalidArgumentException(DefaultLangs.General_NotInteger, (s, m) ->
+                        m.addString(arg));
+
+            int orderId = Integer.parseInt(arg);
+            if (orderId < 1)
+                throw new InvalidArgumentException(RealEconomyLangs.Command_Common_InvalidOrderId);
+
+            return orderId;
+        });
     }
 
     private IArgumentMapper<Currency> mapCurrency() {

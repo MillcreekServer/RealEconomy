@@ -40,6 +40,18 @@ public interface IOrderPlacementHandler {
                   int stock) throws SQLException;
 
     /**
+     * Get current order info. This is merely a snapshot of the order, so the order may or may not be valid
+     * when you try to alter the order later.
+     *
+     * @param orderId order id
+     * @param type    type of order to search for
+     * @return the info; null if no order exist with the given id
+     * @throws SQLException if some unexpected SQL error occurs.
+     */
+    OrderInfo getInfo(int orderId,
+                      OrderType type) throws SQLException;
+
+    /**
      * Edit the current amount of the order. This can be useful when the order is not fully consumed, yet the order of
      * id must be maintained to give fair opportunity (cause if we just delete the order and then add the
      * order again, the order will be placed at the very end of the queue) for all buyers.

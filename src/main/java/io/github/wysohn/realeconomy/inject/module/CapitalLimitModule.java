@@ -9,17 +9,20 @@ import javax.inject.Singleton;
 import java.math.BigDecimal;
 
 public class CapitalLimitModule extends AbstractModule {
+    public static final BigDecimal MIN = BigDecimal.valueOf(-1E100);
+    public static final BigDecimal MAX = BigDecimal.valueOf(1E100);
+
     @Provides
     @Singleton
     @MinCapital
     BigDecimal min() {
-        return BigDecimal.valueOf(-1E100);
+        return MIN;
     }
 
     @Provides
     @Singleton
     @MaxCapital
     BigDecimal max() {
-        return BigDecimal.valueOf(1E100);
+        return MAX;
     }
 }

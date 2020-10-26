@@ -27,10 +27,7 @@ import javax.inject.Singleton;
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
@@ -154,28 +151,38 @@ public class TradeMediator extends Mediator {
      * Bid to buy the specified asset. This does not necessarily mean that the buyer
      * can buy the asset immediately.
      *
-     * @param issuer    the one want to buy asset
-     * @param signature asset signature
-     * @param price     bidding price
-     * @param currency  currency of price
-     * @param amount    goal number of assets to purchase
+     * @param issuer   the one want to buy asset
+     * @param orderId  the order id of selling asset
+     * @param price    bidding price
+     * @param currency currency of price
+     * @param amount   goal number of assets to purchase
      */
     public void bidAsset(IOrderIssuer issuer,
-                         AssetSignature signature,
+                         int orderId,
                          double price,
                          Currency currency,
                          int amount) {
         Validation.assertNotNull(issuer);
-        Validation.assertNotNull(signature);
+        Validation.validate(orderId, id -> id > 0, "Negative or 0 is not allowed for order id.");
         Validation.validate(price, p -> p > 0.0, "Negative or 0.0 price not allowed.");
         Validation.assertNotNull(currency);
         Validation.validate(amount, s -> s > 0, "Negative or 0 amount not allowed.");
 
-        assetListingManager.newListing(signature);
-
         tradeExecutor.submit(() -> {
             try {
-                assetListingManager.addOrder(signature,
+                OrderInfo orderInfo = assetListingManager.getInfo(orderId, OrderType.SELL);
+                if (orderInfo == null)
+                    return;
+
+                UUID listingUuid = orderInfo.getListingUuid();
+                AssetListing assetListing = assetListingManager.get(listingUuid)
+                        .map(Reference::get)
+                        .orElse(null);
+
+                if (assetListing == null)
+                    return;
+
+                assetListingManager.addOrder(assetListing.getSignature(),
                         OrderType.BUY,
                         issuer,
                         price,
@@ -190,6 +197,20 @@ public class TradeMediator extends Mediator {
                 } catch (SQLException ex2) {
                     ex2.printStackTrace();
                 }
+            }
+        });
+    }
+
+    public void cancelOrder(IOrderIssuer issuer, int orderId, OrderType type) {
+        Validation.validate(orderId, id -> id > 0, "Negative or 0 is not allowed for order id.");
+        Validation.assertNotNull(type);
+        Validation.validate(orderId, id -> issuer.hasOrderId(type, id), "Issuer mismatch.");
+
+        tradeExecutor.submit(() -> {
+            try {
+                assetListingManager.cancelOrder(orderId, type, id -> issuer.removeOrderId(type, id));
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         });
     }

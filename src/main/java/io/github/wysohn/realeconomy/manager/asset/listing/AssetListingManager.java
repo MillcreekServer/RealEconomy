@@ -171,6 +171,13 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 stock);
     }
 
+    public OrderInfo getInfo(int orderId, OrderType type) throws SQLException {
+        Validation.validate(orderId, val -> val > 0, "orderId must be larger than 0.");
+        Validation.assertNotNull(type);
+
+        return orderPlacementHandler.getInfo(orderId, type);
+    }
+
     public void editOrder(int orderId, OrderType type, int newAmount) throws SQLException {
         Validation.validate(orderId, val -> val > 0, "orderId must be larger than 0.");
         Validation.assertNotNull(type);
