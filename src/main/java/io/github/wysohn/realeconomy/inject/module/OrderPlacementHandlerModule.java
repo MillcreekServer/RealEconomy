@@ -41,6 +41,8 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         orderPlacementHandler.UPDATE_SELL = Metrics.resourceToString(resourceProvider, "update_sell_orders.sql");
         orderPlacementHandler.DELETE_BUY = Metrics.resourceToString(resourceProvider, "delete_buy_order.sql");
         orderPlacementHandler.DELETE_SELL = Metrics.resourceToString(resourceProvider, "delete_sell_order.sql");
+        orderPlacementHandler.SELECT_BY_BUY_ID = Metrics.resourceToString(resourceProvider, "select_buy_order_by_id.sql");
+        orderPlacementHandler.SELECT_BY_SELL_ID = Metrics.resourceToString(resourceProvider, "select_sell_order_by_id.sql");
         orderPlacementHandler.SELECT_CATEGORIES = Metrics.resourceToString(resourceProvider, "select_categories.sql");
         orderPlacementHandler.SELECT_MATCH_ORDERS
                 = Metrics.resourceToString(resourceProvider, "select_match_orders.sql");
@@ -86,6 +88,8 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         private String UPDATE_SELL;
         private String DELETE_BUY;
         private String DELETE_SELL;
+        private String SELECT_BY_BUY_ID;
+        private String SELECT_BY_SELL_ID;
         private String SELECT_CATEGORIES;
         private String SELECT_MATCH_ORDERS;
         private String SELECT_SELL_ORDERS;
@@ -140,6 +144,34 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                     ex.printStackTrace();
                 }
             }, index -> issuer.addOrderId(type, index.intValue()));
+        }
+
+        @Override
+        public OrderInfo getInfo(int orderId, OrderType type) throws SQLException {
+            String sql;
+            if (type == OrderType.BUY) {
+                sql = SELECT_BY_BUY_ID;
+            } else if (type == OrderType.SELL) {
+                sql = SELECT_BY_SELL_ID;
+            } else {
+                throw new RuntimeException("Unknown order type " + type);
+            }
+
+            return ordersSession.query(sql, pstmt -> {
+                try {
+                    pstmt.setInt(1, orderId);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, resultSet -> {
+                try {
+                    return OrderInfo.read(resultSet);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+
+                return null;
+            }).stream().findFirst().orElse(null);
         }
 
         @Override

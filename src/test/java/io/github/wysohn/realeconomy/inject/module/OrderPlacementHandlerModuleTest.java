@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.*;
@@ -55,6 +56,242 @@ public class OrderPlacementHandlerModuleTest {
                 };
             }
         });
+    }
+
+    @Test
+    public void selectBuy() throws Exception {
+        File folder = new File("build/tmp/selbuy/");
+        folder.mkdir();
+        moduleList.add(new AbstractModule() {
+            @Provides
+            @PluginDirectory
+            File directory() {
+                return folder;
+            }
+        });
+        new File(folder, "orders.db").delete();
+        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderPlacementHandler.class);
+
+        UUID issuerUuid = UUID.randomUUID();
+        IOrderIssuer orderIssuer = new OrderIssuer(issuerUuid);
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+
+        orderPlacementHandler.addOrder(uuid1,
+                "item1",
+                OrderType.BUY,
+                orderIssuer,
+                1023.22,
+                currency,
+                10);
+
+        orderPlacementHandler.addOrder(uuid2,
+                "item1",
+                OrderType.BUY,
+                orderIssuer,
+                20304.55,
+                currency,
+                20);
+
+        assertEquals(OrderInfo.create(1,
+                uuid1,
+                1,
+                issuerUuid,
+                1023.22,
+                currencyUuid,
+                10,
+                10), orderPlacementHandler.getInfo(1, OrderType.BUY));
+
+        assertEquals(OrderInfo.create(2,
+                uuid2,
+                1,
+                issuerUuid,
+                20304.55,
+                currencyUuid,
+                20,
+                20), orderPlacementHandler.getInfo(2, OrderType.BUY));
+
+        assertNull(orderPlacementHandler.getInfo(22, OrderType.SELL));
+    }
+
+    @Test
+    public void selectSell() throws Exception {
+        File folder = new File("build/tmp/selsell/");
+        folder.mkdir();
+        moduleList.add(new AbstractModule() {
+            @Provides
+            @PluginDirectory
+            File directory() {
+                return folder;
+            }
+        });
+        new File(folder, "orders.db").delete();
+        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderPlacementHandler.class);
+
+        UUID issuerUuid = UUID.randomUUID();
+        IOrderIssuer orderIssuer = new OrderIssuer(issuerUuid);
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+
+        orderPlacementHandler.addOrder(uuid1,
+                "item1",
+                OrderType.SELL,
+                orderIssuer,
+                1023.22,
+                currency,
+                10);
+
+        orderPlacementHandler.addOrder(uuid2,
+                "item1",
+                OrderType.SELL,
+                orderIssuer,
+                20304.55,
+                currency,
+                20);
+
+        assertEquals(OrderInfo.create(1,
+                uuid1,
+                1,
+                issuerUuid,
+                1023.22,
+                currencyUuid,
+                10,
+                10), orderPlacementHandler.getInfo(1, OrderType.SELL));
+
+        assertEquals(OrderInfo.create(2,
+                uuid2,
+                1,
+                issuerUuid,
+                20304.55,
+                currencyUuid,
+                20,
+                20), orderPlacementHandler.getInfo(2, OrderType.SELL));
+
+        assertNull(orderPlacementHandler.getInfo(22, OrderType.BUY));
+    }
+
+    @Test
+    public void editOrder() throws Exception {
+        File folder = new File("build/tmp/editorder/");
+        folder.mkdir();
+        moduleList.add(new AbstractModule() {
+            @Provides
+            @PluginDirectory
+            File directory() {
+                return folder;
+            }
+        });
+        new File(folder, "orders.db").delete();
+        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderPlacementHandler.class);
+
+        UUID issuerUuid = UUID.randomUUID();
+        IOrderIssuer orderIssuer = new OrderIssuer(issuerUuid);
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+
+        UUID uuid1 = UUID.randomUUID();
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+
+        orderPlacementHandler.addOrder(uuid1,
+                "item1",
+                OrderType.BUY,
+                orderIssuer,
+                1023.22,
+                currency,
+                10);
+
+        orderPlacementHandler.editOrder(1,
+                OrderType.BUY,
+                2);
+
+        orderPlacementHandler.commitOrders();
+
+        assertEquals(OrderInfo.create(1,
+                uuid1,
+                1,
+                issuerUuid,
+                1023.22,
+                currencyUuid,
+                2,
+                10), orderPlacementHandler.getInfo(1, OrderType.BUY));
+    }
+
+    @Test
+    public void cancelOrder() throws Exception {
+        File folder = new File("build/tmp/cancelorder/");
+        folder.mkdir();
+        moduleList.add(new AbstractModule() {
+            @Provides
+            @PluginDirectory
+            File directory() {
+                return folder;
+            }
+        });
+        new File(folder, "orders.db").delete();
+        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderPlacementHandler.class);
+
+        UUID issuerUuid = UUID.randomUUID();
+        IOrderIssuer orderIssuer = new OrderIssuer(issuerUuid);
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+
+        UUID uuid1 = UUID.randomUUID();
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+
+        orderPlacementHandler.addOrder(uuid1,
+                "item1",
+                OrderType.BUY,
+                orderIssuer,
+                1023.22,
+                currency,
+                10);
+        orderPlacementHandler.addOrder(uuid1,
+                "item2",
+                OrderType.BUY,
+                orderIssuer,
+                3464.25,
+                currency,
+                20);
+        orderPlacementHandler.addOrder(uuid1,
+                "item3",
+                OrderType.SELL,
+                orderIssuer,
+                5525.33,
+                currency,
+                30);
+
+        orderPlacementHandler.commitOrders();
+
+        assertEquals(OrderInfo.create(1,
+                uuid1,
+                1,
+                issuerUuid,
+                1023.22,
+                currencyUuid,
+                10,
+                10), orderPlacementHandler.getInfo(1, OrderType.BUY));
+
+        Consumer<Integer> consumer = mock(Consumer.class);
+        orderPlacementHandler.cancelOrder(1, OrderType.BUY, consumer);
+
+        verify(consumer).accept(1);
+        assertNull(orderPlacementHandler.getInfo(1, OrderType.BUY));
     }
 
     @Test

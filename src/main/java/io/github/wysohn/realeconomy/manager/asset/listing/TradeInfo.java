@@ -117,8 +117,18 @@ public class TradeInfo {
                 '}';
     }
 
+    /**
+     * @param rs
+     * @return the trade info; it can be null if the query contains aggregate function(s)
+     * @throws SQLException
+     */
     public static TradeInfo read(ResultSet rs) throws SQLException {
         int sellId = rs.getInt("sell_id");
+
+        // check null result before working on other stuff
+        if (rs.wasNull())
+            return null;
+
         UUID sellerUuid = UUID.fromString(rs.getString("seller_uuid"));
         double ask = rs.getDouble("ask");
         int stock = rs.getInt("stock");

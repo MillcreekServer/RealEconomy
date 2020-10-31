@@ -16,6 +16,7 @@ import java.util.UUID;
 public class CentralBank extends AbstractBank {
     private transient final Object transactionLock = new Object();
 
+    private BigDecimal numPapers = BigDecimal.ZERO;
     private BigDecimal liquidity = BigDecimal.ZERO;
 
     private CentralBank() {
@@ -24,6 +25,15 @@ public class CentralBank extends AbstractBank {
 
     public CentralBank(UUID key) {
         super(key);
+    }
+
+    public BigDecimal getNumPapers() {
+        return numPapers;
+    }
+
+    public void setNumPapers(BigDecimal numPapers) {
+        this.numPapers = numPapers;
+        notifyObservers();
     }
 
     public BigDecimal getLiquidity() {
@@ -50,6 +60,7 @@ public class CentralBank extends AbstractBank {
                 .filter(uuid -> uuid.equals(getBaseCurrencyUuid()))
                 .map(uuid -> {
                     synchronized (transactionLock) {
+                        numPapers = numPapers.add(value);
                         // collecting currencies
                         liquidity = liquidity.subtract(value);
                         notifyObservers();
@@ -63,11 +74,17 @@ public class CentralBank extends AbstractBank {
     public boolean withdraw(BigDecimal value, Currency currency) {
         Validation.assertNotNull(getBaseCurrencyUuid());
 
+        // not enough papers
+        if (numPapers.compareTo(value) < 0) {
+            return false;
+        }
+
         return Optional.ofNullable(currency)
                 .map(CachedElement::getKey)
                 .filter(uuid -> uuid.equals(getBaseCurrencyUuid()))
                 .map(uuid -> {
                     synchronized (transactionLock) {
+                        numPapers = numPapers.subtract(value);
                         // printing currencies
                         liquidity = liquidity.add(value);
                         notifyObservers();

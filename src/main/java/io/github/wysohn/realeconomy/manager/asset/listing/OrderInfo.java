@@ -1,5 +1,6 @@
 package io.github.wysohn.realeconomy.manager.asset.listing;
 
+import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;
 
 import java.sql.ResultSet;
@@ -105,13 +106,23 @@ public class OrderInfo {
                 '}';
     }
 
+    /**
+     * @param rs
+     * @return the order info; it can be null if the query contains aggregate function(s)
+     * @throws SQLException
+     */
     public static OrderInfo read(ResultSet rs) throws SQLException {
         int orderId = rs.getInt(OrderSQLModule.ORDER_ID);
+
+        // check null result before working on other stuff
+        if (rs.wasNull())
+            return null;
+
         UUID listing_uuid = UUID.fromString(rs.getString("listing_uuid"));
         //long timestamp = rs.getTimestamp("timestamp").getTime();
         int categoryId = rs.getInt("category_id");
         UUID issuer = UUID.fromString(rs.getString("issuer"));
-        double price = rs.getDouble("min_price");
+        double price = rs.getDouble("price");
         UUID currencyUuid = UUID.fromString(rs.getString("currency_uuid"));
         int amount = rs.getInt("amount");
         int max = rs.getInt("maximum");
@@ -122,6 +133,15 @@ public class OrderInfo {
     public static OrderInfo create(int orderId, UUID listingUuid, int categoryId, UUID issuer,
                                    double price, UUID currencyUuid,
                                    int amount, int max) {
+        Validation.validate(orderId, val -> val > 0, "invalid order id.");
+        Validation.assertNotNull(listingUuid);
+        Validation.validate(categoryId, val -> val > 0, "invalid categoryId id.");
+        Validation.assertNotNull(issuer);
+        Validation.validate(price, val -> val > 0.0, "invalid price.");
+        Validation.assertNotNull(currencyUuid);
+        Validation.validate(amount, val -> val > 0, "invalid amount.");
+        Validation.validate(max, val -> val > 0, "invalid max.");
+
         return new OrderInfo(orderId, listingUuid, categoryId, issuer, price, currencyUuid, amount, max);
     }
 }

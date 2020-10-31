@@ -1,31 +1,448 @@
 package io.github.wysohn.realeconomy.mediator;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Module;
+import com.google.inject.Provides;
+import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
+import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
+import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
+import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
+import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
+import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
+import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
+import io.github.wysohn.realeconomy.manager.currency.Currency;
+import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.lang.ref.WeakReference;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class TradeMediatorTest {
 
-    @Test
-    public void getPrice() {
+    List<Module> moduleList = new LinkedList<>();
+    private CurrencyManager currencyManager;
+    private AssetListingManager assetListingManager;
+    private IBankUserProvider bankUserProvider;
+    private ManagerConfig config;
 
+    @Before
+    public void init() {
+        config = mock(ManagerConfig.class);
+        currencyManager = mock(CurrencyManager.class);
+        assetListingManager = mock(AssetListingManager.class);
+        bankUserProvider = mock(IBankUserProvider.class);
+
+        FileConfiguration subConfig = new YamlConfiguration();
+        subConfig.set(Material.APPLE.name(), "food");
+        subConfig.set(Material.DIAMOND.name(), "ore");
+
+        when(config.get(eq(TradeMediator.MATERIALS))).thenReturn(Optional.of(subConfig));
+        when(config.get(eq(subConfig), anyString())).then(invocation -> {
+            String key = (String) invocation.getArguments()[1];
+            return Optional.ofNullable(subConfig.get(key));
+        });
+
+        moduleList.add(new MockLoggerModule());
+        moduleList.add(new AbstractModule() {
+            @Provides
+            ManagerConfig config() {
+                return config;
+            }
+
+            @Provides
+            CurrencyManager currencyManager() {
+                return currencyManager;
+            }
+
+            @Provides
+            AssetListingManager assetListingManager() {
+                return assetListingManager;
+            }
+
+            @Provides
+            IBankUserProvider bankUserProvider() {
+                return bankUserProvider;
+            }
+        });
     }
 
     @Test
-    public void testGetPrice() {
+    public void testBroker() throws Exception {
+        TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    UUID.randomUUID(),
+                    3000.55,
+                    244,
+                    232,
+                    UUID.randomUUID(),
+                    3099.34,
+                    50,
+                    UUID.randomUUID(),
+                    UUID.randomUUID()));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        mediator.enable();
+        mediator.load();
+        Thread.sleep(1L); // prevents run-before case
+        mediator.disable();
+
+        verify(assetListingManager).peekMatchingOrder(any(Consumer.class));
     }
 
     @Test
-    public void sellAsset() {
+    public void testBroker2() throws Exception {
+        TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
+        IBankUser buyer = mock(IBankUser.class);
+        UUID buyerUuid = UUID.randomUUID();
+        IBankUser seller = mock(IBankUser.class);
+        UUID sellerUuid = UUID.randomUUID();
+
+        when(buyer.getUuid()).thenReturn(buyerUuid);
+        when(seller.getUuid()).thenReturn(sellerUuid);
+        when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
+        when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    sellerUuid,
+                    3000.55,
+                    244,
+                    232,
+                    buyerUuid,
+                    3099.34,
+                    50,
+                    UUID.randomUUID(),
+                    UUID.randomUUID()));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        mediator.enable();
+        mediator.load();
+        Thread.sleep(1L); // prevents run-before case
+        mediator.disable();
+
+        verify(assetListingManager).peekMatchingOrder(any(Consumer.class));
     }
 
     @Test
-    public void bidAsset() {
+    public void testBroker3() throws Exception {
+        TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
+        IBankUser buyer = mock(IBankUser.class);
+        UUID buyerUuid = UUID.randomUUID();
+        IBankUser seller = mock(IBankUser.class);
+        UUID sellerUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+
+        when(buyer.getUuid()).thenReturn(buyerUuid);
+        when(seller.getUuid()).thenReturn(sellerUuid);
+        when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
+        when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+        when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
+
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    sellerUuid,
+                    3000.55,
+                    244,
+                    232,
+                    buyerUuid,
+                    3099.34,
+                    50,
+                    currencyUuid,
+                    UUID.randomUUID()));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        mediator.enable();
+        mediator.load();
+        Thread.sleep(1L); // prevents run-before case
+        mediator.disable();
+
+        verify(assetListingManager).peekMatchingOrder(any(Consumer.class));
     }
 
     @Test
-    public void cancelOrder() {
+    public void testBroker4() throws Exception {
+        TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
+        IBankUser buyer = mock(IBankUser.class);
+        UUID buyerUuid = UUID.randomUUID();
+        IBankUser seller = mock(IBankUser.class);
+        UUID sellerUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+        CentralBank ownerBank = mock(CentralBank.class);
+        UUID bankUuid = UUID.randomUUID();
+
+        when(buyer.getUuid()).thenReturn(buyerUuid);
+        when(seller.getUuid()).thenReturn(sellerUuid);
+        when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
+        when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+        when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
+        when(currency.ownerBank()).thenReturn(ownerBank);
+        when(ownerBank.getUuid()).thenReturn(bankUuid);
+
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    sellerUuid,
+                    3000.55,
+                    244,
+                    232,
+                    buyerUuid,
+                    3099.34,
+                    50,
+                    currencyUuid,
+                    UUID.randomUUID()));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        mediator.enable();
+        mediator.load();
+        Thread.sleep(1L); // prevents run-before case
+        mediator.disable();
+
+        verify(assetListingManager).peekMatchingOrder(any(Consumer.class));
+    }
+
+    @Test
+    public void testBroker5() throws Exception {
+        TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
+
+        IBankUser buyer = mock(IBankUser.class);
+        UUID buyerUuid = UUID.randomUUID();
+        IBankUser seller = mock(IBankUser.class);
+        UUID sellerUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+        CentralBank ownerBank = mock(CentralBank.class);
+        UUID bankUuid = UUID.randomUUID();
+
+        when(buyer.getUuid()).thenReturn(buyerUuid);
+        when(seller.getUuid()).thenReturn(sellerUuid);
+        when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
+        when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+        when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
+        when(currency.ownerBank()).thenReturn(ownerBank);
+        when(ownerBank.getUuid()).thenReturn(bankUuid);
+        when(ownerBank.hasAccount(eq(buyer), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
+        when(ownerBank.hasAccount(eq(seller), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
+
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    sellerUuid,
+                    3000.55,
+                    244,
+                    232,
+                    buyerUuid,
+                    3099.34,
+                    50,
+                    currencyUuid,
+                    UUID.randomUUID()));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        mediator.enable();
+        mediator.load();
+        Thread.sleep(1L); // prevents run-before case
+        mediator.disable();
+
+        verify(assetListingManager).peekMatchingOrder(any(Consumer.class));
+    }
+
+    @Test
+    public void testBroker6() throws Exception {
+        TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
+
+        IBankUser buyer = mock(IBankUser.class);
+        UUID buyerUuid = UUID.randomUUID();
+        IBankUser seller = mock(IBankUser.class);
+        UUID sellerUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+        CentralBank ownerBank = mock(CentralBank.class);
+        UUID bankUuid = UUID.randomUUID();
+        AssetListing listing = mock(AssetListing.class);
+        UUID listingUuid = UUID.randomUUID();
+
+        when(buyer.getUuid()).thenReturn(buyerUuid);
+        when(seller.getUuid()).thenReturn(sellerUuid);
+        when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
+        when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+        when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
+        when(currency.ownerBank()).thenReturn(ownerBank);
+        when(ownerBank.getUuid()).thenReturn(bankUuid);
+        when(ownerBank.hasAccount(eq(buyer), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
+        when(ownerBank.hasAccount(eq(seller), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
+        when(listing.getKey()).thenReturn(listingUuid);
+        when(assetListingManager.get(eq(listingUuid))).thenReturn(Optional.of(new WeakReference<>(listing)));
+
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    sellerUuid,
+                    3000.55,
+                    244,
+                    232,
+                    buyerUuid,
+                    3099.34,
+                    50,
+                    currencyUuid,
+                    listingUuid));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        mediator.enable();
+        mediator.load();
+        Thread.sleep(1L); // prevents run-before case
+        mediator.disable();
+
+        verify(assetListingManager).peekMatchingOrder(any(Consumer.class));
+    }
+
+    @Test
+    public void testBroker7() throws Exception {
+        TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
+
+        IBankUser buyer = mock(IBankUser.class);
+        UUID buyerUuid = UUID.randomUUID();
+        IBankUser seller = mock(IBankUser.class);
+        UUID sellerUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+        CentralBank ownerBank = mock(CentralBank.class);
+        UUID bankUuid = UUID.randomUUID();
+        AssetListing listing = mock(AssetListing.class);
+        UUID listingUuid = UUID.randomUUID();
+        AssetSignature signature = mock(AssetSignature.class);
+
+        when(buyer.getUuid()).thenReturn(buyerUuid);
+        when(seller.getUuid()).thenReturn(sellerUuid);
+        when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
+        when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+        when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
+        when(currency.ownerBank()).thenReturn(ownerBank);
+        when(ownerBank.getUuid()).thenReturn(bankUuid);
+        when(ownerBank.hasAccount(eq(buyer), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
+        when(ownerBank.hasAccount(eq(seller), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
+        when(listing.getKey()).thenReturn(listingUuid);
+        when(listing.getSignature()).thenReturn(signature);
+        when(assetListingManager.get(eq(listingUuid))).thenReturn(Optional.of(new WeakReference<>(listing)));
+
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    sellerUuid,
+                    3000.55,
+                    244,
+                    232,
+                    buyerUuid,
+                    3099.34,
+                    50,
+                    currencyUuid,
+                    listingUuid));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        mediator.enable();
+        mediator.load();
+        Thread.sleep(1L); // prevents run-before case
+        mediator.disable();
+
+        verify(assetListingManager).peekMatchingOrder(any(Consumer.class));
+    }
+
+    @Test
+    public void testBroker8() throws Exception {
+        TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
+
+        IBankUser buyer = mock(IBankUser.class);
+        UUID buyerUuid = UUID.randomUUID();
+        IBankUser seller = mock(IBankUser.class);
+        UUID sellerUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+        CentralBank ownerBank = mock(CentralBank.class);
+        UUID bankUuid = UUID.randomUUID();
+        AssetListing listing = mock(AssetListing.class);
+        UUID listingUuid = UUID.randomUUID();
+        AssetSignature signature = mock(AssetSignature.class);
+
+        when(buyer.getUuid()).thenReturn(buyerUuid);
+        when(seller.getUuid()).thenReturn(sellerUuid);
+        when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
+        when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+        when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
+        when(currency.ownerBank()).thenReturn(ownerBank);
+        when(ownerBank.getUuid()).thenReturn(bankUuid);
+        when(ownerBank.hasAccount(eq(buyer), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
+        when(ownerBank.hasAccount(eq(seller), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
+        when(listing.getKey()).thenReturn(listingUuid);
+        when(listing.getSignature()).thenReturn(signature);
+        when(assetListingManager.get(eq(listingUuid))).thenReturn(Optional.of(new WeakReference<>(listing)));
+        when(ownerBank.removeAccountAsset(eq(seller), eq(signature), anyInt())).thenReturn(1);
+
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    sellerUuid,
+                    3000.55,
+                    244,
+                    232,
+                    buyerUuid,
+                    3099.34,
+                    50,
+                    currencyUuid,
+                    listingUuid));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        mediator.enable();
+        mediator.load();
+        Thread.sleep(1L); // prevents run-before case
+        mediator.disable();
+
+        verify(assetListingManager).peekMatchingOrder(any(Consumer.class));
     }
 }

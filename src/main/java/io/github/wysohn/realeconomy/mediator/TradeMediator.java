@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
@@ -92,7 +93,12 @@ public class TradeMediator extends Mediator {
 
     @Override
     public void disable() throws Exception {
+        logger.info("Finalizing trade schedules...");
+        tradeExecutor.shutdown();
+        tradeExecutor.awaitTermination(10, TimeUnit.SECONDS);
+        logger.info("Done");
 
+        tradeBroker.interrupt();
     }
 
     public DataProvider<OrderInfo> getPrice() {
@@ -112,20 +118,27 @@ public class TradeMediator extends Mediator {
      * @param price     offer price
      * @param currency  currency type of price
      * @param stock     number of stocks to sell
+     * @return true if success; false if issuer does not have {@link BankingTypeRegistry#TRADING} account in
+     * the currency owner bank.
      */
-    public void sellAsset(IOrderIssuer issuer,
-                          AssetSignature signature,
-                          double price,
-                          Currency currency,
-                          int stock) {
+    public boolean sellAsset(IBankUser issuer,
+                             AssetSignature signature,
+                             double price,
+                             Currency currency,
+                             int stock) {
         Validation.assertNotNull(issuer);
         Validation.assertNotNull(signature);
         Validation.validate(price, p -> p > 0.0, "Negative or 0.0 price not allowed.");
         Validation.assertNotNull(currency);
         Validation.validate(stock, s -> s > 0, "Negative or 0 stock not allowed.");
 
-        assetListingManager.newListing(signature);
+        Validation.assertNotNull(currency.ownerBank());
 
+        if (!currency.ownerBank().hasAccount(issuer, BankingTypeRegistry.TRADING)) {
+            return false;
+        }
+
+        assetListingManager.newListing(signature);
         tradeExecutor.submit(() -> {
             try {
                 assetListingManager.addOrder(signature,
@@ -145,6 +158,8 @@ public class TradeMediator extends Mediator {
                 }
             }
         });
+
+        return true;
     }
 
     /**
@@ -156,17 +171,25 @@ public class TradeMediator extends Mediator {
      * @param price    bidding price
      * @param currency currency of price
      * @param amount   goal number of assets to purchase
+     * @return true if success; false if issuer does not have {@link BankingTypeRegistry#TRADING} account in
+     * the currency owner bank.
      */
-    public void bidAsset(IOrderIssuer issuer,
-                         int orderId,
-                         double price,
-                         Currency currency,
-                         int amount) {
+    public boolean bidAsset(IBankUser issuer,
+                            int orderId,
+                            double price,
+                            Currency currency,
+                            int amount) {
         Validation.assertNotNull(issuer);
         Validation.validate(orderId, id -> id > 0, "Negative or 0 is not allowed for order id.");
         Validation.validate(price, p -> p > 0.0, "Negative or 0.0 price not allowed.");
         Validation.assertNotNull(currency);
         Validation.validate(amount, s -> s > 0, "Negative or 0 amount not allowed.");
+
+        Validation.assertNotNull(currency.ownerBank());
+
+        if (!currency.ownerBank().hasAccount(issuer, BankingTypeRegistry.TRADING)) {
+            return false;
+        }
 
         tradeExecutor.submit(() -> {
             try {
@@ -199,6 +222,8 @@ public class TradeMediator extends Mediator {
                 }
             }
         });
+
+        return true;
     }
 
     public void cancelOrder(IOrderIssuer issuer, int orderId, OrderType type) {
@@ -333,7 +358,7 @@ public class TradeMediator extends Mediator {
                         if (signature.isPhysical()) // amount varies only for physical assets
                             amountsRemoved = finalBank.removeAccountAsset(seller, signature, amount);
                         else
-                            amountsRemoved = 1;
+                            amountsRemoved = finalBank.removeAccountAsset(seller, signature, 1);
 
                         // trade only if at least one asset is removed successfully
                         if (amountsRemoved > 0) {
