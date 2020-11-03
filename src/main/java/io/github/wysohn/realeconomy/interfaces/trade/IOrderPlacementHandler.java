@@ -65,6 +65,23 @@ public interface IOrderPlacementHandler {
                    int newAmount) throws SQLException;
 
     /**
+     * Log the given trade information.
+     *
+     * @param listingUuid uuid of listing
+     * @param seller      the one sold the asset
+     * @param buyer       the one bought the asset
+     * @param price       price of an asset
+     * @param currency    currency used to trade
+     * @param amount      amount traded
+     */
+    void logOrder(UUID listingUuid,
+                  UUID seller,
+                  UUID buyer,
+                  double price,
+                  UUID currency,
+                  int amount) throws SQLException;
+
+    /**
      * Cancel the order that was already scheduled. This is valid only if the order is not yet processed.
      * <p>
      * For simplicity, this method must be thread-safe, so the callers do not have to worry about

@@ -65,7 +65,7 @@ public class BankingMediator extends Mediator {
     @Override
     public void enable() throws Exception {
         if (!config.get(KEY_SERVER_BANK_ENABLE).isPresent())
-            config.put(KEY_SERVER_BANK_ENABLE, true);
+            config.put(KEY_SERVER_BANK_ENABLE, false);
 
         serverBank = centralBankingManager.getOrNew(SERVER_BANK_UUID)
                 .map(Reference::get)
@@ -199,7 +199,7 @@ public class BankingMediator extends Mediator {
     }
 
     public Result withdraw(IBankUser user, IBankingType type, BigDecimal amount) {
-        return this.withdraw(serverBank, user, type, amount);
+        return this.withdraw(getUsingBank(user), user, type, amount);
     }
 
     public Result withdraw(AbstractBank bank, IBankUser user, IBankingType type, BigDecimal amount) {

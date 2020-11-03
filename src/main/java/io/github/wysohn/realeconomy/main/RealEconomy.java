@@ -328,30 +328,38 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .addUsage(RealEconomyLangs.Command_Buy_Usage)
                 .addTabCompleter(0, TabCompleters.hint("<order id>"))
                 .addTabCompleter(1, TabCompleters.hint("<price>"))
-                .addTabCompleter(2, TabCompleters.hint("<currency>"))
-                .addTabCompleter(3, TabCompleters.hint("<amount>"))
+                .addTabCompleter(2, TabCompleters.hint("<amount>"))
                 .addArgumentMapper(0, mapOrderId())
                 .addArgumentMapper(1, mapPrice())
-                .addArgumentMapper(2, mapCurrency())
-                .addArgumentMapper(3, ArgumentMappers.INTEGER)
+                .addArgumentMapper(2, ArgumentMappers.INTEGER)
                 .action((sender, args) -> {
                     int orderId = args.get(0).map(Integer.class::cast).orElse(-1);
                     double price = args.get(1).map(Double.class::cast).orElse(-1.0);
-                    Currency currency = args.get(2).map(Currency.class::cast).orElse(null);
-                    int amount = args.get(3).map(Integer.class::cast)
+                    int amount = args.get(2).map(Integer.class::cast)
                             .filter(val -> val > 0 && val < 65536)
                             .orElse(1);
 
-                    if (orderId < 0 || price < 0.0 || currency == null)
+                    if (orderId < 0 || price < 0.0)
                         return true;
 
+                    AbstractBank bank = getMain().getMediator(BankingMediator.class)
+                            .flatMap(bankingMediator -> getUser(sender).map(bankingMediator::getUsingBank))
+                            .orElse(null);
+
+                    if (bank == null) {
+                        getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NotInABank);
+                        return true;
+                    }
+
                     getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
-                            getUser(sender).ifPresent(user ->
-                                    tradeMediator.bidAsset(user,
-                                            orderId,
-                                            price,
-                                            currency,
-                                            amount)));
+                            getUser(sender).ifPresent(user -> {
+                                tradeMediator.bidAsset(user,
+                                        orderId,
+                                        price,
+                                        bank.getBaseCurrency(),
+                                        amount);
+                                getMain().comm().runSubCommand(sender, "orders");
+                            }));
 
                     return true;
                 }));
@@ -359,15 +367,21 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .withDescription(RealEconomyLangs.Command_Sell_Desc)
                 .addUsage(RealEconomyLangs.Command_Sell_Usage)
                 .addTabCompleter(0, TabCompleters.hint("<price>"))
-                .addTabCompleter(1, TabCompleters.hint("<currency>"))
                 .addArgumentMapper(0, mapPrice())
-                .addArgumentMapper(1, mapCurrency())
                 .action((sender, args) -> {
                     double price = args.get(0).map(Double.class::cast).orElse(-1.0);
-                    Currency currency = args.get(1).map(Currency.class::cast).orElse(null);
 
-                    if (price < 0.0 || currency == null)
+                    if (price < 0.0)
                         return true;
+
+                    AbstractBank bank = getMain().getMediator(BankingMediator.class)
+                            .flatMap(bankingMediator -> getUser(sender).map(bankingMediator::getUsingBank))
+                            .orElse(null);
+
+                    if (bank == null) {
+                        getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NotInABank);
+                        return true;
+                    }
 
                     getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
                             getUser(sender).ifPresent(user -> {
@@ -380,8 +394,9 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 tradeMediator.sellAsset(user,
                                         new ItemStackSignature(itemStack),
                                         price,
-                                        currency,
+                                        bank.getBaseCurrency(),
                                         itemStack.getAmount());
+                                getMain().comm().runSubCommand(sender, "orders");
                             }));
 
                     return true;
@@ -447,6 +462,14 @@ public class RealEconomy extends AbstractBukkitPlugin {
         getMain().comm().linkMainCommand("pay", "realeconomy", "pay");
     }
 
+    /**
+     * SQL Overhead
+     *
+     * @param sender
+     * @param orderPair
+     * @param i
+     * @return
+     */
     private Message[] toOrderDetail(ICommandSender sender, Pair<Integer, OrderType> orderPair, int i) {
         RealEconomyLangs lang;
         if (orderPair.value == OrderType.BUY) {

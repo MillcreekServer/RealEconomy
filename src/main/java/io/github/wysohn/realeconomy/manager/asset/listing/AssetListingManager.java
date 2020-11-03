@@ -211,6 +211,32 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 callback);
     }
 
+    /**
+     * Log the given trade info.
+     * <p>
+     * This is a thread-safe operation, yet it will be blocked while trade matching is under progress.
+     * Typically, the search process is around 100ms, so this method is better not called in server thread.
+     * <p>
+     * this must be finalized using {@link #commitOrders()}
+     *
+     * @param info   the info used in the trade
+     * @param amount the amounts actually traded; this may differ from the TradeInfo's amount since buyer/seller is
+     *               not obligated to buy/sell the listed amount. Trade occurs only when both ends agree with each
+     *               other.
+     * @throws SQLException something went wrong with SQL operation.
+     */
+    public void logOrder(TradeInfo info, int amount) throws SQLException {
+        Validation.assertNotNull(info);
+        Validation.validate(amount, val -> val > 0, "amount must be larger than 0.");
+
+        orderPlacementHandler.logOrder(info.getListingUuid(),
+                info.getSeller(),
+                info.getBuyer(),
+                info.getAsk(),
+                info.getCurrencyUuid(),
+                amount);
+    }
+
     public void commitOrders() throws SQLException {
         orderPlacementHandler.commitOrders();
     }

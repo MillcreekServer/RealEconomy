@@ -1,6 +1,7 @@
 package io.github.wysohn.realeconomy.manager.user;
 
 import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.core.paging.DataProviderProxy;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
@@ -10,6 +11,7 @@ import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
+import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -19,6 +21,10 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public class User extends BukkitPlayer implements IBankUser {
+    @Inject
+    private ManagerLanguage lang;
+    @Inject
+    private AssetListingManager listingManager;
     @Inject
     private ITaskSupervisor task;
     @Inject

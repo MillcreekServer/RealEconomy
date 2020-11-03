@@ -9,6 +9,12 @@ public enum RealEconomyLangs implements ILang {
     BankingType_Checking("Checking Account"),
     BankingType_Trading("Trading Account"),
 
+    TradeResult_Buy("&dBUY"),
+    TradeResult_Sell("&6SELL"),
+    TradeResult_InvalidInfo("&cSomething went"),
+    TradeResult_Format("&8[${string}&8] &7Asset&8: &6${string}&8, &7Id&8: &6${integer}&8, &7Amount&8: &6${integer}"),
+    TradeResult_Format2("  &8- &f${string}"),
+
     Command_Common_UserNotFound("&cNo player found with name &6${string}&c."),
     Command_Common_BankNotFound("&cNo bank found with name &6${string}&c."),
     Command_Common_CurrencyNotFound("&cNo currency found with name &6${string}&c."),
@@ -19,6 +25,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Common_SendSuccess("&d${string} &f=> &6${string} ${string} &f=> &d${string}&a."),
     Command_Common_InvalidOrderId("&cOrder id must be greather than 0."),
     Command_Common_PriceRange("&cPrice must be greater than 0.0 and less than ${double}"),
+    Command_Common_NotInABank("&cThis command can be used only when you are in a bank."),
 
     Command_Wallet_Desc("Check your wallet."),
     Command_Wallet_Usage("&d/eco bal 1",

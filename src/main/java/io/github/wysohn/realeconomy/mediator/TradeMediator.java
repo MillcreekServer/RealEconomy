@@ -10,10 +10,7 @@ import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
-import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
-import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
-import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
-import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.asset.listing.*;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.PhysicalAssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
@@ -249,12 +246,6 @@ public class TradeMediator extends Mediator {
         @Override
         public void run() {
             while (!interrupted()) {
-                try {
-                    Thread.sleep(1000L);
-                } catch (InterruptedException e) {
-                    logger.info(getName() + " is interrupted.");
-                }
-
                 assetListingManager.peekMatchingOrder(tradeInfo -> {
                     // get buy/sell pair
                     IBankUser buyer = bankUserProvider.get(tradeInfo.getBuyer());
@@ -263,24 +254,12 @@ public class TradeMediator extends Mediator {
                     // cannot proceed if either trading end is not found
                     if (buyer == null) {
                         // delete order so other orders can be processed.
-                        try {
-                            assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index -> {
-                            });
-                            assetListingManager.commitOrders();
-                        } catch (SQLException ex) {
-                            ex.printStackTrace();
-                        }
+                        cancel(tradeInfo.getBuyId(), OrderType.BUY);
                         return;
                     }
                     if (seller == null) {
                         // delete order so other orders can be processed.
-                        try {
-                            assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index -> {
-                            });
-                            assetListingManager.commitOrders();
-                        } catch (SQLException ex) {
-                            ex.printStackTrace();
-                        }
+                        cancel(tradeInfo.getSellId(), OrderType.SELL);
                         return;
                     }
 
@@ -291,43 +270,23 @@ public class TradeMediator extends Mediator {
                     // weird currency found.
                     CentralBank bank = null;
                     if (currency == null || (bank = currency.ownerBank()) == null) {
-                        try {
-                            assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index -> {
-                            });
-                            assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index -> {
-                            });
-                            assetListingManager.commitOrders();
-                        } catch (SQLException ex) {
-                            ex.printStackTrace();
-                        }
-
+                        cancelBoth(tradeInfo);
                         logger.warning("Cannot proceed with unknown Currency or bank not found. Orders are deleted.");
                         logger.warning("Trade Info: " + tradeInfo);
                         return;
                     }
 
                     // check if trading account exist
+                    // usually, this is checked before the order has made, yet
+                    // account may be deleted for some reason while order is pending
                     if (!bank.hasAccount(buyer, BankingTypeRegistry.TRADING)) {
                         // delete order so other orders can be processed.
-                        try {
-                            assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index -> {
-                            });
-                            assetListingManager.commitOrders();
-                        } catch (SQLException ex) {
-                            ex.printStackTrace();
-                        }
+                        cancel(tradeInfo.getBuyId(), OrderType.BUY);
                         return;
                     }
-
                     if (!bank.hasAccount(seller, BankingTypeRegistry.TRADING)) {
                         // delete order so other orders can be processed.
-                        try {
-                            assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index -> {
-                            });
-                            assetListingManager.commitOrders();
-                        } catch (SQLException ex) {
-                            ex.printStackTrace();
-                        }
+                        cancel(tradeInfo.getSellId(), OrderType.SELL);
                         return;
                     }
 
@@ -402,6 +361,9 @@ public class TradeMediator extends Mediator {
                                 } else {
                                     throw new RuntimeException("new amount became negative. How?");
                                 }
+
+                                // log results
+                                logTrade(tradeInfo, amountsRemoved);
                             } catch (SQLException ex) {
                                 throw new RuntimeException("Trade Info: " + tradeInfo, ex);
                             }
@@ -413,6 +375,7 @@ public class TradeMediator extends Mediator {
                         } catch (SQLException ex) {
                             ex.printStackTrace();
                         }
+
                         return TradeResult.OK;
                     }).handleException(Throwable::printStackTrace).onFail(() -> {
                         buyer.restoreState(buyerState);
@@ -426,9 +389,47 @@ public class TradeMediator extends Mediator {
                         }
                     }).run();
 
-                    //TODO some kind of message queue to inform the trade result
-                    //buyer.addResult(result) ??
+                    // since this is an un-handled case, stop the broker
+                    if (result == null) {
+                        tradeBroker.interrupt();
+                    }
                 });
+
+                try {
+                    Thread.sleep(1000L);
+                } catch (InterruptedException e) {
+                    logger.info(getName() + " is interrupted.");
+                }
+            }
+        }
+
+        private void cancelBoth(TradeInfo tradeInfo) {
+            try {
+                assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index -> {
+                });
+                assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index -> {
+                });
+                assetListingManager.commitOrders();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        private void cancel(int buyId, OrderType type) {
+            try {
+                assetListingManager.cancelOrder(buyId, type, index -> {
+                });
+                assetListingManager.commitOrders();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        private void logTrade(TradeInfo tradeInfo, int amountTraded) {
+            try {
+                assetListingManager.logOrder(tradeInfo, amountTraded);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         }
     }
@@ -442,6 +443,10 @@ public class TradeMediator extends Mediator {
         public static FailSensitiveTradeResult of(Supplier<TradeResult> task) {
             return new FailSensitiveTradeResult(task, TradeResult.OK);
         }
+    }
+
+    public enum OrderResult {
+
     }
 
     public enum TradeResult {
