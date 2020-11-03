@@ -116,20 +116,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 throw new RuntimeException("Unknown order type " + type);
             }
 
-            if (!categoryIdMap.containsKey(category)) {
-                ordersSession.execute(INSERT_CATEGORY, pstmt -> {
-                    try {
-                        pstmt.setString(1, category);
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
-                }, key -> {
-                    categoryIdMap.put(category, key.intValue());
-                    categoryTrie.insert(category);
-                });
-            }
-
-            int categoryId = categoryIdMap.get(category);
+            int categoryId = getCategoryId(category);
             ordersSession.execute(sql, pstmt -> {
                 try {
                     pstmt.setString(1, listingUuid.toString());
@@ -144,6 +131,23 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                     ex.printStackTrace();
                 }
             }, index -> issuer.addOrderId(type, index.intValue()));
+        }
+
+        private int getCategoryId(String category) {
+            if (!categoryIdMap.containsKey(category)) {
+                ordersSession.execute(INSERT_CATEGORY, pstmt -> {
+                    try {
+                        pstmt.setString(1, category);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }, key -> {
+                    categoryIdMap.put(category, key.intValue());
+                    categoryTrie.insert(category);
+                });
+            }
+
+            return categoryIdMap.get(category);
         }
 
         @Override
@@ -191,6 +195,33 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                     pstmt.setInt(2, orderId);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
+                }
+            }, index -> {
+            });
+        }
+
+        @Override
+        public void logOrder(UUID listingUuid,
+                             int categoryId,
+                             UUID seller,
+                             UUID buyer,
+                             double price,
+                             UUID currency,
+                             int amount) throws SQLException {
+            String sql = INSERT_LOG;
+
+            ordersSession.execute(sql, pstmt -> {
+                try {
+                    pstmt.setString(1, listingUuid.toString());
+                    pstmt.setInt(2, categoryId);
+                    pstmt.setLong(3, System.currentTimeMillis());
+                    pstmt.setString(4, seller.toString());
+                    pstmt.setString(5, buyer.toString());
+                    pstmt.setDouble(6, price);
+                    pstmt.setString(7, currency.toString());
+                    pstmt.setInt(8, amount);
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
                 }
             }, index -> {
             });

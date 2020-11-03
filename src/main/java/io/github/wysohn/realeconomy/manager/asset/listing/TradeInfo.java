@@ -16,17 +16,17 @@ public class TradeInfo {
     private final int amount;
     private final UUID currencyUuid;
     private final UUID listingUuid;
+    private final int categoryId;
 
-    private TradeInfo(int sellId,
-                      UUID seller,
-                      double ask,
-                      int stock,
-                      int buyId,
-                      UUID buyer,
-                      double bid,
-                      int amount,
-                      UUID currencyUuid,
-                      UUID listingUuid) {
+    public TradeInfo(int sellId,
+                     UUID seller,
+                     double ask,
+                     int stock,
+                     int buyId,
+                     UUID buyer,
+                     double bid,
+                     int amount,
+                     UUID currencyUuid, UUID listingUuid, int categoryId) {
         this.sellId = sellId;
         this.seller = seller;
         this.ask = ask;
@@ -37,6 +37,7 @@ public class TradeInfo {
         this.amount = amount;
         this.currencyUuid = currencyUuid;
         this.listingUuid = listingUuid;
+        this.categoryId = categoryId;
     }
 
     public int getSellId() {
@@ -77,6 +78,10 @@ public class TradeInfo {
 
     public UUID getListingUuid() {
         return listingUuid;
+    }
+
+    public int getCategoryId() {
+        return categoryId;
     }
 
     @Override
@@ -138,12 +143,13 @@ public class TradeInfo {
         int amount = rs.getInt("amount");
         UUID currencyUuid = UUID.fromString(rs.getString("currency"));
         UUID listingUuid = UUID.fromString(rs.getString("listing_uuid"));
-        return new TradeInfo(sellId, sellerUuid, ask, stock, buyId, buyerUuid, bid, amount, currencyUuid, listingUuid);
+        int categoryId = rs.getInt("category_id");
+        return new TradeInfo(sellId, sellerUuid, ask, stock, buyId, buyerUuid, bid, amount, currencyUuid, listingUuid, categoryId);
     }
 
     public static TradeInfo create(int sellId, UUID seller, double ask, int stock,
                                    int buyId, UUID buyer, double bid, int amount,
-                                   UUID currencyUuid, UUID listingUuid) {
-        return new TradeInfo(sellId, seller, ask, stock, buyId, buyer, bid, amount, currencyUuid, listingUuid);
+                                   UUID currencyUuid, UUID listingUuid, int categoryId) {
+        return new TradeInfo(sellId, seller, ask, stock, buyId, buyer, bid, amount, currencyUuid, listingUuid, categoryId);
     }
 }

@@ -97,7 +97,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     UUID.randomUUID(),
-                    UUID.randomUUID()));
+                    UUID.randomUUID(),
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
@@ -156,7 +157,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     UUID.randomUUID(),
-                    UUID.randomUUID()));
+                    UUID.randomUUID(),
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
@@ -218,7 +220,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     currencyUuid,
-                    UUID.randomUUID()));
+                    UUID.randomUUID(),
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
@@ -284,7 +287,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     currencyUuid,
-                    UUID.randomUUID()));
+                    UUID.randomUUID(),
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
@@ -352,7 +356,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     currencyUuid,
-                    UUID.randomUUID()));
+                    UUID.randomUUID(),
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
@@ -424,7 +429,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     currencyUuid,
-                    listingUuid));
+                    listingUuid,
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
@@ -498,7 +504,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     currencyUuid,
-                    listingUuid));
+                    listingUuid,
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
@@ -573,7 +580,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     currencyUuid,
-                    listingUuid));
+                    listingUuid,
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
@@ -652,7 +660,8 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     currencyUuid,
-                    listingUuid));
+                    listingUuid,
+                    1));
 
             return null;
         }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));

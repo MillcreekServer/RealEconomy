@@ -230,6 +230,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         Validation.validate(amount, val -> val > 0, "amount must be larger than 0.");
 
         orderPlacementHandler.logOrder(info.getListingUuid(),
+                info.getCategoryId(),
                 info.getSeller(),
                 info.getBuyer(),
                 info.getAsk(),

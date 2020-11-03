@@ -8,7 +8,8 @@ SELECT sell_orders.order_id as sell_id,
 	buy_orders.price as bid,
 	buy_orders.amount as amount,
 	sell_orders.currency_uuid as currency,
-	sell_orders.listing_uuid as listing_uuid
+	sell_orders.listing_uuid as listing_uuid,
+	sell_orders.category_id as category_id
 FROM sell_orders JOIN buy_orders
 ON sell_orders.listing_uuid = buy_orders.listing_uuid -- same asset
     AND sell_orders.currency_uuid = buy_orders.currency_uuid -- same currency

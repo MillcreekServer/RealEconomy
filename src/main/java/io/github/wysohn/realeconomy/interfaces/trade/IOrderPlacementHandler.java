@@ -68,6 +68,7 @@ public interface IOrderPlacementHandler {
      * Log the given trade information.
      *
      * @param listingUuid uuid of listing
+     * @param categoryId  category id
      * @param seller      the one sold the asset
      * @param buyer       the one bought the asset
      * @param price       price of an asset
@@ -75,6 +76,7 @@ public interface IOrderPlacementHandler {
      * @param amount      amount traded
      */
     void logOrder(UUID listingUuid,
+                  int categoryId,
                   UUID seller,
                   UUID buyer,
                   double price,

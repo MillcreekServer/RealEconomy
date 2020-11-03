@@ -384,7 +384,8 @@ public class OrderPlacementHandlerModuleTest {
                 3000.0,
                 30,
                 currencyUuid,
-                listingUuid)));
+                listingUuid,
+                1)));
     }
 
     @Test
