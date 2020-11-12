@@ -6,12 +6,14 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
+import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,11 +33,15 @@ public class UserTest extends AbstractBukkitManagerTest {
 
     private ITaskSupervisor taskSupervisor;
     private ICurrencyOwnerProvider currencyOwnerProvider;
+    private ManagerLanguage lang;
+    private AssetListingManager listingManager;
 
     @Before
     public void init() {
         taskSupervisor = mock(ITaskSupervisor.class);
         currencyOwnerProvider = mock(ICurrencyOwnerProvider.class);
+        lang = mock(ManagerLanguage.class);
+        listingManager = mock(AssetListingManager.class);
 
         moduleList.add(new TaskSupervisorModule(taskSupervisor));
         moduleList.add(new AbstractModule() {
@@ -54,6 +60,16 @@ public class UserTest extends AbstractBukkitManagerTest {
             @Provides
             ICurrencyOwnerProvider currencyOwnerProvider() {
                 return currencyOwnerProvider;
+            }
+
+            @Provides
+            ManagerLanguage language() {
+                return lang;
+            }
+
+            @Provides
+            AssetListingManager listingManager() {
+                return listingManager;
             }
         });
     }

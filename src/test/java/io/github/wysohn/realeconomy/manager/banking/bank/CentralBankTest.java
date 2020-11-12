@@ -116,10 +116,13 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         when(currency.getKey()).thenReturn(currencyUuid);
         when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
         bank.setBaseCurrency(currency);
+        bank.setNumPapers(BigDecimal.valueOf(10000000));
 
         bank.withdraw(BigDecimal.valueOf(30567.22), currency);
         // liquidity increases as currency is created
         assertEquals(BigDecimal.valueOf(30567.22), bank.getLiquidity());
+        // printing new currency cost paper per currency
+        assertEquals(BigDecimal.valueOf(10000000 - 30567.22), bank.getNumPapers());
         // always max for base currency
         assertEquals(BigDecimal.valueOf(Double.MAX_VALUE), bank.balance(currency));
     }

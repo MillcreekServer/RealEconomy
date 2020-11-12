@@ -5,6 +5,7 @@ import com.google.inject.*;
 import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
@@ -16,6 +17,7 @@ import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckCurrency;
 import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.main.RealEconomy;
+import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -61,6 +63,8 @@ public class UserManagerTest {
     private ITaskSupervisor taskSupervisor;
     private CentralBankingManager centralBankingManager;
     private ICurrencyOwnerProvider currencyOwnerProvider;
+    private ManagerLanguage lang;
+    private AssetListingManager listingManager;
 
     @Before
     public void init() {
@@ -73,6 +77,8 @@ public class UserManagerTest {
         taskSupervisor = mock(ITaskSupervisor.class);
         centralBankingManager = mock(CentralBankingManager.class);
         currencyOwnerProvider = mock(ICurrencyOwnerProvider.class);
+        lang = mock(ManagerLanguage.class);
+        listingManager = mock(AssetListingManager.class);
 
         moduleList.add(new PluginInfoModule("test", "test", "test"));
         moduleList.add(new TypeAsserterModule());
@@ -114,6 +120,16 @@ public class UserManagerTest {
             @Provides
             ICurrencyOwnerProvider currencyOwnerProvider() {
                 return currencyOwnerProvider;
+            }
+
+            @Provides
+            ManagerLanguage language() {
+                return lang;
+            }
+
+            @Provides
+            AssetListingManager listingManager() {
+                return listingManager;
             }
         });
     }

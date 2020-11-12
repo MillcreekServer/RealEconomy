@@ -105,7 +105,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
@@ -144,6 +144,7 @@ public class TradeMediatorTest {
         when(seller.getUuid()).thenReturn(sellerUuid);
         when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
         when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+        when(currencyManager.get(any(UUID.class))).thenReturn(Optional.empty());
 
         doAnswer(invocation -> {
             Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
@@ -165,7 +166,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
@@ -228,7 +229,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
@@ -295,7 +296,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
@@ -364,7 +365,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
@@ -437,7 +438,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
@@ -512,7 +513,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
@@ -588,7 +589,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
@@ -668,7 +669,7 @@ public class TradeMediatorTest {
 
         mediator.enable();
         mediator.load();
-        Thread.sleep(1L); // prevents run-before case
+        mediator.tradeBroker.processOrder();
         mediator.disable();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
