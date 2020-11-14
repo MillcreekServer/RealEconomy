@@ -74,15 +74,13 @@ public class BankingMediator extends Mediator {
             serverBank.setStringKey("*");
             currencyManager.newCurrency(SERVER_CURRENCY, SERVER_CURRENCY_CODE, serverBank);
         }
-
-        serverBank.setOperating(config.get(KEY_SERVER_BANK_ENABLE)
-                .map(Boolean.class::cast)
-                .orElse(false));
     }
 
     @Override
     public void load() throws Exception {
-
+        serverBank.setOperating(config.get(KEY_SERVER_BANK_ENABLE)
+                .map(Boolean.class::cast)
+                .orElse(false));
     }
 
     @Override
