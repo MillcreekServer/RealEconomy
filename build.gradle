@@ -256,7 +256,7 @@ dependencies {
     testCompile 'org.javassist:javassist:3.20.0-GA'
     testCompile group: 'com.carrotsearch', name: 'junit-benchmarks', version: '0.7.0'
 
-    testCompile 'org.spigotmc:spigot-api:1.15.+'
+    testCompile 'org.spigotmc:spigot-api:1.16.+'
 }
 
 jar {
