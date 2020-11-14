@@ -232,6 +232,7 @@ sourceSets {
         resources {
             srcDirs = ['src/main/resources']
             include '**/*.yml'
+            include '**/*.sql'
         }
     }
 
