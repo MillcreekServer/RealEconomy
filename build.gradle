@@ -209,7 +209,7 @@ repositories {
         url "https://repo.extendedclip.com/content/repositories/placeholderapi/"
     }
     maven {
-        url "https://maven.pkg.github.com/MillcreekServer/RapidFramework"
+        url "https://maven.pkg.github.com/millcreekserver/rapidframework"
         credentials {
             username = gh_username
             password = gh_token
