@@ -276,7 +276,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                     return true;
                 }));
-        list.add(new SubCommand.Builder("items", 1)
+        list.add(new SubCommand.Builder("items", -1)
                 .withDescription(RealEconomyLangs.Command_Items_Desc)
                 .addUsage(RealEconomyLangs.Command_Items_Usage)
                 .addTabCompleter(0, TabCompleters.hint("[page]"))
