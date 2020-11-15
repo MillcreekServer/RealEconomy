@@ -227,6 +227,22 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
         return i;
     }
 
+    public DataProvider<Asset> accountAssetProvider(IBankUser user) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
+        Validation.assertNotNull(user);
+        if (!accounts.containsKey(user.getUuid()))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        if (!accountMap.containsKey(BankingTypeRegistry.TRADING))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        TradingAccount account = (TradingAccount) accountMap.get(BankingTypeRegistry.TRADING);
+        return account.assetDataProvider();
+    }
+
     public boolean depositAccount(IBankUser user, IBankingType type, BigDecimal amount, Currency currency) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());

@@ -43,7 +43,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
-import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.ItemStack;
 
 import java.lang.ref.Reference;
@@ -251,15 +250,16 @@ public class RealEconomy extends AbstractBukkitPlugin {
         );
         //TODO this command need rework
         // bank is based on BankingMediator#getUsingBank
-        // /bank info
+        // /bank info [type]
         // /bank deposit <type> <amount>
         // /bank withdraw <type> <amount>
+        // /bank assets <type>
         // /bank open <type>
         // /bank close <type>
         list.add(new SubCommand.Builder("bank", -1)
                 .withDescription(RealEconomyLangs.Command_Bank_Desc)
                 .addUsage(RealEconomyLangs.Command_Bank_Usage)
-                .addTabCompleter(0, TabCompleters.simple("info", "balance", "deposit", "withdraw", "open", "close"))
+                .addTabCompleter(0, TabCompleters.simple("info", "deposit", "withdraw", "assets", "open"/*, "close"*/))
                 .addTabCompleter(1, TabCompleters.simple(Arrays.stream(BankingTypeRegistry.values())
                         .map(IBankingType::name)
                         .toArray(String[]::new)))
@@ -311,12 +311,17 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 }
 
                                 double finalAmount = amount;
-                                if(action.equals("deposit")){
+                                if (action.equals("deposit")) {
                                     getUser(sender).ifPresent(user -> deposit(user, bank, finalAmount, bankingType));
                                 } else {
                                     getUser(sender).ifPresent(user -> withdraw(user, bank, finalAmount, bankingType));
                                 }
 
+                                break;
+                            case "assets":
+                                if (bankingType == null)
+                                    return false;
+                                getUser(sender).ifPresent(user -> assets(user, bank, bankingType));
                                 break;
                             case "open":
                                 if (bankingType == null)
@@ -362,29 +367,52 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             AbstractBank bank,
                                             double amount,
                                             IBankingType type) {
-                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
-                            switch (bankingMediator.deposit(bank, sender, type, BigDecimal.valueOf(amount))){
-
-                            }
-                        });
+                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
+                                handleResult(sender, bankingMediator.deposit(bank, sender, type, BigDecimal.valueOf(amount))));
                     }
 
                     private void withdraw(User sender,
-                                             AbstractBank bank,
-                                             double amount,
-                                             IBankingType type) {
-                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
-                            switch (bankingMediator.withdraw(bank, sender, type, BigDecimal.valueOf(amount))){
+                                          AbstractBank bank,
+                                          double amount,
+                                          IBankingType type) {
+                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
+                                handleResult(sender, bankingMediator.withdraw(bank, sender, type, BigDecimal.valueOf(amount))));
+                    }
 
-                            }
-                        });
+                    private void handleResult(ICommandSender sender, BankingMediator.Result result) {
+                        switch (result) {
+                            case NO_CURRENCY_SET:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoCurrencySet);
+                                break;
+                            case NO_ACCOUNT:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoAccount);
+                                break;
+                            case FAIL_WITHDRAW:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_WithdrawRefused);
+                                break;
+                            case FAIL_DEPOSIT:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DepositRefused);
+                                break;
+                            case OK:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Success);
+                                break;
+                            default:
+                                sender.sendMessageRaw("&cUndefined result: " + result);
+                                break;
+                        }
+                    }
+
+                    private void assets(User sender,
+                                        AbstractBank bank,
+                                        IBankingType type) {
+                        // TODO use GUI to give/take the items in account
                     }
 
                     private void open(User sender,
-                                         AbstractBank bank,
-                                         IBankingType type){
+                                      AbstractBank bank,
+                                      IBankingType type) {
                         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
-                            if (bankingMediator.openAccount(bank, sender, type)){
+                            if (bankingMediator.openAccount(bank, sender, type)) {
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Open_Success);
                             } else {
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Open_AlreadyExist);
