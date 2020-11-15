@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.ProvidesIntoSet;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
@@ -77,7 +78,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }
@@ -127,7 +128,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }
@@ -188,7 +189,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }
@@ -251,7 +252,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }
@@ -318,7 +319,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }
@@ -387,7 +388,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }
@@ -460,7 +461,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }
@@ -535,7 +536,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }
@@ -611,7 +612,7 @@ public class TradeMediatorTest {
                 return assetListingManager;
             }
 
-            @Provides
+            @ProvidesIntoSet
             IBankUserProvider bankUserProvider() {
                 return bankUserProvider;
             }

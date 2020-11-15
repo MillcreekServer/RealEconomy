@@ -261,10 +261,12 @@ public class TradeMediator extends Mediator {
                 // get buy/sell pair
                 IBankUser buyer = bankUserProviders.stream()
                         .map(provider -> provider.get(tradeInfo.getBuyer()))
+                        .filter(Objects::nonNull)
                         .findFirst()
                         .orElse(null);
                 IBankUser seller = bankUserProviders.stream()
                         .map(provider -> provider.get(tradeInfo.getSeller()))
+                        .filter(Objects::nonNull)
                         .findFirst()
                         .orElse(null);
 
