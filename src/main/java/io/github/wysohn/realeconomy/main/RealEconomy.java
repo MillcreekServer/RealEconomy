@@ -245,6 +245,13 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     return true;
                 })
         );
+        //TODO this command need rework
+        // bank is based on BankingMediator#getUsingBank
+        // /bank info
+        // /bank deposit <amount> [type] - default type is checking
+        // /bank withdraw <amount> [type] - default type is checking
+        // /bank open <type>
+        // /bank close <type>
         list.add(new SubCommand.Builder("bank", -1)
                 .withDescription(RealEconomyLangs.Command_Bank_Desc)
                 .addUsage(RealEconomyLangs.Command_Bank_Usage)
