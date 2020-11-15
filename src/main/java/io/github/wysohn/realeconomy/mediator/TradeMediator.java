@@ -258,6 +258,10 @@ public class TradeMediator extends Mediator {
 
         void processOrder() {
             assetListingManager.peekMatchingOrder(tradeInfo -> {
+                // skip if no matching orders
+                if(tradeInfo == null)
+                    return;
+
                 // get buy/sell pair
                 IBankUser buyer = bankUserProviders.stream()
                         .map(provider -> provider.get(tradeInfo.getBuyer()))
