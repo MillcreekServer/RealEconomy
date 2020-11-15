@@ -4,11 +4,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.ProvidesIntoSet;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
-import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
@@ -59,8 +59,12 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
             BigDecimal min() {
                 return BigDecimal.valueOf(-Double.MAX_VALUE);
             }
+
+            @ProvidesIntoSet
+            IBankOwnerProvider bankOwnerProvider(){
+                return provider;
+            }
         });
-        moduleList.add(new BankOwnerProviderModule(provider));
     }
 
     @Test

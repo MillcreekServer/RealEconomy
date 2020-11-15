@@ -14,6 +14,7 @@ import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckBalance;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckCurrency;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import org.bukkit.Material;
@@ -49,6 +50,10 @@ public class UserManager extends AbstractUserManager<User> {
     private final CurrencyManager currencyManager;
     private final NamespacedKey checkCurrencyKey;
     private final NamespacedKey checkBalanceKey;
+
+    private final IBankUserProvider bankUserProvider = (uuid) -> get(uuid)
+            .map(Reference::get)
+            .orElse(null);
 
     @Inject
     public UserManager(
@@ -92,6 +97,10 @@ public class UserManager extends AbstractUserManager<User> {
         if (!config.get(CHECK_PICKUP_BY_PLAYER_ONLY).isPresent()) {
             config.put(CHECK_PICKUP_BY_PLAYER_ONLY, false);
         }
+    }
+
+    public IBankUserProvider bankUserProvider(){
+        return bankUserProvider;
     }
 
     /**

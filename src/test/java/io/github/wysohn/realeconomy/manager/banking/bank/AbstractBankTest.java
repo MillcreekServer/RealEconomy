@@ -4,11 +4,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.ProvidesIntoSet;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
-import io.github.wysohn.realeconomy.inject.module.BankOwnerProviderModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
@@ -68,8 +68,12 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
             ICurrencyOwnerProvider currencyOwnerProvider() {
                 return currencyOwnerProvider;
             }
+
+            @ProvidesIntoSet
+            IBankOwnerProvider bankOwnerProvider(){
+                return provider;
+            }
         });
-        moduleList.add(new BankOwnerProviderModule(provider));
     }
 
     @Test

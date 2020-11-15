@@ -43,7 +43,7 @@ public class TradeMediator extends Mediator {
     private final ManagerConfig config;
     private final CurrencyManager currencyManager;
     private final AssetListingManager assetListingManager;
-    private final IBankUserProvider bankUserProvider;
+    private final Set<IBankUserProvider> bankUserProviders;
 
     TradeBroker tradeBroker;
 
@@ -52,12 +52,12 @@ public class TradeMediator extends Mediator {
                          ManagerConfig config,
                          CurrencyManager currencyManager,
                          AssetListingManager assetListingManager,
-                         IBankUserProvider bankUserProvider) {
+                         Set<IBankUserProvider> bankUserProviders) {
         this.logger = logger;
         this.config = config;
         this.currencyManager = currencyManager;
         this.assetListingManager = assetListingManager;
-        this.bankUserProvider = bankUserProvider;
+        this.bankUserProviders = bankUserProviders;
     }
 
     @Override
@@ -259,8 +259,14 @@ public class TradeMediator extends Mediator {
         void processOrder() {
             assetListingManager.peekMatchingOrder(tradeInfo -> {
                 // get buy/sell pair
-                IBankUser buyer = bankUserProvider.get(tradeInfo.getBuyer());
-                IBankUser seller = bankUserProvider.get(tradeInfo.getSeller());
+                IBankUser buyer = bankUserProviders.stream()
+                        .map(provider -> provider.get(tradeInfo.getBuyer()))
+                        .findFirst()
+                        .orElse(null);
+                IBankUser seller = bankUserProviders.stream()
+                        .map(provider -> provider.get(tradeInfo.getSeller()))
+                        .findFirst()
+                        .orElse(null);
 
                 // cannot proceed if either trading end is not found
                 if (buyer == null) {

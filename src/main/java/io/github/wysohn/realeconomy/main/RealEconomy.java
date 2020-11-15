@@ -69,14 +69,19 @@ public class RealEconomy extends AbstractBukkitPlugin {
         pluginMainBuilder.addModule(new LanguagesModule(RealEconomyLangs.values()));
         pluginMainBuilder.addModule(new ManagerModule(
                 CentralBankingManager.class,
+                AssetListingManager.class,
                 CurrencyManager.class,
                 UserManager.class
         ));
         pluginMainBuilder.addModule(new MediatorModule(
-                BankingMediator.class
+                BankingMediator.class,
+                TradeMediator.class
         ));
         pluginMainBuilder.addModule(new BankOwnerProviderModule(
-                //TODO users
+                //TODO users may own commercial bank later
+        ));
+        pluginMainBuilder.addModule(new BankUserProviderModule(
+
         ));
         pluginMainBuilder.addModule(new GsonSerializerModule(
                 CustomTypeAdapters.ACCOUNT,
