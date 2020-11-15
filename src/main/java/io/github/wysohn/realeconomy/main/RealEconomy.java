@@ -356,12 +356,17 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                     getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
                             getUser(sender).ifPresent(user -> {
-                                tradeMediator.bidAsset(user,
+                                if (tradeMediator.bidAsset(user,
                                         orderId,
                                         price,
                                         bank.getBaseCurrency(),
-                                        amount);
-                                getMain().comm().runSubCommand(sender, "orders");
+                                        amount)) {
+                                    getMain().comm().runSubCommand(sender, "orders");
+                                } else {
+                                    String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
+                                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoAccount, (l, m) ->
+                                            m.addString(nameTrading));
+                                }
                             }));
 
                     return true;
@@ -394,12 +399,17 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     return;
                                 }
 
-                                tradeMediator.sellAsset(user,
+                                if(tradeMediator.sellAsset(user,
                                         new ItemStackSignature(itemStack),
                                         price,
                                         bank.getBaseCurrency(),
-                                        itemStack.getAmount());
-                                getMain().comm().runSubCommand(sender, "orders");
+                                        itemStack.getAmount())){
+                                    getMain().comm().runSubCommand(sender, "orders");
+                                } else {
+                                    String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
+                                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoAccount, (l, m) ->
+                                            m.addString(nameTrading));
+                                }
                             }));
 
                     return true;

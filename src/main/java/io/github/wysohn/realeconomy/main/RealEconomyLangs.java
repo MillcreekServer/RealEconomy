@@ -23,9 +23,10 @@ public enum RealEconomyLangs implements ILang {
     Command_Common_WithdrawRefused("&cWithdraw failed. Contact administrator if you believe it's a bug."),
     Command_Common_DepositRefused("&cDeposit refused. Contact administrator if you believe it's a bug."),
     Command_Common_SendSuccess("&d${string} &f=> &6${string} ${string} &f=> &d${string}&a."),
-    Command_Common_InvalidOrderId("&cOrder id must be greather than 0."),
+    Command_Common_InvalidOrderId("&cOrder id must be greater than 0."),
     Command_Common_PriceRange("&cPrice must be greater than 0.0 and less than ${double}"),
     Command_Common_NotInABank("&cThis command can be used only when you are in a bank."),
+    Command_Common_NoAccount("&cYou must open &6${string} &caccount to do this."),
 
     Command_Wallet_Desc("Check your wallet."),
     Command_Wallet_Usage("&d/eco bal 1",
