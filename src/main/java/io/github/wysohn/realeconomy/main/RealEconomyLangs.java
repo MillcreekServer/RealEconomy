@@ -27,6 +27,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Common_PriceRange("&cPrice must be greater than 0.0 and less than ${double}"),
     Command_Common_NotInABank("&cThis command can be used only when you are in a bank."),
     Command_Common_NoAccount("&cYou must open &6${string} &caccount to do this."),
+    Command_Common_InvalidAmount("&cAmount must be larger than 0."),
 
     Command_Wallet_Desc("Check your wallet."),
     Command_Wallet_Usage("&d/eco bal 1",
@@ -53,6 +54,10 @@ public enum RealEconomyLangs implements ILang {
             " &8- &7check summary of the bank owned by server",
             "&d/eco bank MyBank info",
             " &8- &7check summary of MyBank"),
+    Command_Bank_Balance("&dBalance &8: &6${string} ${string}"),
+
+    Command_Bank_Open_Success("&aNew account has opened!"),
+    Command_Bank_Open_AlreadyExist("&7You already have the account in this bank."),
 
     Command_Items_Desc("List all selling items."),
     Command_Items_Usage("&d/eco items [page] [category] &8- &7list all items currently selling"),

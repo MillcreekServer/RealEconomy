@@ -246,8 +246,8 @@ sourceSets {
 dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
-    compile 'org.spigotmc:spigot-api:1.16.+'
-    compile "io.github.wysohn:rapidframework:3.10.2"
+    implementation 'org.spigotmc:spigot-api:1.16.+'
+    implementation "io.github.wysohn:rapidframework:3.10.2"
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.mockito:mockito-core:1.9.5'

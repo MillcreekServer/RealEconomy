@@ -16,17 +16,20 @@ import io.github.wysohn.rapidframework3.core.message.MessageBuilder;
 import io.github.wysohn.rapidframework3.core.paging.Pagination;
 import io.github.wysohn.rapidframework3.core.player.AbstractPlayerWrapper;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
+import io.github.wysohn.rapidframework3.interfaces.command.CommandAction;
 import io.github.wysohn.rapidframework3.interfaces.command.IArgumentMapper;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.regex.CommonPatterns;
 import io.github.wysohn.realeconomy.inject.module.*;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
+import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -40,6 +43,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
+import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.ItemStack;
 
 import java.lang.ref.Reference;
@@ -248,45 +252,157 @@ public class RealEconomy extends AbstractBukkitPlugin {
         //TODO this command need rework
         // bank is based on BankingMediator#getUsingBank
         // /bank info
-        // /bank deposit <amount> [type] - default type is checking
-        // /bank withdraw <amount> [type] - default type is checking
+        // /bank deposit <type> <amount>
+        // /bank withdraw <type> <amount>
         // /bank open <type>
         // /bank close <type>
         list.add(new SubCommand.Builder("bank", -1)
                 .withDescription(RealEconomyLangs.Command_Bank_Desc)
                 .addUsage(RealEconomyLangs.Command_Bank_Usage)
-                .addTabCompleter(0, TabCompleters.hint("<bank name>"))
-                .addTabCompleter(1, TabCompleters.simple("info"))
-                .addArgumentMapper(0, s -> Optional.of(s)
-                        .map(RealEconomy.this::getCentralBank)
-                        .orElseThrow(() -> new InvalidArgumentException(RealEconomyLangs.Command_Common_BankNotFound,
-                                (sen, man) -> man.addString(s))))
-                .addArgumentMapper(1, ArgumentMappers.STRING)
-                .action((sender, args) -> {
-                    CentralBank centralBank = args.get(0)
-                            .map(CentralBank.class::cast)
-                            .orElse(null);
-                    String action = args.get(1)
-                            .map(String.class::cast)
-                            .orElse(null);
-                    if (centralBank == null)
-                        return true;
-                    if (action == null)
-                        return false;
-
-                    switch (action) {
-                        case "info":
-                            getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
-                            getMain().lang().sendMessage(sender, DefaultLangs.General_Header, (sen, man) ->
-                                    man.addString(centralBank.getStringKey()));
-                            getMain().lang().sendProperty(sender, centralBank);
-                            getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
-                            break;
-                        default:
+                .addTabCompleter(0, TabCompleters.simple("info", "balance", "deposit", "withdraw", "open", "close"))
+                .addTabCompleter(1, TabCompleters.simple(Arrays.stream(BankingTypeRegistry.values())
+                        .map(IBankingType::name)
+                        .toArray(String[]::new)))
+                .addArgumentMapper(0, ArgumentMappers.STRING)
+                .addArgumentMapper(1, s -> Optional.of(s)
+                        .map(String::toUpperCase)
+                        .map(BankingTypeRegistry::fromString)
+                        .orElse(null))
+                .action(new CommandAction() {
+                    @Override
+                    public boolean execute(ICommandSender sender, SubCommand.Arguments args) {
+                        String action = args.get(0)
+                                .map(String.class::cast)
+                                .orElse(null);
+                        if (action == null)
                             return false;
+
+                        AbstractBank bank = getCurrentBank(sender);
+                        if(bank == null){
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NotInABank);
+                            return true;
+                        }
+
+                        IBankingType bankingType = args.get(1)
+                                .map(IBankingType.class::cast)
+                                .orElse(null);
+                        double amount = 0.0;
+                        switch (action) {
+                            case "info":
+                                if(bankingType == null){
+                                    info(sender, bank);
+                                } else {
+                                    getUser(sender).ifPresent(user -> balanceInfo(user, bank, bankingType));
+                                }
+                                break;
+                            case "deposit":
+                            case "withdraw":
+                                if(bankingType == null)
+                                    return false;
+
+                                amount = args.get(2)
+                                        .map(String.class::cast)
+                                        .filter(str -> CommonPatterns.DOUBLE.matcher(str).matches())
+                                        .map(Double.class::cast)
+                                        .orElse(0.0);
+                                if(amount <= 0.0){
+                                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_InvalidAmount);
+                                    return true;
+                                }
+
+                                double finalAmount = amount;
+                                if(action.equals("deposit")){
+                                    getUser(sender).ifPresent(user -> deposit(user, bank, finalAmount, bankingType));
+                                } else {
+                                    getUser(sender).ifPresent(user -> withdraw(user, bank, finalAmount, bankingType));
+                                }
+
+                                break;
+                            case "open":
+                                if (bankingType == null)
+                                    return false;
+                                getUser(sender).ifPresent(user -> open(user, bank, bankingType));
+                                break;
+                            case "close":
+                                if (bankingType == null)
+                                    return false;
+                                //getUser(sender).ifPresent(user -> close(user, bank, bankingType));
+                                break;
+                            default:
+                                return false;
+                        }
+
+                        return true;
                     }
 
-                    return true;
+                    private void info(ICommandSender sender, AbstractBank bank) {
+                        getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
+                        getMain().lang().sendMessage(sender, DefaultLangs.General_Header, (sen, man) ->
+                                man.addString(bank.getStringKey()));
+                        getMain().lang().sendProperty(sender, bank);
+                        getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
+                    }
+
+                    private void balanceInfo(User sender, AbstractBank bank, IBankingType type) {
+                        String translated = getMain().lang().parseFirst(sender, type.lang());
+                        getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
+                        getMain().lang().sendMessage(sender, DefaultLangs.General_Header, (sen, man) ->
+                                man.addString(translated));
+                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
+                            BigDecimal balance = bankingMediator.balance(bank, sender, type);
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Balance, (sen, man) ->
+                                    man.addString(balance.toString())
+                                            .addString(Objects.toString(bank.getBaseCurrency())));
+                        });
+                        getMain().lang().sendProperty(sender, bank);
+                        getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
+                    }
+
+                    private void deposit(User sender,
+                                            AbstractBank bank,
+                                            double amount,
+                                            IBankingType type) {
+                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
+                            switch (bankingMediator.deposit(bank, sender, type, BigDecimal.valueOf(amount))){
+
+                            }
+                        });
+                    }
+
+                    private void withdraw(User sender,
+                                             AbstractBank bank,
+                                             double amount,
+                                             IBankingType type) {
+                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
+                            switch (bankingMediator.withdraw(bank, sender, type, BigDecimal.valueOf(amount))){
+
+                            }
+                        });
+                    }
+
+                    private void open(User sender,
+                                         AbstractBank bank,
+                                         IBankingType type){
+                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
+                            if (bankingMediator.openAccount(bank, sender, type)){
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Open_Success);
+                            } else {
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Open_AlreadyExist);
+                            }
+                        });
+                    }
+
+//                    private void close(User sender,
+//                                         AbstractBank bank,
+//                                         IBankingType type){
+//                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
+//                            if (bankingMediator.(bank, sender, type)){
+//
+//                            } else {
+//
+//                            }
+//                        });
+//                    }
                 }));
         list.add(new SubCommand.Builder("items", -1)
                 .withDescription(RealEconomyLangs.Command_Items_Desc)
