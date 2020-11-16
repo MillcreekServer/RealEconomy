@@ -9,6 +9,11 @@ public enum RealEconomyLangs implements ILang {
     BankingType_Checking("Checking Account"),
     BankingType_Trading("Trading Account"),
 
+    GUI_PreviousPage("&dPrevious Page"),
+    GUI_NextPage("&dNext Page"),
+    GUI_Assets_IssuedDate("&dIssued on &a${date}"),
+    GUI_Assets_Physical_Amount("&dAmount&8: &6${integer}"),
+
     TradeResult_Buy("&dBUY"),
     TradeResult_Sell("&6SELL"),
     TradeResult_InvalidInfo("&cSomething went"),

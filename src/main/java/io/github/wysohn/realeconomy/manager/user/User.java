@@ -11,8 +11,10 @@ import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
+import io.github.wysohn.realeconomy.manager.asset.Item;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
@@ -37,7 +39,6 @@ public class User extends BukkitPlayer implements IBankUser {
     private final Map<UUID, BigDecimal> wallet = new HashMap<>();
     private final Set<Integer> buyOrderIdSet = new HashSet<>();
     private final Set<Integer> sellOrderIdSet = new HashSet<>();
-    private final List<Asset> ownedAssets = new ArrayList<>();
 
     private transient DataProvider<Pair<UUID, BigDecimal>> balanceProvider;
 
@@ -167,6 +168,16 @@ public class User extends BukkitPlayer implements IBankUser {
                 return new HashSet<>(sellOrderIdSet);
             default:
                 throw new RuntimeException("Unknown order type " + type);
+        }
+    }
+
+    @Override
+    public int realizeAsset(Asset asset) {
+        if (asset instanceof Item) {
+            ItemStackSignature signature = (ItemStackSignature) asset.getSignature();
+            return give(signature.getItemStack(), ((Item) asset).getAmount());
+        } else {
+            throw new RuntimeException("Not yet implemented: " + asset);
         }
     }
 

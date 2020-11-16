@@ -1,9 +1,10 @@
 package io.github.wysohn.realeconomy.manager.asset;
 
+import io.github.wysohn.rapidframework3.core.language.DynamicLang;
+import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class Asset {
     private final UUID uuid;
@@ -44,6 +45,13 @@ public abstract class Asset {
 
     void setLastUpdate(long lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    public List<DynamicLang> lore() {
+        return new ArrayList<DynamicLang>() {{
+            add(new DynamicLang(RealEconomyLangs.GUI_Assets_IssuedDate, (s, m) ->
+                    m.addDate(new Date(issuedDate))));
+        }};
     }
 
     public abstract Asset clone();

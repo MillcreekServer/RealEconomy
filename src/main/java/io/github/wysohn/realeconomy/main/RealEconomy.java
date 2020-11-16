@@ -21,6 +21,7 @@ import io.github.wysohn.rapidframework3.interfaces.command.IArgumentMapper;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.regex.CommonPatterns;
+import io.github.wysohn.realeconomy.api.smartinv.SmartInvAPI;
 import io.github.wysohn.realeconomy.inject.module.*;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
@@ -79,6 +80,9 @@ public class RealEconomy extends AbstractBukkitPlugin {
         pluginMainBuilder.addModule(new MediatorModule(
                 BankingMediator.class,
                 TradeMediator.class
+        ));
+        pluginMainBuilder.addModule(new ExternalAPIModule(
+                Pair.of("SmartInvs", SmartInvAPI.class)
         ));
         pluginMainBuilder.addModule(new BankOwnerProviderModule(
                 //TODO users may own commercial bank later
