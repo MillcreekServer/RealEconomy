@@ -6,6 +6,7 @@ import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public abstract class PhysicalAsset extends Asset {
@@ -31,5 +32,19 @@ public abstract class PhysicalAsset extends Asset {
         return new ArrayList<DynamicLang>() {{
             add(new DynamicLang(RealEconomyLangs.GUI_Assets_Physical_Amount, (s, m) -> m.addInteger(amount)));
         }};
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        PhysicalAsset that = (PhysicalAsset) o;
+        return amount == that.amount;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), amount);
     }
 }

@@ -38,7 +38,7 @@ public class TradingAccount implements IAccount, IAssetHolder {
 
     @Override
     public IBankingType getType() {
-        return BankingTypeRegistry.CHECKING;
+        return BankingTypeRegistry.TRADING;
     }
 
     @Override

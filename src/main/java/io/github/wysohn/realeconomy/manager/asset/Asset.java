@@ -61,11 +61,12 @@ public abstract class Asset {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Asset asset = (Asset) o;
-        return uuid.equals(asset.uuid);
+        return uuid.equals(asset.uuid) &&
+                signature.equals(asset.signature);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
+        return Objects.hash(uuid, signature);
     }
 }

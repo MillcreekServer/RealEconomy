@@ -1,5 +1,6 @@
 package io.github.wysohn.realeconomy.api.smartinv.gui;
 
+import fr.minuskube.inv.ItemClickData;
 import fr.minuskube.inv.content.InventoryContents;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
@@ -14,6 +15,8 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemFactory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -25,12 +28,14 @@ import org.junit.Test;
 import org.mockito.internal.util.reflection.Whitebox;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
@@ -189,6 +194,133 @@ public class TradeAccountGUITest {
             verify(dataProvider, never()).get(i, 45);
     }
 
+    @Test
+    public void testClickAddItem() throws Exception {
+        Server server = mock(Server.class);
+        Field field = Bukkit.class.getDeclaredField("server");
+        field.setAccessible(true);
+        field.set(null, server);
+
+        List<Asset> assetList = new ArrayList<>();
+        Item asset = new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND)));
+        assetList.add(asset);
+        ItemMeta meta = mock(ItemMeta.class);
+
+        Player player = mock(Player.class);
+        InventoryContents contents = mock(InventoryContents.class);
+        User user = mock(User.class);
+        UUID uuid = UUID.randomUUID();
+        AbstractBank bank = mock(AbstractBank.class);
+        DataProvider<Asset> dataProvider = mock(DataProvider.class);
+        ItemFactory itemFactory = mock(ItemFactory.class);
+        PersistentDataContainer persistentDataContainer = new TempContainer();
+        ItemClickData data = mock(ItemClickData.class);
+
+        when(player.getUniqueId()).thenReturn(uuid);
+        when(user.getUuid()).thenReturn(uuid);
+        when(function.apply(eq(player))).thenReturn(user);
+        when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
+        when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
+        when(dataProvider.size()).thenReturn(46);
+        when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
+        when(server.getItemFactory()).thenReturn(itemFactory);
+        when(itemFactory.getItemMeta(any())).thenReturn(meta);
+        when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainer);
+
+        InventoryClickEvent clickEvent = mock(InventoryClickEvent.class);
+        InventoryAction action = InventoryAction.PLACE_ALL;
+        ItemStack cursor = TradeAccountGUI.assetToItem(namespacedKey, language, user, asset);
+        when(data.getEvent()).thenReturn(clickEvent);
+        when(clickEvent.getAction()).thenReturn(action);
+        when(clickEvent.getCursor()).thenReturn(cursor);
+
+        tradeAccountGUI.init(player, contents);
+        tradeAccountGUI.update(player, contents);
+
+        Method method = TradeAccountGUI.class.getDeclaredMethod("clickedSlot",
+                Player.class, AbstractBank.class, ItemClickData.class);
+        method.setAccessible(true);
+        method.invoke(tradeAccountGUI, player, bank, data);
+    }
+
+    @Test
+    public void testClickTakeItem() throws Exception {
+        Server server = mock(Server.class);
+        Field field = Bukkit.class.getDeclaredField("server");
+        field.setAccessible(true);
+        field.set(null, server);
+
+        List<Asset> assetList = new ArrayList<>();
+        Item asset = new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND)));
+        assetList.add(asset);
+        ItemMeta meta = mock(ItemMeta.class);
+
+        Player player = mock(Player.class);
+        InventoryContents contents = mock(InventoryContents.class);
+        User user = mock(User.class);
+        UUID uuid = UUID.randomUUID();
+        AbstractBank bank = mock(AbstractBank.class);
+        DataProvider<Asset> dataProvider = mock(DataProvider.class);
+        ItemFactory itemFactory = mock(ItemFactory.class);
+        PersistentDataContainer persistentDataContainer = new TempContainer();
+        ItemClickData data = mock(ItemClickData.class);
+
+        when(player.getUniqueId()).thenReturn(uuid);
+        when(user.getUuid()).thenReturn(uuid);
+        when(function.apply(eq(player))).thenReturn(user);
+        when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
+        when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
+        when(dataProvider.size()).thenReturn(46);
+        when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
+        when(server.getItemFactory()).thenReturn(itemFactory);
+        when(itemFactory.getItemMeta(any())).thenReturn(meta);
+        when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainer);
+
+        InventoryClickEvent clickEvent = mock(InventoryClickEvent.class);
+        InventoryAction action = InventoryAction.PLACE_ALL;
+        ItemStack slot = TradeAccountGUI.assetToItem(namespacedKey, language, user, asset);
+        when(data.getEvent()).thenReturn(clickEvent);
+        when(clickEvent.getAction()).thenReturn(action);
+        when(clickEvent.getCurrentItem()).thenReturn(slot);
+
+        tradeAccountGUI.init(player, contents);
+        tradeAccountGUI.update(player, contents);
+
+        Method method = TradeAccountGUI.class.getDeclaredMethod("clickedSlot",
+                Player.class, AbstractBank.class, ItemClickData.class);
+        method.setAccessible(true);
+        method.invoke(tradeAccountGUI, player, bank, data);
+    }
+
+    @Test
+    public void testSerialize() throws Exception {
+        Server server = mock(Server.class);
+        Field field = Bukkit.class.getDeclaredField("server");
+        field.setAccessible(true);
+        field.set(null, server);
+
+        ItemMeta meta = mock(ItemMeta.class);
+        ItemFactory itemFactory = mock(ItemFactory.class);
+        PersistentDataContainer persistentDataContainer = new TempContainer();
+
+        when(server.getItemFactory()).thenReturn(itemFactory);
+        when(itemFactory.getItemMeta(any())).thenReturn(meta);
+        when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainer);
+
+        User user = mock(User.class);
+        UUID uuid = UUID.randomUUID();
+
+        when(user.getUuid()).thenReturn(uuid);
+
+        Item asset = new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND)));
+        asset.setAmount(8853);
+
+        ItemStack itemStack = TradeAccountGUI.assetToItem(namespacedKey, language, user, asset);
+        Asset restored = TradeAccountGUI.itemToAsset(namespacedKey, itemStack);
+
+        assertEquals(8853, TradeAccountGUI.assetAmount(restored));
+    }
+
     private class TempContainer implements PersistentDataContainer {
         private String serialized;
 
@@ -204,7 +336,7 @@ public class TradeAccountGUITest {
 
         @Override
         public <T, Z> Z get(NamespacedKey key, PersistentDataType<T, Z> type) {
-            return null;
+            return (Z) serialized;
         }
 
         @Override

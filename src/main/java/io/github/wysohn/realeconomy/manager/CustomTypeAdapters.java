@@ -66,7 +66,7 @@ public class CustomTypeAdapters {
         }
     });
 
-    public static final Pair<Class<?>, CustomAdapter<?>> ASSET = Pair.of(IBankingType.class, new CustomAdapter<Asset>() {
+    public static final Pair<Class<?>, CustomAdapter<?>> ASSET = Pair.of(Asset.class, new CustomAdapter<Asset>() {
         @Override
         public Asset deserialize(
                 JsonElement json,

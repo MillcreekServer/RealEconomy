@@ -112,8 +112,10 @@ public class TradeAccountGUI implements InventoryProvider {
             List<Asset> assets = dataProvider.get(i, ITEMS_PER_PAGE);
 
             if (i < assets.size()) {
-                inventoryContents.set(i, ClickableItem.from(assetToItem(player, assets.get(i)), data ->
-                        clickedSlot(player, currentBank, data)));
+                inventoryContents.set(i, ClickableItem.from(assetToItem(keySerialized,
+                        lang,
+                        userFunction.apply(player),
+                        assets.get(i)), data -> clickedSlot(player, currentBank, data)));
             } else {
                 inventoryContents.set(i, ClickableItem.from(new ItemStack(Material.AIR), data ->
                         clickedSlot(player, currentBank, data)));
@@ -155,7 +157,7 @@ public class TradeAccountGUI implements InventoryProvider {
                     return true;
 
                 // delete
-                Asset asset = itemToAsset(slot);
+                Asset asset = itemToAsset(keySerialized, slot);
                 int assetAmount = assetAmount(asset);
                 if (currentBank.removeAccountAsset(bankUser, asset.getSignature(), assetAmount) != assetAmount)
                     return false;
@@ -185,29 +187,32 @@ public class TradeAccountGUI implements InventoryProvider {
         }).run();
     }
 
-    private ItemStack assetToItem(Player player, Asset asset) {
+    static ItemStack assetToItem(NamespacedKey serKey,
+                                 ManagerLanguage lang,
+                                 User user,
+                                 Asset asset) {
         String serialized = GSON.toJson(asset, Asset.class);
 
         ItemStack itemStack = new ItemStack(Material.PAPER);
         ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
         meta.setLore(asset.lore().stream()
-                .map(dl -> lang.parseFirst(userFunction.apply(player), dl.lang, dl.parser))
+                .map(dl -> lang.parseFirst(user, dl.lang, dl.parser))
                 .collect(Collectors.toList()));
         PersistentDataContainer persistent = meta.getPersistentDataContainer();
-        persistent.set(keySerialized, PersistentDataType.STRING, serialized);
+        persistent.set(serKey, PersistentDataType.STRING, serialized);
         itemStack.setItemMeta(meta);
 
         return itemStack;
     }
 
-    private Asset itemToAsset(ItemStack itemStack) {
+    static Asset itemToAsset(NamespacedKey serKey, ItemStack itemStack) {
         ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
         PersistentDataContainer persistent = meta.getPersistentDataContainer();
-        String serialized = persistent.get(keySerialized, PersistentDataType.STRING);
+        String serialized = persistent.get(serKey, PersistentDataType.STRING);
         return GSON.fromJson(serialized, Asset.class);
     }
 
-    private int assetAmount(Asset asset) {
+    static int assetAmount(Asset asset) {
         if (asset instanceof PhysicalAsset) {
             return ((PhysicalAsset) asset).getAmount();
         } else {
