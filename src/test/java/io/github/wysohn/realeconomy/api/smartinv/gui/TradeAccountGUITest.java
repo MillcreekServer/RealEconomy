@@ -58,6 +58,7 @@ public class TradeAccountGUITest {
         tradeAccountGUI = new TradeAccountGUI(language, bankingMediator, namespacedKey, function);
 
         when(language.parse(any(User.class), any())).thenReturn(new String[]{"Message"});
+        when(language.parse(any(User.class), any(), any())).thenReturn(new String[]{"Message"});
     }
 
     @Test
@@ -195,9 +196,8 @@ public class TradeAccountGUITest {
         tradeAccountGUI.init(player, contents);
         tradeAccountGUI.update(player, contents);
 
-        verify(dataProvider).get(0, 45);
-        for (int i = 1; i < 45; i++)
-            verify(dataProvider, never()).get(i, 45);
+        for (int i = 0; i < 45; i++)
+            verify(dataProvider).get(i, 45);
     }
 
     @Test
