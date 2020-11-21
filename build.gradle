@@ -12,7 +12,7 @@ plugins {
     id 'groovy'
 }
 
-project.version = '1.2.1'
+project.version = '1.2.2'
 
 ext {
     id = project.name
@@ -247,7 +247,7 @@ dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
     implementation 'org.spigotmc:spigot-api:1.16.+'
-    implementation "io.github.wysohn:rapidframework:3.10.2"
+    implementation "io.github.wysohn:rapidframework:3.10.3"
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.mockito:mockito-core:1.9.5'
