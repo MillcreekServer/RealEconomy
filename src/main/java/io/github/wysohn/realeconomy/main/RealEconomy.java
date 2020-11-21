@@ -409,7 +409,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     private void assets(User sender,
                                         AbstractBank bank,
                                         IBankingType type) {
-                        // TODO use GUI to give/take the items in account
+                        getMain().api().getAPI(SmartInvAPI.class).ifPresent(smartInvAPI ->
+                                smartInvAPI.openTradeAccountGUI(sender));
                     }
 
                     private void open(User sender,

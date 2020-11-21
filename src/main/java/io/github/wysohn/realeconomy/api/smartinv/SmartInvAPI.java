@@ -54,6 +54,7 @@ public class SmartInvAPI extends ExternalAPI {
                         .flatMap(userManager::get)
                         .map(Reference::get)
                         .orElse(null)))
-                .build().open(user.getSender());
+                .build()
+                .open(user.getSender());
     }
 }
