@@ -325,7 +325,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                             case "assets":
                                 if (bankingType == null)
                                     return false;
-                                getUser(sender).ifPresent(user -> assets(user, bank, bankingType));
+                                getUser(sender).ifPresent(user -> assets(user, bankingType));
                                 break;
                             case "open":
                                 if (bankingType == null)
@@ -407,10 +407,13 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     }
 
                     private void assets(User sender,
-                                        AbstractBank bank,
                                         IBankingType type) {
-                        getMain().api().getAPI(SmartInvAPI.class).ifPresent(smartInvAPI ->
-                                smartInvAPI.openTradeAccountGUI(sender));
+                        if (BankingTypeRegistry.TRADING.equals(type)) {
+                            getMain().api().getAPI(SmartInvAPI.class).ifPresent(smartInvAPI ->
+                                    smartInvAPI.openTradeAccountGUI(sender));
+                        } else {
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Assets_InvalidType);
+                        }
                     }
 
                     private void open(User sender,
