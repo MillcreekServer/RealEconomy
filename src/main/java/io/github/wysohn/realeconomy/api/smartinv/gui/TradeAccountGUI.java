@@ -70,7 +70,7 @@ public class TradeAccountGUI implements InventoryProvider {
         if (currentBank == null)
             return null;
 
-        if (currentBank.hasAccount(bankUser, BankingTypeRegistry.TRADING))
+        if (!currentBank.hasAccount(bankUser, BankingTypeRegistry.TRADING))
             return null;
 
         return currentBank;

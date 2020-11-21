@@ -326,7 +326,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 if (bankingType == null)
                                     return false;
 
-                                getUser(sender).ifPresent(user -> assets(user, bankingType));
+                                getUser(sender).ifPresent(user -> assets(user, bank, bankingType));
                                 break;
                             case "open":
                                 if (bankingType == null)
