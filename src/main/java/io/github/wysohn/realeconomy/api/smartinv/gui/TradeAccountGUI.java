@@ -7,6 +7,7 @@ import fr.minuskube.inv.ItemClickData;
 import fr.minuskube.inv.content.InventoryContents;
 import fr.minuskube.inv.content.InventoryProvider;
 import fr.minuskube.inv.content.SlotPos;
+import io.github.wysohn.rapidframework3.bukkit.utils.InventoryUtil;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
@@ -32,7 +33,6 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -105,13 +105,8 @@ public class TradeAccountGUI implements InventoryProvider {
         if (dataProvider == null)
             return;
 
-        int size = dataProvider.size();
-
         for (int i = 0; i < ITEMS_PER_PAGE; i++) {
             inventoryContents.setEditable(SlotPos.of(i / 9, i % 9), true);
-
-            if (ITEMS_PER_PAGE * page + i >= size)
-                break;
 
             List<Asset> assets = dataProvider.get(i, ITEMS_PER_PAGE);
 
@@ -201,10 +196,10 @@ public class TradeAccountGUI implements InventoryProvider {
                                 User user,
                                 boolean left){
         ItemStack itemStack = new ItemStack(Material.ARROW);
-        ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
-        meta.setDisplayName(lang.parseFirst(user, left ?
-                RealEconomyLangs.GUI_PreviousPage : RealEconomyLangs.GUI_NextPage));
-        itemStack.setItemMeta(meta);
+        InventoryUtil.parseFirstToItemTitle(lang,
+                user,
+                left ? RealEconomyLangs.GUI_PreviousPage : RealEconomyLangs.GUI_NextPage,
+                itemStack);
         return itemStack;
     }
 
@@ -215,10 +210,16 @@ public class TradeAccountGUI implements InventoryProvider {
             displayPage = 1;
 
         ItemStack itemStack = new ItemStack(Material.NETHER_STAR, displayPage);
-        ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
-        meta.setDisplayName(lang.parseFirst(user, RealEconomyLangs.GUI_Home_Title));
-        meta.setLore(Arrays.asList(lang.parse(user, RealEconomyLangs.GUI_Home_Lore).clone()));
-        itemStack.setItemMeta(meta);
+        InventoryUtil.parseFirstToItemTitle(lang,
+                user,
+                RealEconomyLangs.GUI_Home_Title,
+                itemStack);
+        int finalDisplayPage1 = displayPage;
+        InventoryUtil.parseToItemLores(lang,
+                user,
+                RealEconomyLangs.GUI_Home_Lore,
+                (s, m)-> m.addInteger(finalDisplayPage1),
+                itemStack);
         return itemStack;
     }
 
