@@ -10,6 +10,8 @@ public enum RealEconomyLangs implements ILang {
     BankingType_Trading("Trading Account"),
 
     GUI_PreviousPage("&dPrevious Page"),
+    GUI_Home_Title("&dFirst Page"),
+    GUI_Home_Lore("", "&7Current Page&8: &6${integer}"),
     GUI_NextPage("&dNext Page"),
     GUI_Assets_IssuedDate("&dIssued on &a${date}"),
     GUI_Assets_Physical_Amount("&dAmount&8: &6${integer}"),

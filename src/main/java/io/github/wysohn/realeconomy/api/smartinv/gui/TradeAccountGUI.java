@@ -12,6 +12,7 @@ import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.PhysicalAsset;
@@ -31,6 +32,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -47,6 +49,7 @@ public class TradeAccountGUI implements InventoryProvider {
 
     private DataProvider<Asset> dataProvider;
     private int page = 0;
+    public static final int PAGE_MAX = 128;
 
     public TradeAccountGUI(ManagerLanguage lang,
                            BankingMediator bankingMediator,
@@ -103,7 +106,6 @@ public class TradeAccountGUI implements InventoryProvider {
             return;
 
         int size = dataProvider.size();
-        int pageMax = size / ITEMS_PER_PAGE;
 
         for (int i = 0; i < ITEMS_PER_PAGE; i++) {
             inventoryContents.setEditable(SlotPos.of(i / 9, i % 9), true);
@@ -124,10 +126,18 @@ public class TradeAccountGUI implements InventoryProvider {
             }
         }
 
-        inventoryContents.set(SlotPos.of(5, 3), ClickableItem.from(new ItemStack(Material.ARROW), data ->
-                page = Math.max(0, Math.min(pageMax, page - 1))));
-        inventoryContents.set(SlotPos.of(5, 5), ClickableItem.from(new ItemStack(Material.ARROW), data ->
-                page = Math.max(0, Math.min(pageMax, page + 1))));
+        inventoryContents.set(SlotPos.of(5, 3), ClickableItem.from(pageButton(lang,
+                userFunction.apply(player),
+                true),
+                data -> page = Math.max(0, Math.min(PAGE_MAX, page - 1))));
+        inventoryContents.set(SlotPos.of(5, 4), ClickableItem.from(homeButton(lang,
+                userFunction.apply(player),
+                page + 1),
+                data -> page = 0));
+        inventoryContents.set(SlotPos.of(5, 5), ClickableItem.from(pageButton(lang,
+                userFunction.apply(player),
+                false),
+                data -> page = Math.max(0, Math.min(PAGE_MAX, page + 1))));
     }
 
     private void clickedSlot(Player player, AbstractBank currentBank, ItemClickData data) {
@@ -185,6 +195,31 @@ public class TradeAccountGUI implements InventoryProvider {
             bankUser.restoreState(mementoUser);
             currentBank.restoreState(mementoBank);
         }).run();
+    }
+
+    static ItemStack pageButton(ManagerLanguage lang,
+                                User user,
+                                boolean left){
+        ItemStack itemStack = new ItemStack(Material.ARROW);
+        ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
+        meta.setDisplayName(lang.parseFirst(user, left ?
+                RealEconomyLangs.GUI_PreviousPage : RealEconomyLangs.GUI_NextPage));
+        itemStack.setItemMeta(meta);
+        return itemStack;
+    }
+
+    static ItemStack homeButton(ManagerLanguage lang,
+                                User user,
+                                int displayPage){
+        if(displayPage < 1 || displayPage > 64)
+            displayPage = 1;
+
+        ItemStack itemStack = new ItemStack(Material.NETHER_STAR, displayPage);
+        ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
+        meta.setDisplayName(lang.parseFirst(user, RealEconomyLangs.GUI_Home_Title));
+        meta.setLore(Arrays.asList(lang.parse(user, RealEconomyLangs.GUI_Home_Lore).clone()));
+        itemStack.setItemMeta(meta);
+        return itemStack;
     }
 
     static ItemStack assetToItem(NamespacedKey serKey,
