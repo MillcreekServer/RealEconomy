@@ -106,6 +106,8 @@ public class TradeAccountGUI implements InventoryProvider {
         int pageMax = size / ITEMS_PER_PAGE;
 
         for (int i = 0; i < ITEMS_PER_PAGE; i++) {
+            inventoryContents.setEditable(SlotPos.of(i / 9, i % 9), true);
+
             if (ITEMS_PER_PAGE * page + i >= size)
                 break;
 
@@ -120,8 +122,6 @@ public class TradeAccountGUI implements InventoryProvider {
                 inventoryContents.set(i, ClickableItem.from(new ItemStack(Material.AIR), data ->
                         clickedSlot(player, currentBank, data)));
             }
-
-            inventoryContents.setEditable(SlotPos.of(i / 9, i % 9), true);
         }
 
         inventoryContents.set(SlotPos.of(6, 3), ClickableItem.from(new ItemStack(Material.ARROW), data ->
