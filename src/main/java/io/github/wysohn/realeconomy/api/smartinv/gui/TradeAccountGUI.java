@@ -124,9 +124,9 @@ public class TradeAccountGUI implements InventoryProvider {
             }
         }
 
-        inventoryContents.set(SlotPos.of(6, 3), ClickableItem.from(new ItemStack(Material.ARROW), data ->
+        inventoryContents.set(SlotPos.of(5, 3), ClickableItem.from(new ItemStack(Material.ARROW), data ->
                 page = Math.max(0, Math.min(pageMax, page - 1))));
-        inventoryContents.set(SlotPos.of(6, 5), ClickableItem.from(new ItemStack(Material.ARROW), data ->
+        inventoryContents.set(SlotPos.of(5, 5), ClickableItem.from(new ItemStack(Material.ARROW), data ->
                 page = Math.max(0, Math.min(pageMax, page + 1))));
     }
 
