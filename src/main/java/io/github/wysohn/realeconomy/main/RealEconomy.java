@@ -809,7 +809,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
     private AbstractBank getCurrentBank(ICommandSender sender) {
         return getMain().getMediator(BankingMediator.class)
                 .flatMap(bankingMediator -> getUser(sender).map(bankingMediator::getUsingBank))
-                .orElseThrow(() -> new RuntimeException("Bank does not exist. But how?"));
+                .orElse(null);
     }
 
     @Override
