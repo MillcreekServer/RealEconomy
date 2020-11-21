@@ -4,6 +4,7 @@ import fr.minuskube.inv.ItemClickData;
 import fr.minuskube.inv.content.InventoryContents;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
@@ -55,6 +56,8 @@ public class TradeAccountGUITest {
         function = mock(Function.class);
 
         tradeAccountGUI = new TradeAccountGUI(language, bankingMediator, namespacedKey, function);
+
+        when(language.parse(any(User.class), any())).thenReturn(new String[]{"Message"});
     }
 
     @Test
@@ -100,6 +103,7 @@ public class TradeAccountGUITest {
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
         when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
+        when(bank.hasAccount(eq(user), any(IBankingType.class))).thenReturn(true);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
         when(dataProvider.size()).thenReturn(45);
         when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
@@ -138,6 +142,7 @@ public class TradeAccountGUITest {
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
         when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
+        when(bank.hasAccount(eq(user), any(IBankingType.class))).thenReturn(true);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
         when(dataProvider.size()).thenReturn(46);
         when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
@@ -178,6 +183,7 @@ public class TradeAccountGUITest {
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
         when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
+        when(bank.hasAccount(eq(user), any(IBankingType.class))).thenReturn(true);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
         when(dataProvider.size()).thenReturn(46);
         when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
