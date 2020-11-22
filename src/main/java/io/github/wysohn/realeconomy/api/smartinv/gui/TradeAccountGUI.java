@@ -9,6 +9,7 @@ import fr.minuskube.inv.content.InventoryProvider;
 import fr.minuskube.inv.content.SlotPos;
 import io.github.wysohn.rapidframework3.bukkit.utils.InventoryUtil;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.core.serialize.BukkitConfigurationSerializer;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
@@ -24,6 +25,7 @@ import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -33,6 +35,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -105,10 +108,16 @@ public class TradeAccountGUI implements InventoryProvider {
         if (dataProvider == null)
             return;
 
+        int size = dataProvider.size();
         for (int i = 0; i < ITEMS_PER_PAGE; i++) {
             inventoryContents.setEditable(SlotPos.of(i / 9, i % 9), true);
 
-            List<Asset> assets = dataProvider.get(i, ITEMS_PER_PAGE);
+            List<Asset> assets;
+            if(page * ITEMS_PER_PAGE < size){
+                assets = dataProvider.get(page, ITEMS_PER_PAGE);
+            } else {
+                assets = Collections.emptyList();
+            }
 
             if (i < assets.size()) {
                 inventoryContents.set(i, ClickableItem.from(assetToItem(keySerialized,
@@ -258,6 +267,7 @@ public class TradeAccountGUI implements InventoryProvider {
 
     private static final Gson GSON = new GsonBuilder()
             .excludeFieldsWithModifiers(Modifier.STATIC | Modifier.TRANSIENT)
+            .registerTypeHierarchyAdapter(ConfigurationSerializable.class, new BukkitConfigurationSerializer())
             .registerTypeAdapter(CustomTypeAdapters.ASSET.key, CustomTypeAdapters.ASSET.value)
             .registerTypeAdapter(CustomTypeAdapters.ASSET_SIGNATURE.key, CustomTypeAdapters.ASSET_SIGNATURE.value)
             .create();
