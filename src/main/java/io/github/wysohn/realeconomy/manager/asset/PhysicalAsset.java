@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 public abstract class PhysicalAsset extends Asset {
-    private int amount;
+    private int amount = 1;
 
     public PhysicalAsset(UUID key,
                          AssetSignature signature) {

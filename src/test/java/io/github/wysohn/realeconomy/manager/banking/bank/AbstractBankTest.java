@@ -7,15 +7,22 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.ProvidesIntoSet;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
+import io.github.wysohn.realeconomy.manager.asset.Item;
+import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -206,6 +213,43 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
                 bank.balanceOfAccount(user, BankingTypeRegistry.CHECKING));
     }
 
+    @Test
+    public void testAddAccountAsset() {
+        AbstractBank bank = new TempBank();
+        addFakeObserver(bank);
+        Guice.createInjector(moduleList).injectMembers(bank);
+
+        IBankUser user = mock(IBankUser.class);
+        UUID uuid = UUID.randomUUID();
+        AssetSignature assetSignature = new ItemStackSignature(new ItemStack(Material.DIAMOND));
+        Asset asset = new Item(UUID.randomUUID(), assetSignature);
+
+        when(user.getUuid()).thenReturn(uuid);
+
+        bank.putAccount(user, BankingTypeRegistry.TRADING);
+        bank.addAccountAsset(user, asset);
+
+        DataProvider<Asset> assetDataProvider = bank.accountAssetProvider(user);
+        assertEquals(asset, assetDataProvider.get(0, 45).get(0));
+    }
+
+    @Test
+    public void testRemoveAccountAsset() {
+        AbstractBank bank = new TempBank();
+        addFakeObserver(bank);
+        Guice.createInjector(moduleList).injectMembers(bank);
+
+        IBankUser user = mock(IBankUser.class);
+        UUID uuid = UUID.randomUUID();
+        AssetSignature assetSignature = new ItemStackSignature(new ItemStack(Material.DIAMOND));
+        Asset asset = new Item(UUID.randomUUID(), assetSignature);
+
+        when(user.getUuid()).thenReturn(uuid);
+
+        bank.putAccount(user, BankingTypeRegistry.TRADING);
+        bank.addAccountAsset(user, asset);
+        assertEquals(1, bank.removeAccountAsset(user, assetSignature, 1));
+    }
 
     public static class TempBank extends AbstractBank {
         private TempBank() {

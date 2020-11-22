@@ -23,7 +23,8 @@ public class ItemStackSignature extends PhysicalAssetSignature {
     private final ItemStack itemStack;
 
     public ItemStackSignature(ItemStack itemStack) {
-        this.itemStack = itemStack;
+        this.itemStack = Objects.requireNonNull(itemStack).clone();
+        this.itemStack.setAmount(1);
     }
 
     @Override
