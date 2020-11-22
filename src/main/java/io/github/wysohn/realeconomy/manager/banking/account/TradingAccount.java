@@ -43,9 +43,10 @@ public class TradingAccount implements IAccount, IAssetHolder {
 
     @Override
     public IAccount clone() {
-        CheckingAccount checkingAccount = new CheckingAccount();
+        TradingAccount checkingAccount = new TradingAccount();
         // both UUID and BigDecimal are immutable
         checkingAccount.balances.putAll(balances);
+        ownedAssets.forEach(asset -> checkingAccount.ownedAssets.add(asset.clone()));
         return checkingAccount;
     }
 }
