@@ -3,6 +3,7 @@ package io.github.wysohn.realeconomy.manager.asset.signature;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
@@ -42,7 +43,7 @@ public class ItemStackSignature extends PhysicalAssetSignature {
 
     @Override
     public AssetSignature clone() {
-        return new ItemStackSignature(itemStack.clone());
+        return new ItemStackSignature(itemStack == null ? new ItemStack(Material.AIR) : itemStack);
     }
 
     @Override
