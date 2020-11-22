@@ -109,15 +109,15 @@ public class TradeAccountGUI implements InventoryProvider {
             return;
 
         int size = dataProvider.size();
+        List<Asset> assets;
+        if(page * ITEMS_PER_PAGE < size){
+            assets = dataProvider.get(page, ITEMS_PER_PAGE);
+        } else {
+            assets = Collections.emptyList();
+        }
+
         for (int i = 0; i < ITEMS_PER_PAGE; i++) {
             inventoryContents.setEditable(SlotPos.of(i / 9, i % 9), true);
-
-            List<Asset> assets;
-            if(page * ITEMS_PER_PAGE < size){
-                assets = dataProvider.get(page, ITEMS_PER_PAGE);
-            } else {
-                assets = Collections.emptyList();
-            }
 
             if (i < assets.size()) {
                 inventoryContents.set(i, ClickableItem.from(assetToItem(keySerialized,

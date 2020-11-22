@@ -47,18 +47,24 @@ public class TradeAccountGUITest {
     private NamespacedKey namespacedKey;
     private BankingMediator bankingMediator;
     private ManagerLanguage language;
+    private Server server;
 
     @Before
-    public void init() {
+    public void init() throws Exception {
         language = mock(ManagerLanguage.class);
         bankingMediator = mock(BankingMediator.class);
         namespacedKey = new NamespacedKey("test", "ser");
         function = mock(Function.class);
+        server = mock(Server.class, RETURNS_DEEP_STUBS);
+        Field field = Bukkit.class.getDeclaredField("server");
+        field.setAccessible(true);
+        field.set(null, server);
 
         tradeAccountGUI = new TradeAccountGUI(language, bankingMediator, namespacedKey, function);
 
         when(language.parse(any(User.class), any())).thenReturn(new String[]{"Message"});
         when(language.parse(any(User.class), any(), any())).thenReturn(new String[]{"Message"});
+        when(server.getUnsafe().getDataVersion()).thenReturn(1);
     }
 
     @Test
@@ -82,11 +88,6 @@ public class TradeAccountGUITest {
 
     @Test
     public void testUpdateSinglePage() throws Exception {
-        Server server = mock(Server.class);
-        Field field = Bukkit.class.getDeclaredField("server");
-        field.setAccessible(true);
-        field.set(null, server);
-
         List<Asset> assetList = new ArrayList<>();
         assetList.add(new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND))));
         ItemMeta meta = mock(ItemMeta.class);
@@ -120,11 +121,6 @@ public class TradeAccountGUITest {
 
     @Test
     public void testUpdateTwoPages() throws Exception {
-        Server server = mock(Server.class);
-        Field field = Bukkit.class.getDeclaredField("server");
-        field.setAccessible(true);
-        field.set(null, server);
-
         List<Asset> assetList = new ArrayList<>();
         for (int i = 0; i < 46; i++)
             assetList.add(new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND))));
@@ -154,18 +150,12 @@ public class TradeAccountGUITest {
         tradeAccountGUI.init(player, contents);
         tradeAccountGUI.update(player, contents);
 
-        for (int i = 0; i < 45; i++)
-            verify(dataProvider).get(i, 45);
-        verify(dataProvider, never()).get(45, 45);
+        verify(dataProvider).get(0, 45);
+        verify(dataProvider, never()).get(1, 45);
     }
 
     @Test
     public void testUpdateTwoPagesNext() throws Exception {
-        Server server = mock(Server.class);
-        Field field = Bukkit.class.getDeclaredField("server");
-        field.setAccessible(true);
-        field.set(null, server);
-
         List<Asset> assetList = new ArrayList<>();
         for (int i = 0; i < 46; i++)
             assetList.add(new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND))));
@@ -196,17 +186,11 @@ public class TradeAccountGUITest {
         tradeAccountGUI.init(player, contents);
         tradeAccountGUI.update(player, contents);
 
-        for (int i = 0; i < 45; i++)
-            verify(dataProvider).get(i, 45);
+        verify(dataProvider).get(1, 45);
     }
 
     @Test
     public void testClickAddItem() throws Exception {
-        Server server = mock(Server.class);
-        Field field = Bukkit.class.getDeclaredField("server");
-        field.setAccessible(true);
-        field.set(null, server);
-
         List<Asset> assetList = new ArrayList<>();
         Item asset = new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND)));
         assetList.add(asset);
@@ -251,11 +235,6 @@ public class TradeAccountGUITest {
 
     @Test
     public void testClickTakeItem() throws Exception {
-        Server server = mock(Server.class);
-        Field field = Bukkit.class.getDeclaredField("server");
-        field.setAccessible(true);
-        field.set(null, server);
-
         List<Asset> assetList = new ArrayList<>();
         Item asset = new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND)));
         assetList.add(asset);
@@ -300,11 +279,6 @@ public class TradeAccountGUITest {
 
     @Test
     public void testSerialize() throws Exception {
-        Server server = mock(Server.class);
-        Field field = Bukkit.class.getDeclaredField("server");
-        field.setAccessible(true);
-        field.set(null, server);
-
         ItemMeta meta = mock(ItemMeta.class);
         ItemFactory itemFactory = mock(ItemFactory.class);
         PersistentDataContainer persistentDataContainer = new TempContainer();
