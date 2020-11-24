@@ -1,5 +1,6 @@
 package io.github.wysohn.realeconomy.api.smartinv.gui;
 
+import com.google.common.collect.Multimap;
 import fr.minuskube.inv.ItemClickData;
 import fr.minuskube.inv.content.InventoryContents;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
@@ -15,12 +16,20 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFactory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.tags.CustomItemTagContainer;
 import org.bukkit.persistence.PersistentDataAdapterContext;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -30,13 +39,11 @@ import org.mockito.internal.util.reflection.Whitebox;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
@@ -279,13 +286,15 @@ public class TradeAccountGUITest {
 
     @Test
     public void testSerialize() throws Exception {
-        ItemMeta meta = mock(ItemMeta.class);
+        TestMeta meta = new TestMeta();
         ItemFactory itemFactory = mock(ItemFactory.class);
-        PersistentDataContainer persistentDataContainer = new TempContainer();
+        meta.container = new TempContainer();
 
         when(server.getItemFactory()).thenReturn(itemFactory);
+        when(server.getUnsafe().getMaterial(anyString(), anyInt())).then(invocation ->
+                Material.valueOf((String) invocation.getArguments()[0]));
         when(itemFactory.getItemMeta(any())).thenReturn(meta);
-        when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainer);
+        when(itemFactory.equals(any(), any())).thenReturn(true);
 
         User user = mock(User.class);
         UUID uuid = UUID.randomUUID();
@@ -299,6 +308,9 @@ public class TradeAccountGUITest {
         Asset restored = TradeAccountGUI.itemToAsset(namespacedKey, itemStack);
 
         assertEquals(8853, TradeAccountGUI.assetAmount(restored));
+        assertTrue(restored instanceof Item);
+        assertEquals(new ItemStack(Material.DIAMOND),
+                ((ItemStackSignature)restored.getSignature()).getItemStack());
     }
 
     private class TempContainer implements PersistentDataContainer {
@@ -344,6 +356,239 @@ public class TradeAccountGUITest {
         @Override
         public PersistentDataAdapterContext getAdapterContext() {
             return null;
+        }
+    }
+
+    static {
+        ConfigurationSerialization.registerClass(TestMeta.class);
+    }
+
+    public static class TestMeta implements ItemMeta, Damageable {
+        PersistentDataContainer container;
+
+        @Override
+        public boolean hasDisplayName() {
+            return false;
+        }
+
+
+        @Override
+        public String getDisplayName() {
+            return null;
+        }
+
+        @Override
+        public void setDisplayName(String name) {
+
+        }
+
+        @Override
+        public boolean hasLocalizedName() {
+            return false;
+        }
+
+
+        @Override
+        public String getLocalizedName() {
+            return null;
+        }
+
+        @Override
+        public void setLocalizedName(String name) {
+
+        }
+
+        @Override
+        public boolean hasLore() {
+            return false;
+        }
+
+        @Override
+        public List<String> getLore() {
+            return null;
+        }
+
+        @Override
+        public void setLore(List<String> lore) {
+
+        }
+
+        @Override
+        public boolean hasCustomModelData() {
+            return false;
+        }
+
+        @Override
+        public int getCustomModelData() {
+            return 0;
+        }
+
+        @Override
+        public void setCustomModelData(Integer data) {
+
+        }
+
+        @Override
+        public boolean hasEnchants() {
+            return false;
+        }
+
+        @Override
+        public boolean hasEnchant(Enchantment ench) {
+            return false;
+        }
+
+        @Override
+        public int getEnchantLevel(Enchantment ench) {
+            return 0;
+        }
+
+
+        @Override
+        public Map<Enchantment, Integer> getEnchants() {
+            return null;
+        }
+
+        @Override
+        public boolean addEnchant(Enchantment ench, int level, boolean ignoreLevelRestriction) {
+            return false;
+        }
+
+        @Override
+        public boolean removeEnchant(Enchantment ench) {
+            return false;
+        }
+
+        @Override
+        public boolean hasConflictingEnchant(Enchantment ench) {
+            return false;
+        }
+
+        @Override
+        public void addItemFlags(ItemFlag... itemFlags) {
+
+        }
+
+        @Override
+        public void removeItemFlags(ItemFlag... itemFlags) {
+
+        }
+
+
+        @Override
+        public Set<ItemFlag> getItemFlags() {
+            return null;
+        }
+
+        @Override
+        public boolean hasItemFlag(ItemFlag flag) {
+            return false;
+        }
+
+        @Override
+        public boolean isUnbreakable() {
+            return false;
+        }
+
+        @Override
+        public void setUnbreakable(boolean unbreakable) {
+
+        }
+
+        @Override
+        public boolean hasAttributeModifiers() {
+            return false;
+        }
+
+        @Override
+        public Multimap<Attribute, AttributeModifier> getAttributeModifiers() {
+            return null;
+        }
+
+
+        @Override
+        public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot) {
+            return null;
+        }
+
+        @Override
+        public Collection<AttributeModifier> getAttributeModifiers(Attribute attribute) {
+            return null;
+        }
+
+        @Override
+        public boolean addAttributeModifier(Attribute attribute, AttributeModifier modifier) {
+            return false;
+        }
+
+        @Override
+        public void setAttributeModifiers(Multimap<Attribute, AttributeModifier> attributeModifiers) {
+
+        }
+
+        @Override
+        public boolean removeAttributeModifier(Attribute attribute) {
+            return false;
+        }
+
+        @Override
+        public boolean removeAttributeModifier(EquipmentSlot slot) {
+            return false;
+        }
+
+        @Override
+        public boolean removeAttributeModifier(Attribute attribute, AttributeModifier modifier) {
+            return false;
+        }
+
+
+        @Override
+        public CustomItemTagContainer getCustomTagContainer() {
+            return null;
+        }
+
+        @Override
+        public void setVersion(int version) {
+
+        }
+
+
+        @Override
+        public TestMeta clone() {
+            TestMeta testMeta = new TestMeta();
+            testMeta.container = container;
+            return testMeta;
+        }
+
+
+        @Override
+        public Map<String, Object> serialize() {
+            return new HashMap<>();
+        }
+
+        public static TestMeta deserialize(Map<String, Object> map) {
+            return new TestMeta();
+        }
+
+
+        @Override
+        public PersistentDataContainer getPersistentDataContainer() {
+            return container;
+        }
+
+        @Override
+        public boolean hasDamage() {
+            return false;
+        }
+
+        @Override
+        public int getDamage() {
+            return 0;
+        }
+
+        @Override
+        public void setDamage(int damage) {
+
         }
     }
 }
