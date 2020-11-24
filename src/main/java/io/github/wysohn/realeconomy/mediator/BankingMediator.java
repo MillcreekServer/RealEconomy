@@ -67,13 +67,18 @@ public class BankingMediator extends Mediator {
         if (!config.get(KEY_SERVER_BANK_ENABLE).isPresent())
             config.put(KEY_SERVER_BANK_ENABLE, false);
 
+        // make sure the server currency exist no matter what
+        currencyManager.newCurrency(SERVER_CURRENCY, SERVER_CURRENCY_CODE, serverBank);
         serverBank = centralBankingManager.getOrNew(SERVER_BANK_UUID)
                 .map(Reference::get)
                 .orElseThrow(RuntimeException::new);
-        if (serverBank.getBaseCurrency() == null) {
-            serverBank.setStringKey("*");
-            currencyManager.newCurrency(SERVER_CURRENCY, SERVER_CURRENCY_CODE, serverBank);
-        }
+        Currency currency = currencyManager.get(SERVER_CURRENCY)
+                .map(Reference::get)
+                .orElseThrow(RuntimeException::new);
+
+        serverBank.setStringKey("*");
+        if(serverBank.getBaseCurrency() == null)
+            serverBank.setBaseCurrency(currency);
     }
 
     @Override
