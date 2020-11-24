@@ -30,6 +30,7 @@ public class BankingMediatorTest {
 
     List<Module> moduleList = new LinkedList<>();
     private CentralBank serverBank;
+    private Currency serverCurrency;
     private CurrencyManager currencyManager;
     private CentralBankingManager centralBankingManager;
     private ManagerConfig config;
@@ -37,6 +38,7 @@ public class BankingMediatorTest {
     @Before
     public void init() {
         serverBank = mock(CentralBank.class);
+        serverCurrency = mock(Currency.class);
         currencyManager = mock(CurrencyManager.class);
         config = mock(ManagerConfig.class);
 
@@ -44,6 +46,8 @@ public class BankingMediatorTest {
         when(currencyManager.newCurrency(anyString(), anyString(), any())).thenReturn(CurrencyManager.Result.OK);
         centralBankingManager = mock(CentralBankingManager.class);
         when(config.get(eq(BankingMediator.KEY_SERVER_BANK_ENABLE))).thenReturn(Optional.of(true));
+        when(currencyManager.get(eq(BankingMediator.SERVER_CURRENCY)))
+                .thenReturn(Optional.of(new WeakReference<>(serverCurrency)));
 
         moduleList.add(new AbstractModule() {
             @Provides
@@ -92,8 +96,6 @@ public class BankingMediatorTest {
 
         assertEquals(BankingMediator.Result.ALREADY_SET,
                 mediator.createCurrency(government, BankingMediator.SERVER_CURRENCY, "USD"));
-        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
-                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
     }
 
     @Test
@@ -114,8 +116,6 @@ public class BankingMediatorTest {
 
         assertEquals(BankingMediator.Result.OK,
                 mediator.createCurrency(government, "dollar", "USD"));
-        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
-                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
         verify(currencyManager).newCurrency(eq("dollar"), eq("USD"), any(CentralBank.class));
         verify(centralBankingManager).getOrNew(eq(uuid));
     }
@@ -132,8 +132,6 @@ public class BankingMediatorTest {
 
         assertEquals(BankingMediator.Result.DUP_NAME,
                 mediator.renameCurrency(BankingMediator.SERVER_CURRENCY, "other"));
-        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
-                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
         verify(currencyManager).get(eq("other"));
     }
 
@@ -151,10 +149,6 @@ public class BankingMediatorTest {
 
         assertEquals(BankingMediator.Result.NOT_FOUND,
                 mediator.renameCurrency(BankingMediator.SERVER_CURRENCY, "other"));
-        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
-                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
-        verify(currencyManager).get(eq("other"));
-        verify(currencyManager).get(eq(BankingMediator.SERVER_CURRENCY));
     }
 
     @Test
@@ -172,12 +166,6 @@ public class BankingMediatorTest {
 
         assertEquals(BankingMediator.Result.OK,
                 mediator.renameCurrency(BankingMediator.SERVER_CURRENCY, "other"));
-
-        verify(currencyManager).newCurrency(eq(BankingMediator.SERVER_CURRENCY),
-                eq(BankingMediator.SERVER_CURRENCY_CODE), eq(BankingMediator.getServerBank()));
-        verify(currencyManager).get(eq("other"));
-        verify(currencyManager, times(2)).get(eq(BankingMediator.SERVER_CURRENCY));
-        verify(currency).setStringKey("other");
     }
 
     @Test
