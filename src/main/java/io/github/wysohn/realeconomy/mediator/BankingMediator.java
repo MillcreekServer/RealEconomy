@@ -3,6 +3,7 @@ package io.github.wysohn.realeconomy.mediator;
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
@@ -243,6 +244,37 @@ public class BankingMediator extends Mediator {
         return TransactionUtil.send(from, to, amount, currency);
     }
 
+    public TransactionUtil.Result send(
+            IBankUser from,
+            IBankingType type,
+            IFinancialEntity to,
+            BigDecimal amount,
+            Currency currency) {
+        return send(new BankAccountWrapper(from, type), to, amount, currency);
+    }
+
+    public TransactionUtil.Result send(
+            IFinancialEntity from,
+            IBankUser to,
+            IBankingType type,
+            BigDecimal amount,
+            Currency currency) {
+        return send(from, new BankAccountWrapper(to, type), amount, currency);
+    }
+
+    public TransactionUtil.Result send(
+            IBankUser from,
+            IBankingType from_type,
+            IBankUser to,
+            IBankingType to_type,
+            BigDecimal amount,
+            Currency currency) {
+        return send(new BankAccountWrapper(from, from_type),
+                new BankAccountWrapper(to, to_type),
+                amount,
+                currency);
+    }
+
     public boolean isInBank(IBankUser user) {
         return Optional.ofNullable(user)
                 .map(IPluginObject::getUuid)
@@ -278,6 +310,68 @@ public class BankingMediator extends Mediator {
     public void createCommercialBank(IBankOwner owner, UUID baseCurrency, double base, String name) {
         //TODO
     }
+
+    public class BankAccountWrapper implements IFinancialEntity {
+        private final IBankUser user;
+        private final IBankingType type;
+
+        public BankAccountWrapper(IBankUser user, IBankingType type) {
+            Validation.assertNotNull(user);
+            Validation.assertNotNull(type);
+
+            this.user = user;
+            this.type = type;
+        }
+
+        private void verifyCurrency(Currency currency) {
+            Optional<Currency> optBaseCurrency = Optional.of(user)
+                    .map(BankingMediator.this::getUsingBank)
+                    .map(AbstractBank::getBaseCurrency);
+
+            if (!optBaseCurrency.map(baseCurrency -> baseCurrency.equals(currency))
+                    .orElse(false)) {
+                throw new RuntimeException("Currently using bank of "+user+" and the requested currency" +
+                        " type does not match. "+ currency +" vs "+optBaseCurrency.orElse(null));
+            }
+        }
+
+        @Override
+        public BigDecimal balance(Currency currency) {
+            verifyCurrency(currency);
+
+            return BankingMediator.this.balance(user, type);
+        }
+
+        @Override
+        public boolean deposit(BigDecimal value, Currency currency) {
+            verifyCurrency(currency);
+
+            return BankingMediator.this.deposit(user, type, value) == Result.OK;
+        }
+
+        @Override
+        public boolean withdraw(BigDecimal value, Currency currency) {
+            verifyCurrency(currency);
+
+            return BankingMediator.this.withdraw(user, type, value) == Result.OK;
+        }
+
+        @Override
+        public UUID getUuid() {
+            return user.getUuid();
+        }
+
+        @Override
+        public IMemento saveState() {
+            return user.saveState();
+        }
+
+        @Override
+        public void restoreState(IMemento iMemento) {
+            user.restoreState(iMemento);
+        }
+    }
+
 
     public enum Result {
         OK,

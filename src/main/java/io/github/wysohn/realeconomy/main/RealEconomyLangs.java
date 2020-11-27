@@ -27,10 +27,12 @@ public enum RealEconomyLangs implements ILang {
     Command_Common_CurrencyNotFound("&cNo currency found with name &6${string}&c."),
     Command_Common_SenderReceiverSame("&7The sender and the receiver cannot be the same."),
     Command_Common_NoCurrencyOwner("&7The currency &6${string} &7has no owner."),
-    Command_Common_WithdrawRefused("&cWithdraw failed. Does your account have enough currency?" +
-            " Contact administrator if you believe it's a bug."),
-    Command_Common_DepositRefused("&cDeposit refused. Your account probably reached the maximum currency limit." +
-            " Contact administrator if you believe it's a bug."),
+    Command_Common_WithdrawRefused("&cDeposit failed. &7Possible reasons:",
+            "&71. Account no longer exist. Maybe the recipient account is closed?",
+            "&72. Account reached maximum allowed limit."),
+    Command_Common_DepositRefused("&cWithdraw failed. &7Possible reasons:",
+            "&71. Most likely, payer doesn't have enough money in the account.",
+            "&72. If payer is a bank, it may ran out of papers to print more currencies."),
     Command_Common_SendSuccess("&d${string} &f=> &6${string} ${string} &f=> &d${string}&a."),
     Command_Common_InvalidOrderId("&cOrder id must be greater than 0."),
     Command_Common_PriceRange("&cPrice must be greater than 0.0 and less than ${double}"),
@@ -76,6 +78,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Bank_Open_AlreadyExist("&7You already have the account in this bank."),
     Command_Bank_NoCurrencySet("&7The bank you are in does not have currency set."),
     Command_Bank_NoAccount("&cYou need appropriate account to proceed."),
+    Command_Bank_NoCurrencyOwner("&cCurrency does not have owner."),
     Command_Bank_Success("&aTransaction successfully finished!"),
 
     Command_Items_Desc("List all selling items."),

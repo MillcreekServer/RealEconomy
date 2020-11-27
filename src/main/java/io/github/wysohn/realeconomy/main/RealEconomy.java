@@ -33,6 +33,7 @@ import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
+import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -308,7 +309,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 amount = args.get(2)
                                         .map(String.class::cast)
                                         .filter(str -> CommonPatterns.DOUBLE.matcher(str).matches())
-                                        .map(Double.class::cast)
+                                        .map(Double::parseDouble)
                                         .orElse(0.0);
                                 if(amount <= 0.0){
                                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_InvalidAmount);
@@ -374,15 +375,17 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             double amount,
                                             IBankingType type) {
                         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
-                                handleResult(sender, bankingMediator.deposit(bank, sender, type, BigDecimal.valueOf(amount))));
+                                // wallet -> bank account
+                                handleResult2(sender, bankingMediator.send(sender, sender, type, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
                     }
 
                     private void withdraw(User sender,
                                           AbstractBank bank,
                                           double amount,
                                           IBankingType type) {
+                                // bank account -> wallet
                         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
-                                handleResult(sender, bankingMediator.withdraw(bank, sender, type, BigDecimal.valueOf(amount))));
+                                handleResult2(sender, bankingMediator.send(sender, type, sender, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
                     }
 
                     private void handleResult(ICommandSender sender, BankingMediator.Result result) {
@@ -398,6 +401,26 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 break;
                             case FAIL_DEPOSIT:
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DepositRefused);
+                                break;
+                            case OK:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Success);
+                                break;
+                            default:
+                                sender.sendMessageRaw("&cUndefined result: " + result);
+                                break;
+                        }
+                    }
+
+                    private void handleResult2(ICommandSender sender, TransactionUtil.Result result) {
+                        switch (result) {
+                            case NO_OWNER:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoCurrencyOwner);
+                                break;
+                            case TO_DEPOSIT_REFUSED:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DepositRefused);
+                                break;
+                            case FROM_WITHDRAW_REFUSED:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_WithdrawRefused);
                                 break;
                             case OK:
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Success);
