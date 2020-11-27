@@ -489,7 +489,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             .addInteger(info.getOrderId()));
 
                             Message[] message = getSignature(info.getListingUuid()).toMessage(getMain().lang(), sender);
-                            Message.concat(message, MessageBuilder.forMessage(other).build());
+                            message = Message.concat(message, MessageBuilder.forMessage(other).build());
                             return message;
                         });
                     });
