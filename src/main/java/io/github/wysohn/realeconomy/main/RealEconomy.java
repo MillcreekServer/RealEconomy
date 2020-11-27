@@ -628,7 +628,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         .collect(Collectors.toList()),
                                 7,
                                 "Orders",
-                                "/realeconomy orders").show(sender, page, this::toOrderDetail);
+                                "/realeconomy orders")
+                                .show(sender, page, (s, pair, i) -> toOrderDetail(user, pair, i));
                     });
                     return true;
                 }));
@@ -682,7 +683,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
      * @param i
      * @return
      */
-    private Message[] toOrderDetail(ICommandSender sender, Pair<Integer, OrderType> orderPair, int i) {
+    private Message[] toOrderDetail(User sender, Pair<Integer, OrderType> orderPair, int i) {
         RealEconomyLangs lang;
         if (orderPair.value == OrderType.BUY) {
             lang = RealEconomyLangs.Command_Orders_Buys;
@@ -702,6 +703,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
         }).orElse(null);
 
         if (orderInfo == null) {
+            sender.removeOrderId(orderPair.value, orderPair.key);
             return null;
         } else {
             return MessageBuilder.forMessage(getMain().lang().parseFirst(lang, (s, m) ->
