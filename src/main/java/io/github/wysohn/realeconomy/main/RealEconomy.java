@@ -702,7 +702,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
         }).orElse(null);
 
         if (orderInfo == null) {
-            return MessageBuilder.forMessage(orderPair + "?").build();
+            return null;
         } else {
             return MessageBuilder.forMessage(getMain().lang().parseFirst(lang, (s, m) ->
                     m.addInteger(orderPair.key)
