@@ -55,6 +55,7 @@ public class OrderSQLModule extends AbstractModule {
                         .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
                         .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
+                        .field("category_id", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("seller", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("buyer", "char(36)", SQLSession.Attribute.NOT_NULL)
