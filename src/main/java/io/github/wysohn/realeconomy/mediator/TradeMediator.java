@@ -351,6 +351,7 @@ public class TradeMediator extends Mediator {
                             // cancel it since this buyer is unable to pay the initially promised price
                             // give other buyers chance to purchase
                             cancel(tradeInfo.getBuyId(), OrderType.BUY);
+                            buyer.removeOrderId(OrderType.BUY, tradeInfo.getBuyId());
                             return TradeResult.WITHDRAW_REFUSED;
                         }
 
@@ -359,6 +360,7 @@ public class TradeMediator extends Mediator {
                             // something wrong with this seller's account, so cancel it
                             // give other listed items the chance to be sold
                             cancel(tradeInfo.getSellId(), OrderType.SELL);
+                            seller.removeOrderId(OrderType.SELL, tradeInfo.getSellId());
                             return TradeResult.DEPOSIT_REFUSED;
                         }
 
@@ -403,6 +405,7 @@ public class TradeMediator extends Mediator {
                         // in this case, the seller is unable to deliver the promised asset to the buyer
                         // cancel this order so other sellers can get chance to sell their assets.
                         cancel(tradeInfo.getSellId(), OrderType.SELL);
+                        seller.removeOrderId(OrderType.SELL, tradeInfo.getSellId());
                     }
 
                     // finalize SQL transaction
