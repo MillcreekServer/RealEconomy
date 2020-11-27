@@ -19,6 +19,8 @@ public class CentralBank extends AbstractBank {
     private BigDecimal numPapers = BigDecimal.ZERO;
     private BigDecimal liquidity = BigDecimal.ZERO;
 
+    private boolean limitlessPapers = false;
+
     private CentralBank() {
         super(null);
     }
@@ -33,6 +35,15 @@ public class CentralBank extends AbstractBank {
 
     public void setNumPapers(BigDecimal numPapers) {
         this.numPapers = numPapers;
+        notifyObservers();
+    }
+
+    public boolean isLimitlessPapers() {
+        return limitlessPapers;
+    }
+
+    public void setLimitlessPapers(boolean limitlessPapers) {
+        this.limitlessPapers = limitlessPapers;
         notifyObservers();
     }
 
@@ -75,7 +86,7 @@ public class CentralBank extends AbstractBank {
         Validation.assertNotNull(getBaseCurrencyUuid());
 
         // not enough papers
-        if (numPapers.compareTo(value) < 0) {
+        if (!limitlessPapers && numPapers.compareTo(value) < 0) {
             return false;
         }
 
@@ -98,6 +109,8 @@ public class CentralBank extends AbstractBank {
     public Map<ILang, Object> properties() {
         Map<ILang, Object> properties = super.properties();
         properties.put(RealEconomyLangs.Bank_Liquidity, Metrics.df.format(liquidity) + " " + getBaseCurrency());
+        properties.put(RealEconomyLangs.Bank_Papers, Metrics.df.format(numPapers) + " " + getNumPapers());
+        properties.put(RealEconomyLangs.Bank_PaperUnlimited, limitlessPapers ? "&aO" : "&cX");
         return properties;
     }
 

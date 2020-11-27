@@ -81,6 +81,7 @@ public class BankingMediator extends Mediator {
         serverBank.setStringKey("*");
         if(serverBank.getBaseCurrency() == null)
             serverBank.setBaseCurrency(currency);
+        serverBank.setLimitlessPapers(true);
     }
 
     @Override

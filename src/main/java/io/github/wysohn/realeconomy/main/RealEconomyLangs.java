@@ -110,6 +110,8 @@ public enum RealEconomyLangs implements ILang {
     Bank_BaseCurrency("&9BaseCurrency"),
     Bank_NumAccounts("&9Number of accounts"),
     Bank_Liquidity("&9Currency in circulation"),
+    Bank_Papers("&9Number of papers"),
+    Bank_PaperUnlimited("&9Paper unlimited"),
     Bank_Finance("&9Finance"),
 
     ;
