@@ -280,7 +280,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IFinan
 
         IAccount account = accountMap.get(type);
         notifyObservers();
-        return TransactionUtil.withdraw(minimum, account.getCurrencyMap(), amount, currency, true);
+
+        BigDecimal accountMinimum = minimum.compareTo(account.minimumBalance()) > 0 ? minimum : account.minimumBalance();
+        return TransactionUtil.withdraw(accountMinimum, account.getCurrencyMap(), amount, currency, true);
     }
 
     public boolean withdrawAccount(IBankUser user, IBankingType type, double amount, Currency currency) {
