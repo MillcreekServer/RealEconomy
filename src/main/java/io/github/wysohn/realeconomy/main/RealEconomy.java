@@ -505,7 +505,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 dataProvider,
                                 7,
                                 "items",
-                                "/economy items").show(sender, page, (sen, info, i) -> {
+                                "/realeconomy items").show(sender, page, (sen, info, i) -> {
                             String other = getMain().lang().parseFirst(sen, RealEconomyLangs.Command_Items_Format, (s, man) ->
                                     man.addDouble(info.getPrice())
                                             .addString(Objects.toString(getCurrency(info.getCurrencyUuid()).orElse(null)))
@@ -628,7 +628,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         .collect(Collectors.toList()),
                                 7,
                                 "Orders",
-                                "/economy orders").show(sender, page, this::toOrderDetail);
+                                "/realeconomy orders").show(sender, page, this::toOrderDetail);
                     });
                     return true;
                 }));
