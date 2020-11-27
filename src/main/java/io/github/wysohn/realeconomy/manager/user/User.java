@@ -181,15 +181,25 @@ public class User extends BukkitPlayer implements IBankUser {
         }
     }
 
+    /**
+     * Warning) This does not save the parent state, which contains
+     * the snapshot of the player's inventory content.
+     *
+     * This is because this class can be used even if the player is offline,
+     * yet the parent class's state require player to be online.
+     *
+     * And since any trade will be held through TRADING account, bukkit
+     * inventory is not necessary.
+     * @return
+     */
     @Override
     public IMemento saveState() {
-        return new Memento(super.saveState(), this);
+        return new Memento(this);
     }
 
     @Override
     public void restoreState(IMemento memento) {
         Memento mem = (Memento) memento;
-        super.restoreState(mem.parentState);
 
         synchronized (wallet) {
             wallet.clear();
@@ -205,13 +215,11 @@ public class User extends BukkitPlayer implements IBankUser {
     }
 
     private static class Memento implements IMemento {
-        private final IMemento parentState;
         private final Map<UUID, BigDecimal> wallet = new HashMap<>();
         private final Set<Integer> buyOrderIdSet = new HashSet<>();
         private final Set<Integer> sellOrderIdSet = new HashSet<>();
 
-        public Memento(IMemento parentState, User user) {
-            this.parentState = parentState;
+        public Memento(User user) {
             synchronized (wallet) {
                 //UUID and BigDecimal are both immutable
                 wallet.putAll(user.wallet);
