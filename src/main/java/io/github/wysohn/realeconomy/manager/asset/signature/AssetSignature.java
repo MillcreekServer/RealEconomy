@@ -1,5 +1,8 @@
 package io.github.wysohn.realeconomy.manager.asset.signature;
 
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.core.message.Message;
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 
 import java.util.Map;
@@ -26,4 +29,6 @@ public abstract class AssetSignature {
     public abstract AssetSignature clone();
 
     public abstract Asset create(Map<String, Object> metaData);
+
+    public abstract Message[] toMessage(ManagerLanguage lang, ICommandSender sender);
 }

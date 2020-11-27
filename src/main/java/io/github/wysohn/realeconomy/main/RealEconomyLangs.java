@@ -82,7 +82,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Items_Usage("&d/eco items [page] [category] &8- &7list all items currently selling"),
     Command_Items_InvalidCategory("&cInvalid category &6${string}"),
     //signature, price, currency, order_id
-    Command_Items_Format("&d${string}&8: &6${double} ${string} &8[&bOrderId &d${integer}&8]"),
+    Command_Items_Format("&8: &6${double} ${string} &8[&bOrderId &d${integer}&8]"),
 
     Command_Buy_Desc("Buy a listed item."),
     Command_Buy_Usage("&d/eco buy <order id> <price> <currency> &8- &7Bid to purchase the given asset.",

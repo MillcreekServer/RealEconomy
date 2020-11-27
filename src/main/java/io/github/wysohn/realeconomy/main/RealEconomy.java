@@ -29,6 +29,7 @@ import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
@@ -481,16 +482,16 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 dataProvider,
                                 7,
                                 "items",
-                                "/economy items").show(sender, page, (sen, info, i) ->
-                                MessageBuilder.forMessage(getMain()
-                                        .lang()
-                                        .parseFirst(RealEconomyLangs.Command_Items_Format, (s, man) ->
-                                                man.addString(Objects.toString(getSignature(info.getListingUuid())))
-                                                        .addDouble(info.getPrice())
-                                                        .addString(Objects.toString(getCurrency(info.getCurrencyUuid())
-                                                                .orElse(null)))
-                                                        .addInteger(info.getOrderId())))
-                                        .build());
+                                "/economy items").show(sender, page, (sen, info, i) -> {
+                            String other = getMain().lang().parseFirst(sen, RealEconomyLangs.Command_Items_Format, (s, man) ->
+                                    man.addDouble(info.getPrice())
+                                            .addString(Objects.toString(getCurrency(info.getCurrencyUuid()).orElse(null)))
+                                            .addInteger(info.getOrderId()));
+
+                            Message[] message = getSignature(info.getListingUuid()).toMessage(getMain().lang(), sender);
+                            Message.concat(message, MessageBuilder.forMessage(other).build());
+                            return message;
+                        });
                     });
                     return true;
                 }));
@@ -682,10 +683,11 @@ public class RealEconomy extends AbstractBukkitPlugin {
         }
     }
 
-    private AssetListing getSignature(UUID listingUuid) {
+    private AssetSignature getSignature(UUID listingUuid) {
         return getMain().getManager(AssetListingManager.class)
                 .flatMap(assetListingManager -> assetListingManager.get(listingUuid))
                 .map(Reference::get)
+                .map(AssetListing::getSignature)
                 .orElse(null);
     }
 

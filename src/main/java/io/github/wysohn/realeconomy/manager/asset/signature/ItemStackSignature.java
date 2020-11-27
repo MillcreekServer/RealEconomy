@@ -1,5 +1,9 @@
 package io.github.wysohn.realeconomy.manager.asset.signature;
 
+import io.github.wysohn.rapidframework3.bukkit.manager.common.message.BukkitMessageBuilder;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.core.message.Message;
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
@@ -53,6 +57,16 @@ public class ItemStackSignature extends PhysicalAssetSignature {
         // fail early if amount is not set
         item.setAmount((int) Objects.requireNonNull(metaData.get(KEY_AMOUNT)));
         return item;
+    }
+
+    @Override
+    public Message[] toMessage(ManagerLanguage lang, ICommandSender sender) {
+        return BukkitMessageBuilder.forBukkitMessage(Optional.of(itemStack)
+                .map(ItemStack::getType)
+                .map(Objects::toString)
+                .orElse(""))
+                .withHoverShowItem(itemStack)
+                .build();
     }
 
     @Override
