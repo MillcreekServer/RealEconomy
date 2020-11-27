@@ -106,6 +106,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Cancel_InvalidOrderType("&6${string} &cis not a valid order type."),
     Command_Cancel_Ownership("&cThat order is not issued by you."),
 
+
     Bank_Owner("&9Owner"),
     Bank_BaseCurrency("&9BaseCurrency"),
     Bank_NumAccounts("&9Number of accounts"),

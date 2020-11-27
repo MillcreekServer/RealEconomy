@@ -656,6 +656,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                         getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
                                 tradeMediator.cancelOrder(user, orderId, type));
+                        getMain().comm().runSubCommand(sender, "orders");
                     });
 
                     return true;
@@ -665,6 +666,12 @@ public class RealEconomy extends AbstractBukkitPlugin {
         getMain().comm().linkMainCommand("balance", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("money", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("pay", "realeconomy", "pay");
+        getMain().comm().linkMainCommand("bank", "realeconomy", "bank");
+        getMain().comm().linkMainCommand("items", "realeconomy", "items");
+        getMain().comm().linkMainCommand("shop", "realeconomy", "items");
+        getMain().comm().linkMainCommand("buy", "realeconomy", "buy");
+        getMain().comm().linkMainCommand("sell", "realeconomy", "sell");
+        getMain().comm().linkMainCommand("cancel", "realeconomy", "cancel");
     }
 
     /**
