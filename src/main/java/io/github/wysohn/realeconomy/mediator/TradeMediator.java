@@ -347,12 +347,20 @@ public class TradeMediator extends Mediator {
                         BigDecimal payTotal = BigDecimal.valueOf(price).multiply(BigDecimal.valueOf(amountsRemoved));
 
                         // take currency from buyer account
-                        if (!finalBank.withdrawAccount(buyer, BankingTypeRegistry.TRADING, payTotal, currency))
+                        if (!finalBank.withdrawAccount(buyer, BankingTypeRegistry.TRADING, payTotal, currency)) {
+                            // cancel it since this buyer is unable to pay the initially promised price
+                            // give other buyers chance to purchase
+                            cancel(tradeInfo.getBuyId(), OrderType.BUY);
                             return TradeResult.WITHDRAW_REFUSED;
+                        }
 
                         // give currency to the seller account
-                        if (!finalBank.depositAccount(seller, BankingTypeRegistry.TRADING, payTotal, currency))
+                        if (!finalBank.depositAccount(seller, BankingTypeRegistry.TRADING, payTotal, currency)) {
+                            // something wrong with this seller's account, so cancel it
+                            // give other listed items the chance to be sold
+                            cancel(tradeInfo.getSellId(), OrderType.SELL);
                             return TradeResult.DEPOSIT_REFUSED;
+                        }
 
                         // give asset to the buyer account
                         finalBank.addAccountAsset(buyer, signature.create(new HashMap<String, Object>() {{
@@ -390,6 +398,11 @@ public class TradeMediator extends Mediator {
                         } catch (SQLException ex) {
                             throw new RuntimeException("Trade Info: " + tradeInfo, ex);
                         }
+                    } else {
+                        // No asset was removed from the seller
+                        // in this case, the seller is unable to deliver the promised asset to the buyer
+                        // cancel this order so other sellers can get chance to sell their assets.
+                        cancel(tradeInfo.getSellId(), OrderType.SELL);
                     }
 
                     // finalize SQL transaction
@@ -431,9 +444,9 @@ public class TradeMediator extends Mediator {
             }
         }
 
-        private void cancel(int buyId, OrderType type) {
+        private void cancel(int orderId, OrderType type) {
             try {
-                assetListingManager.cancelOrder(buyId, type, index -> {
+                assetListingManager.cancelOrder(orderId, type, index -> {
                 });
                 assetListingManager.commitOrders();
             } catch (SQLException ex) {
