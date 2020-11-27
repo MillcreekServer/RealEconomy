@@ -94,8 +94,8 @@ public enum RealEconomyLangs implements ILang {
 
     Command_Orders_Desc("List all orders issued by you."),
     Command_Orders_Usage("&d/eco orders &8- &7list all orders."),
-    Command_Orders_Buys("&8[&aBUY &7id:&d${integer}&8] &7at &6${double} ${string} &e\u26c1${integer}"),
-    Command_Orders_Sells("&8[&6SELL &7id&d${integer}8] &7at &6${double} ${string} &e\u26c1${integer}"),
+    Command_Orders_Buys("&8[&aBUY &7id&8:&d${integer}&8] &7at &6${double} ${string} &e\u26c1${integer}"),
+    Command_Orders_Sells("&8[&6SELL &7id&8:&d${integer}&8] &7at &6${double} ${string} &e\u26c1${integer}"),
 
     Command_Cancel_Desc("Cancel buy/sell order that has not processed yet."),
     Command_Cancel_Usage("&d/eco cancel <type> <order id> &8- &7cancel the order with given id.",
