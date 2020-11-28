@@ -23,6 +23,7 @@ import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
@@ -238,10 +239,11 @@ public class TradeAccountGUI implements InventoryProvider {
                                  Asset asset) {
         String serialized = GSON.toJson(asset, Asset.class);
 
-        ItemStack itemStack = new ItemStack(Material.PAPER);
+        ItemStack itemStack = asset.getIcon();
         ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
         meta.setLore(asset.lore().stream()
                 .map(dl -> lang.parseFirst(user, dl.lang, dl.parser))
+                .map(raw -> ChatColor.translateAlternateColorCodes('&', raw))
                 .collect(Collectors.toList()));
         PersistentDataContainer persistent = meta.getPersistentDataContainer();
         persistent.set(serKey, PersistentDataType.STRING, serialized);

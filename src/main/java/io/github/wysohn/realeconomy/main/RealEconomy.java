@@ -512,9 +512,14 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             .addString(Objects.toString(getCurrency(info.getCurrencyUuid()).orElse(null)))
                                             .addInteger(info.getOrderId()));
 
-                            Message[] message = getSignature(info.getListingUuid()).toMessage(getMain().lang(), sender);
+                            Message[] message = MessageBuilder.forMessage("[").build();
+                            message = Message.concat(message, getSignature(info.getListingUuid()).toMessage(getMain().lang(), sender));
+                            message = Message.concat(message, MessageBuilder.forMessage("]").build());
                             message = Message.concat(message, MessageBuilder.forMessage("\u26c1"+info.getAmount()).build());
-                            message = Message.concat(message, MessageBuilder.forMessage(other).build());
+                            message = Message.concat(message, MessageBuilder.forMessage(other)
+                                    .withHoverShowText("/realeconomy buy "+info.getOrderId()+" ")
+                                    .withClickSuggestCommand("/realeconomy buy "+info.getOrderId()+" ")
+                                    .build());
                             return message;
                         });
                     });

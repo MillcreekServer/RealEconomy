@@ -1,12 +1,15 @@
 package io.github.wysohn.realeconomy.manager.asset;
 
 import io.github.wysohn.rapidframework3.core.language.DynamicLang;
+import io.github.wysohn.realeconomy.api.smartinv.gui.GUISlotIcon;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
-public abstract class Asset {
+public abstract class Asset implements GUISlotIcon {
     private final UUID uuid;
     private final AssetSignature signature;
     private final long issuedDate;
@@ -52,6 +55,11 @@ public abstract class Asset {
             add(new DynamicLang(RealEconomyLangs.GUI_Assets_IssuedDate, (s, m) ->
                     m.addDate(new Date(issuedDate))));
         }};
+    }
+
+    @Override
+    public ItemStack getIcon(){
+        return new ItemStack(Material.PAPER);
     }
 
     public abstract Asset clone();
