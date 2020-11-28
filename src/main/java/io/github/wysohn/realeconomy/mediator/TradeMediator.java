@@ -147,6 +147,8 @@ public class TradeMediator extends Mediator {
                         currency,
                         stock);
 
+                after.run();
+
                 assetListingManager.commitOrders();
             } catch (SQLException ex) {
                 ex.printStackTrace();

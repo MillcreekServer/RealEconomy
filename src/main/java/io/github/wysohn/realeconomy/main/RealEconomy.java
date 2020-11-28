@@ -31,6 +31,7 @@ import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
+import io.github.wysohn.realeconomy.manager.asset.signature.PhysicalAssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
@@ -597,12 +598,18 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     return;
                                 }
 
+                                AssetSignature signature = new ItemStackSignature(itemStack);
                                 if(tradeMediator.sellAsset(user,
-                                        new ItemStackSignature(itemStack),
+                                        signature,
                                         price,
                                         bank.getBaseCurrency(),
                                         itemStack.getAmount(),
-                                        () -> user.getSender().getInventory().setItemInMainHand(null))){
+                                        () -> {
+                                            user.getSender().getInventory().setItemInMainHand(null);
+                                            bank.addAccountAsset(user, signature.create(new HashMap<String, Object>(){{
+                                                put(PhysicalAssetSignature.KEY_AMOUNT, itemStack.getAmount());
+                                            }}));
+                                        })){
                                     getMain().comm().runSubCommand(sender, "orders");
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);

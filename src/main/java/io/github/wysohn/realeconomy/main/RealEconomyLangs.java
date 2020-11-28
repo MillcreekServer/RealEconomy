@@ -22,7 +22,7 @@ public enum RealEconomyLangs implements ILang {
     TradeResult_Format("&8[${string}&8] &7Asset&8: &6${string}&8, &7Id&8: &6${integer}&8, &7Amount&8: &6${integer}"),
     TradeResult_Format2("  &8- &f${string}"),
 
-    DelayedMessage_Format("$&d{date full GMT+09:00}",
+    DelayedMessage_Format("&d${date full GMT+09:00}",
             "- &6${string} ${string} \u26c1${integer}",
             "- &7Result&8: ${string}"),
     DelayedMessage_InvalidInfo("&cAsset info doesn't match with the listed items."),
