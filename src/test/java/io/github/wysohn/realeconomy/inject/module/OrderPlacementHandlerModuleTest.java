@@ -578,6 +578,11 @@ public class OrderPlacementHandlerModuleTest {
         }
 
         @Override
+        public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
+
+        }
+
+        @Override
         public UUID getUuid() {
             return uuid;
         }

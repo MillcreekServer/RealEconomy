@@ -7,6 +7,7 @@ import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.utils.Pair;
+import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
@@ -178,19 +179,30 @@ public class User extends BukkitPlayer implements IBankUser {
 
     @Override
     public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
+        Validation.assertNotNull(type);
+
         String message = null;
         switch (result){
             case INVALID_INFO:
                 message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_InvalidInfo);
                 break;
             case WITHDRAW_REFUSED:
-                message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_WithdrawFail);
+                if(type == OrderType.BUY)
+                    message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_WithdrawFailAsBuyer);
+                else
+                    message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_WithdrawFailAsSeller);
                 break;
             case DEPOSIT_REFUSED:
-                message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_DepositFail);
+                if(type == OrderType.BUY)
+                    message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_DepositFailAsBuyer);
+                else
+                    message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_DepositFailAsSeller);
                 break;
             case INSUFFICIENT_ASSETS:
-                message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_InsufficientAssets);
+                if(type == OrderType.BUY)
+                    message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_InsufficientAssetsBuyer);
+                else
+                    message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_InsufficientAssetsSeller);
                 break;
             case OK:
                 message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_Ok);

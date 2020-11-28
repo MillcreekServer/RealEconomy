@@ -437,7 +437,8 @@ public class TradeMediator extends Mediator {
                     tradeBroker.interrupt();
                 }
 
-                buyer.handleTransactionResult(tradeInfo, result);
+                buyer.handleTransactionResult(tradeInfo, OrderType.BUY, result);
+                seller.handleTransactionResult(tradeInfo, OrderType.SELL, result);
             });
         }
 
