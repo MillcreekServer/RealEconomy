@@ -90,4 +90,9 @@ public class ItemStackSignature extends PhysicalAssetSignature {
 
         return hash;
     }
+
+    @Override
+    public String toString() {
+        return itemStack.getType().name();
+    }
 }

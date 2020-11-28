@@ -329,6 +329,7 @@ public class TradeMediator extends Mediator {
                     if (listing == null) {
                         logger.warning("Found broken orders. They are deleted.");
                         logger.warning("Trade Info: " + tradeInfo);
+                        cancelBoth(tradeInfo);
                         return TradeResult.INVALID_INFO;
                     }
                     AssetSignature signature = listing.getSignature();
@@ -408,6 +409,7 @@ public class TradeMediator extends Mediator {
                         // cancel this order so other sellers can get chance to sell their assets.
                         cancel(tradeInfo.getSellId(), OrderType.SELL);
                         seller.removeOrderId(OrderType.SELL, tradeInfo.getSellId());
+                        return TradeResult.INSUFFICIENT_ASSETS;
                     }
 
                     // finalize SQL transaction
@@ -434,6 +436,8 @@ public class TradeMediator extends Mediator {
                 if (result == null) {
                     tradeBroker.interrupt();
                 }
+
+                buyer.handleTransactionResult(tradeInfo, result);
             });
         }
 
@@ -484,6 +488,6 @@ public class TradeMediator extends Mediator {
     }
 
     public enum TradeResult {
-        INVALID_INFO, WITHDRAW_REFUSED, DEPOSIT_REFUSED, NO_ACCOUNT_BUYER, NO_ACCOUNT_SELLER, OK
+        INVALID_INFO, WITHDRAW_REFUSED, DEPOSIT_REFUSED, INSUFFICIENT_ASSETS, NO_ACCOUNT_BUYER, NO_ACCOUNT_SELLER, OK
     }
 }

@@ -31,4 +31,9 @@ public class AssetListing extends CachedElement<UUID> {
     public Asset create(Map<String, Object> metaData) {
         return signature.create(metaData);
     }
+
+    @Override
+    public String toString() {
+        return signature.toString();
+    }
 }

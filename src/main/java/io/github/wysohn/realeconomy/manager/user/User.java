@@ -10,15 +10,20 @@ import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
+import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 
 import javax.inject.Inject;
+import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -168,6 +173,42 @@ public class User extends BukkitPlayer implements IBankUser {
                 return new HashSet<>(sellOrderIdSet);
             default:
                 throw new RuntimeException("Unknown order type " + type);
+        }
+    }
+
+    @Override
+    public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
+        String message = null;
+        switch (result){
+            case INVALID_INFO:
+                message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_InvalidInfo);
+                break;
+            case WITHDRAW_REFUSED:
+                message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_WithdrawFail);
+                break;
+            case DEPOSIT_REFUSED:
+                message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_DepositFail);
+                break;
+            case INSUFFICIENT_ASSETS:
+                message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_InsufficientAssets);
+                break;
+            case OK:
+                message = lang.parseFirst(this, RealEconomyLangs.DelayedMessage_Ok);
+                break;
+        }
+
+        if(message != null){
+            String finalMessage = message;
+            String typeStr = lang.parseFirst(this, type == OrderType.BUY ?
+                    RealEconomyLangs.TradeResult_Buy : RealEconomyLangs.TradeResult_Sell);
+            String listingStr = listingManager.get(info.getListingUuid())
+                    .map(Reference::get)
+                    .map(AssetListing::toString)
+                    .orElse("N/A");
+            lang.enqueueMessage(this, RealEconomyLangs.DelayedMessage_Format, (s, man) ->
+                    man.addDate(new Date(System.currentTimeMillis()))
+                            .addString(typeStr).addString(listingStr).addInteger(info.getAmount())
+                            .addString(finalMessage));
         }
     }
 

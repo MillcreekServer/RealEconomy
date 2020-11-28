@@ -3,6 +3,8 @@ package io.github.wysohn.realeconomy.interfaces.banking;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 
 import java.util.Collection;
 
@@ -14,4 +16,6 @@ public interface IOrderIssuer extends IPluginObject, IFinancialEntity {
     boolean removeOrderId(OrderType type, int orderId);
 
     Collection<Integer> getOrderIds(OrderType type);
+
+    void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result);
 }
