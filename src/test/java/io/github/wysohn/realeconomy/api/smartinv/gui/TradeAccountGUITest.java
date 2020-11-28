@@ -71,6 +71,8 @@ public class TradeAccountGUITest {
 
         when(language.parse(any(User.class), any())).thenReturn(new String[]{"Message"});
         when(language.parse(any(User.class), any(), any())).thenReturn(new String[]{"Message"});
+        when(language.parseFirst(any(User.class), any())).thenReturn("Message");
+        when(language.parseFirst(any(User.class), any(), any())).thenReturn("Message");
         when(server.getUnsafe().getDataVersion()).thenReturn(1);
     }
 
