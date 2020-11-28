@@ -513,6 +513,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             .addInteger(info.getOrderId()));
 
                             Message[] message = getSignature(info.getListingUuid()).toMessage(getMain().lang(), sender);
+                            message = Message.concat(message, MessageBuilder.forMessage("\u26c1"+info.getAmount()).build());
                             message = Message.concat(message, MessageBuilder.forMessage(other).build());
                             return message;
                         });
