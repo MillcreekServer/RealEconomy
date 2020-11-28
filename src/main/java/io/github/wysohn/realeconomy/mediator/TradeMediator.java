@@ -115,6 +115,7 @@ public class TradeMediator extends Mediator {
      * @param price     offer price
      * @param currency  currency type of price
      * @param stock     number of stocks to sell
+     * @param after     what to do after order is added.
      * @return true if success; false if issuer does not have {@link BankingTypeRegistry#TRADING} account in
      * the currency owner bank.
      */
@@ -122,7 +123,8 @@ public class TradeMediator extends Mediator {
                              AssetSignature signature,
                              double price,
                              Currency currency,
-                             int stock) {
+                             int stock,
+                             Runnable after) {
         Validation.assertNotNull(issuer);
         Validation.assertNotNull(signature);
         Validation.validate(price, p -> p > 0.0, "Negative or 0.0 price not allowed.");

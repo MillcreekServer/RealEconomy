@@ -595,7 +595,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         new ItemStackSignature(itemStack),
                                         price,
                                         bank.getBaseCurrency(),
-                                        itemStack.getAmount())){
+                                        itemStack.getAmount(),
+                                        () -> user.getSender().getInventory().setItemInMainHand(null))){
                                     getMain().comm().runSubCommand(sender, "orders");
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
