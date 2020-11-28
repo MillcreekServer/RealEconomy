@@ -91,6 +91,9 @@ public enum RealEconomyLangs implements ILang {
     Command_Buy_Usage("&d/eco buy <order id> <price> <currency> &8- &7Bid to purchase the given asset.",
             "&7Bidding on asset does not guarantee the successful trade.",
             "&Trade is made whenever there is a listed order with the price below the price you provided."),
+    Command_Buy_NotEnoughCurrency("&cNot enough currency in your account.",
+            "&7Remember that you are paying &6after &7the deals are matched by the system, so your &6TRADING &7account" +
+                    " must be filled with enough currency in it. Otherwise, order will be canceled automatically."),
 
     Command_Sell_Desc("Sell an item."),
     Command_Sell_Usage("&d/eco sell <price> <currency> &8- &7sell the item in hand for specified price."),

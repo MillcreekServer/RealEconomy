@@ -553,7 +553,13 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         price,
                                         bank.getBaseCurrency(),
                                         amount)) {
-                                    getMain().comm().runSubCommand(sender, "orders");
+                                    // show reminder if the account doesn't have enough currency
+                                    if (bank.balanceOfAccount(user, BankingTypeRegistry.TRADING)
+                                            .compareTo(BigDecimal.valueOf(price)) < 0) {
+                                        getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Buy_NotEnoughCurrency);
+                                    } else {
+                                        getMain().comm().runSubCommand(sender, "orders");
+                                    }
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
                                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoAccount, (l, m) ->
