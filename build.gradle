@@ -12,7 +12,7 @@ plugins {
     id 'groovy'
 }
 
-project.version = '1.6.4'
+project.version = '1.6.5'
 
 ext {
     id = project.name
@@ -77,7 +77,7 @@ task writePluginYml {
             "Citizens"
     ])
     map.put("depend", [])
-    map.put("commands", new HashMap<String, Object>() {
+    map.put("commands", new LinkedHashMap<String, Object>() {
         {
             put(id.toLowerCase(), new HashMap<String, Object>() {
                 {
