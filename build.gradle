@@ -98,6 +98,37 @@ task writePluginYml {
                     put("description", "shortcut command of /eco pay")
                 }
             })
+
+            put("bank", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco bank")
+                }
+            })
+
+            put("items", new HashMap<String, Object>() {
+                {
+                    put("aliases", ["shop"])
+                    put("description", "shortcut command of /eco items")
+                }
+            })
+
+            put("buy", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco buy")
+                }
+            })
+
+            put("sell", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco sell")
+                }
+            })
+
+            put("cancel", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco cancel")
+                }
+            })
         }
     })
     map.put("permissions", new HashMap<String, Object>() {
