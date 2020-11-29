@@ -565,7 +565,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             .compareTo(BigDecimal.valueOf(price)) < 0) {
                                         getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Buy_NotEnoughCurrency);
                                     } else {
-                                        getMain().comm().runSubCommand(sender, "orders");
+                                        // process one tick later since order listing have sone delays
+                                        getMain().task().sync(() -> getMain().comm().runSubCommand(sender, "orders"));
                                     }
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
@@ -616,7 +617,9 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                                 put(PhysicalAssetSignature.KEY_AMOUNT, itemStack.getAmount());
                                             }}));
                                         })){
-                                    getMain().comm().runSubCommand(sender, "orders");
+
+                                    // process one tick later since order listing have sone delays
+                                    getMain().task().sync(() -> getMain().comm().runSubCommand(sender, "orders"));
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
                                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoAccount, (l, m) ->
