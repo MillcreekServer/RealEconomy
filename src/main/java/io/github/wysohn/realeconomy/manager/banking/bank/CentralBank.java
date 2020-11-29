@@ -109,7 +109,7 @@ public class CentralBank extends AbstractBank {
     public Map<ILang, Object> properties() {
         Map<ILang, Object> properties = super.properties();
         properties.put(RealEconomyLangs.Bank_Liquidity, Metrics.df.format(liquidity) + " " + getBaseCurrency());
-        properties.put(RealEconomyLangs.Bank_Papers, Metrics.df.format(numPapers) + " " + getNumPapers());
+        properties.put(RealEconomyLangs.Bank_Papers, numPapers.toBigInteger().toString());
         properties.put(RealEconomyLangs.Bank_PaperUnlimited, limitlessPapers ? "&aO" : "&cX");
         return properties;
     }
