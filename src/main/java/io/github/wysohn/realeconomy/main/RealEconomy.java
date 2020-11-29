@@ -274,7 +274,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .addArgumentMapper(1, s -> Optional.of(s)
                         .map(String::toUpperCase)
                         .map(BankingTypeRegistry::fromString)
-                        .orElse(null))
+                        .orElseThrow(() -> new InvalidArgumentException(RealEconomyLangs.Command_Common_InvalidAccountType, (sen, man) ->
+                                man.addString(s))))
                 .action(new CommandAction() {
                     @Override
                     public boolean execute(ICommandSender sender, SubCommand.Arguments args) {

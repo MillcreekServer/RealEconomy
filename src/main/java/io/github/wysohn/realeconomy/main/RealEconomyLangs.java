@@ -51,6 +51,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Common_NotInABank("&cThis command can be used only when you are in a bank."),
     Command_Common_NoAccount("&cYou must open &6${string} &caccount to do this."),
     Command_Common_InvalidAmount("&cAmount must be larger than 0."),
+    Command_Common_InvalidAccountType("&6${string} &cis not a valid account type!"),
 
     Command_Wallet_Desc("Check your wallet."),
     Command_Wallet_Usage("&d/eco bal 1",
