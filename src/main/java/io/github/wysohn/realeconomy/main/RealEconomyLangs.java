@@ -61,8 +61,7 @@ public enum RealEconomyLangs implements ILang {
             " &8- &7Give wysohn 1304.22 dollar."),
 
     Command_Currencies_Desc("Show list of all currencies available in the server."),
-    Command_Currencies_Usage("&d/eco give wysohn 1003.67 dollar",
-            " &8- &7wysohn will get 1003.67 dollar out of thin air."),
+    Command_Currencies_Usage("&d/eco currencies"),
 
     Command_Give_Desc("'Print' new currency and give it to target"),
     Command_Give_Usage("&d/eco give wysohn 1003.67 dollar",
