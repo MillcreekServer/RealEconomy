@@ -655,7 +655,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 }));
         list.add(new SubCommand.Builder("cancel", 2)
                 .withDescription(RealEconomyLangs.Command_Cancel_Desc)
-                .addUsage(RealEconomyLangs.Command_Cancel_Usage)
+                .addUsage(RealEconomyLangs.Command_Cancel_Usage, (s, man) ->
+                        man.addString("&dBUY &8, &dSELL"))
                 .addTabCompleter(0, TabCompleters.simple(Arrays.stream(OrderType.values())
                         .map(Enum::name)
                         .toArray(String[]::new)))
