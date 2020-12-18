@@ -1,6 +1,7 @@
 package io.github.wysohn.realeconomy.manager.asset.signature;
 
 import io.github.wysohn.rapidframework3.bukkit.manager.common.message.BukkitMessageBuilder;
+import io.github.wysohn.rapidframework3.bukkit.utils.InventoryUtil;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.core.message.Message;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
@@ -74,7 +75,7 @@ public class ItemStackSignature extends PhysicalAssetSignature {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ItemStackSignature that = (ItemStackSignature) o;
-        return itemStack.isSimilar(that.itemStack);
+        return InventoryUtil.areSimilar(itemStack, that.itemStack);
     }
 
     @Override
