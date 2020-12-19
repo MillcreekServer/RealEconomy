@@ -485,7 +485,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .addArgumentMapper(0, ArgumentMappers.INTEGER)
                 .addArgumentMapper(1, arg -> getMain().getManager(AssetListingManager.class)
                         .map(AssetListingManager::getCategoryTrie)
-                        .map(trie -> trie.find(arg))
+                        .filter(trie -> trie.find(arg))
+                        .map(trie -> arg)
                         .orElseThrow(() -> new InvalidArgumentException(RealEconomyLangs.Command_Items_InvalidCategory,
                                 (s, m) -> m.addString(arg))))
                 .action((sender, args) -> {
