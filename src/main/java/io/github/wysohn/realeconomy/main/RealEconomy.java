@@ -18,6 +18,7 @@ import io.github.wysohn.rapidframework3.core.player.AbstractPlayerWrapper;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.command.CommandAction;
 import io.github.wysohn.rapidframework3.interfaces.command.IArgumentMapper;
+import io.github.wysohn.rapidframework3.interfaces.command.ITabCompleter;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.regex.CommonPatterns;
@@ -478,10 +479,20 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .withDescription(RealEconomyLangs.Command_Items_Desc)
                 .addUsage(RealEconomyLangs.Command_Items_Usage)
                 .addTabCompleter(0, TabCompleters.hint("[page]"))
-                .addTabCompleter(1, part -> getMain().getManager(AssetListingManager.class)
-                        .map(AssetListingManager::getCategoryTrie)
-                        .map(trie -> trie.getAllStartsWith(part))
-                        .orElseGet(ArrayList::new))
+                .addTabCompleter(1, new ITabCompleter() {
+                    @Override
+                    public List<String> getHint() {
+                        return TabCompleters.list("...");
+                    }
+
+                    @Override
+                    public List<String> getCandidates(String part) {
+                        return getMain().getManager(AssetListingManager.class)
+                                .map(AssetListingManager::getCategoryTrie)
+                                .map(trie -> trie.getAllStartsWith(part))
+                                .orElseGet(ArrayList::new);
+                    }
+                })
                 .addArgumentMapper(0, ArgumentMappers.INTEGER)
                 .addArgumentMapper(1, arg -> getMain().getManager(AssetListingManager.class)
                         .map(AssetListingManager::getCategoryTrie)
