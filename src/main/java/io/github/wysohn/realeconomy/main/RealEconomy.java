@@ -744,7 +744,11 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     Optional.ofNullable(getSignature(orderInfo.getListingUuid()))
                             .map(signature -> signature.toMessage(getMain().lang(), sender))
                             .orElse(MessageBuilder.empty()),
-                    MessageBuilder.forMessage("]").build());
+                    MessageBuilder.forMessage("]").build(),
+                    MessageBuilder.forMessage(" ").append("&c[\u2718]")
+                            .withHoverShowText("/eco cancel " + orderPair.value.name() + " " + orderInfo.getOrderId())
+                            .withClickRunCommand("/eco cancel " + orderPair.value.name() + " " + orderInfo.getOrderId())
+                            .build());
         }
     }
 
