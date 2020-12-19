@@ -368,7 +368,6 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     man.addString(balance.toString())
                                             .addString(Objects.toString(bank.getBaseCurrency())));
                         });
-                        getMain().lang().sendProperty(sender, bank);
                         getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
                     }
 
