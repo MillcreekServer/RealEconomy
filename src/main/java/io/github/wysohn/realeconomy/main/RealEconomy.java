@@ -735,14 +735,16 @@ public class RealEconomy extends AbstractBukkitPlugin {
             return null;
         } else {
             return Message.concat(MessageBuilder.forMessage(getMain().lang().parseFirst(lang, (s, m) ->
-                    m.addInteger(orderPair.key)
-                            .addDouble(orderInfo.getPrice())
-                            .addString(Objects.toString(getCurrency(orderInfo.getCurrencyUuid()).orElse(null)))
-                            .addInteger(orderInfo.getAmount())))
-                    .append(" ")
-                    .build(), Optional.ofNullable(getSignature(orderInfo.getListingUuid()))
-                    .map(signature -> signature.toMessage(getMain().lang(), sender))
-                    .orElse(MessageBuilder.empty()));
+                            m.addInteger(orderPair.key)
+                                    .addDouble(orderInfo.getPrice())
+                                    .addString(Objects.toString(getCurrency(orderInfo.getCurrencyUuid()).orElse(null)))
+                                    .addInteger(orderInfo.getAmount())))
+                            .append(" &f[")
+                            .build(),
+                    Optional.ofNullable(getSignature(orderInfo.getListingUuid()))
+                            .map(signature -> signature.toMessage(getMain().lang(), sender))
+                            .orElse(MessageBuilder.empty()),
+                    MessageBuilder.forMessage("]").build());
         }
     }
 
