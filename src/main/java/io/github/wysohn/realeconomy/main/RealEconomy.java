@@ -385,33 +385,33 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                           AbstractBank bank,
                                           double amount,
                                           IBankingType type) {
-                                // bank account -> wallet
+                        // bank account -> wallet
                         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
                                 handleResult2(sender, bankingMediator.send(sender, type, sender, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
                     }
 
-                    private void handleResult(ICommandSender sender, BankingMediator.Result result) {
-                        switch (result) {
-                            case NO_CURRENCY_SET:
-                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoCurrencySet);
-                                break;
-                            case NO_ACCOUNT:
-                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoAccount);
-                                break;
-                            case FAIL_WITHDRAW:
-                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_WithdrawRefused);
-                                break;
-                            case FAIL_DEPOSIT:
-                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DepositRefused);
-                                break;
-                            case OK:
-                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Success);
-                                break;
-                            default:
-                                sender.sendMessageRaw("&cUndefined result: " + result);
-                                break;
-                        }
-                    }
+//                    private void handleResult(ICommandSender sender, BankingMediator.Result result) {
+//                        switch (result) {
+//                            case NO_CURRENCY_SET:
+//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoCurrencySet);
+//                                break;
+//                            case NO_ACCOUNT:
+//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoAccount);
+//                                break;
+//                            case FAIL_WITHDRAW:
+//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_WithdrawRefused);
+//                                break;
+//                            case FAIL_DEPOSIT:
+//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DepositRefused);
+//                                break;
+//                            case OK:
+//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Success);
+//                                break;
+//                            default:
+//                                sender.sendMessageRaw("&cUndefined result: " + result);
+//                                break;
+//                        }
+//                    }
 
                     private void handleResult2(ICommandSender sender, TransactionUtil.Result result) {
                         switch (result) {
@@ -439,7 +439,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         if(!bank.hasAccount(sender, type)){
                             String translate = getMain().lang().parseFirst(sender, type.lang());
                             getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoAccount, (s, m) ->
-                                    m.addString(translate));
+                                    m.addString(translate).addString(translate));
                             return;
                         }
 
@@ -566,13 +566,16 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             .compareTo(BigDecimal.valueOf(price)) < 0) {
                                         getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Buy_NotEnoughCurrency);
                                     } else {
-                                        // process one tick later since order listing have sone delays
-                                        getMain().task().sync(() -> getMain().comm().runSubCommand(sender, "orders"));
+                                        // process one tick later since order listing have some delays
+                                        getMain().task().sync(() -> {
+                                            getMain().comm().runSubCommand(sender, "orders");
+                                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Buy_FailNotice);
+                                        });
                                     }
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
                                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoAccount, (l, m) ->
-                                            m.addString(nameTrading));
+                                            m.addString(nameTrading).addString(nameTrading));
                                 }
                             }));
 
@@ -624,7 +627,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
                                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoAccount, (l, m) ->
-                                            m.addString(nameTrading));
+                                            m.addString(nameTrading).addString(nameTrading));
                                 }
                             }));
 
@@ -731,12 +734,15 @@ public class RealEconomy extends AbstractBukkitPlugin {
             sender.removeOrderId(orderPair.value, orderPair.key);
             return null;
         } else {
-            return MessageBuilder.forMessage(getMain().lang().parseFirst(lang, (s, m) ->
+            return Message.concat(MessageBuilder.forMessage(getMain().lang().parseFirst(lang, (s, m) ->
                     m.addInteger(orderPair.key)
                             .addDouble(orderInfo.getPrice())
                             .addString(Objects.toString(getCurrency(orderInfo.getCurrencyUuid()).orElse(null)))
                             .addInteger(orderInfo.getAmount())))
-                    .build();
+                    .append(" ")
+                    .build(), Optional.ofNullable(getSignature(orderInfo.getListingUuid()))
+                    .map(signature -> signature.toMessage(getMain().lang(), sender))
+                    .orElse(MessageBuilder.empty()));
         }
     }
 
