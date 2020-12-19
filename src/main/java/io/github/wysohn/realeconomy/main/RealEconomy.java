@@ -568,6 +568,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         // process one tick later since order listing have some delays
                                         getMain().task().sync(() -> {
                                             getMain().comm().runSubCommand(sender, "orders");
+                                        });
+                                        getMain().task().sync(() -> {
                                             getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Buy_FailNotice);
                                         });
                                     }

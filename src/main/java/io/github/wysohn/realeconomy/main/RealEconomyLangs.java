@@ -113,7 +113,7 @@ public enum RealEconomyLangs implements ILang {
             "&7Remember that you are paying &6after &7the deals are matched by the system, so your &6TRADING &7account" +
                     " must be filled with enough currency in it beforehand. Otherwise, order will be canceled automatically."),
     Command_Buy_FailNotice("&7Your order is submitted. If your order is not visible in the order list," +
-            "it may means that you have typed the wrong orderId, or the target item is no longer valid."),
+            " it may means that you have typed the wrong orderId, or the target item is no longer valid."),
 
     Command_Sell_Desc("Sell an item using the item in your hand."),
     Command_Sell_Usage("&d/eco sell <price> <currency> &8- &7sell the item in hand for specified price."),
