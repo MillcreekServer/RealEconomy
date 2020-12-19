@@ -319,7 +319,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
             public Integer get() {
                 List<Integer> out = ordersSession.query("SELECT COUNT(" + OrderSQLModule.ORDER_ID + ") as " + COLUMN_COUNT +
                         " FROM sell_orders" +
-                        (queryAll ? "" : "WHERE " + OrderSQLModule.CATEGORY_ID + " = ?;"), pstmt -> {
+                        (queryAll ? "" : " WHERE " + OrderSQLModule.CATEGORY_ID + " = ?;"), pstmt -> {
                     try {
                         if (!queryAll)
                             pstmt.setInt(1, categoryId);
