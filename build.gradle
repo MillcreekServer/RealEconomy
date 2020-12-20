@@ -12,7 +12,7 @@ plugins {
     id 'groovy'
 }
 
-project.version = '1.7.5'
+project.version = '1.8.0'
 
 ext {
     id = project.name
@@ -249,6 +249,9 @@ repositories {
     maven{
         url "http://repo.citizensnpcs.co/"
     }
+    maven{
+        url "https://jitpack.io"
+    }
 }
 
 tasks.withType(JavaCompile) {
@@ -279,6 +282,7 @@ dependencies {
 
     implementation 'org.spigotmc:spigot-api:1.16.+'
     implementation "io.github.wysohn:rapidframework:3.13.3"
+    implementation "com.github.MilkBowl:VaultAPI:1.7"
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.mockito:mockito-core:1.9.5'

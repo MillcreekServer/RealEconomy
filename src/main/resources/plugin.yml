@@ -16,7 +16,7 @@ softdepend:
 - SmartInvs
 - ScoreboardScreen
 - Citizens
-version: 1.7.0
+version: 1.7.5
 commands:
   realeconomy:
     aliases:
