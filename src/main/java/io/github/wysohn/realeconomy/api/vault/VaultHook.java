@@ -17,7 +17,6 @@ import org.bukkit.plugin.ServicePriority;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.lang.ref.Reference;
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -132,7 +131,7 @@ public class VaultHook extends ExternalAPI {
         public double getBalance(String playerName) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .map(user -> bankingMediator.balance(user, BankingTypeRegistry.CHECKING).doubleValue())
+                    .map(user -> user.balance(BankingMediator.getServerBank().getBaseCurrency()).doubleValue())
                     .orElse(0.0);
         }
 
@@ -140,7 +139,7 @@ public class VaultHook extends ExternalAPI {
         public double getBalance(OfflinePlayer player) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .map(user -> bankingMediator.balance(user, BankingTypeRegistry.CHECKING).doubleValue())
+                    .map(user -> user.balance(BankingMediator.getServerBank().getBaseCurrency()).doubleValue())
                     .orElse(0.0);
         }
 
@@ -178,17 +177,8 @@ public class VaultHook extends ExternalAPI {
         public EconomyResponse withdrawPlayer(String playerName, double amount) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .map(user -> {
-                        BankingMediator.Result result = bankingMediator.withdraw(user,
-                                BankingTypeRegistry.CHECKING,
-                                BigDecimal.valueOf(amount));
-                        switch (result) {
-                            case OK:
-                                return new EconomyResponse(amount, getBalance(playerName), EconomyResponse.ResponseType.SUCCESS, null);
-                            default:
-                                return null;
-                        }
-                    })
+                    .filter(user -> user.withdraw(amount, BankingMediator.getServerBank().getBaseCurrency()))
+                    .map(user -> new EconomyResponse(amount, getBalance(playerName), EconomyResponse.ResponseType.SUCCESS, null))
                     .orElseGet(() -> new EconomyResponse(0, getBalance(playerName), EconomyResponse.ResponseType.FAILURE, null));
         }
 
@@ -196,17 +186,8 @@ public class VaultHook extends ExternalAPI {
         public EconomyResponse withdrawPlayer(OfflinePlayer player, double amount) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .map(user -> {
-                        BankingMediator.Result result = bankingMediator.withdraw(user,
-                                BankingTypeRegistry.CHECKING,
-                                BigDecimal.valueOf(amount));
-                        switch (result) {
-                            case OK:
-                                return new EconomyResponse(amount, getBalance(player), EconomyResponse.ResponseType.SUCCESS, null);
-                            default:
-                                return null;
-                        }
-                    })
+                    .filter(user -> user.withdraw(amount, BankingMediator.getServerBank().getBaseCurrency()))
+                    .map(user -> new EconomyResponse(amount, getBalance(player), EconomyResponse.ResponseType.SUCCESS, null))
                     .orElseGet(() -> new EconomyResponse(0, getBalance(player), EconomyResponse.ResponseType.FAILURE, null));
         }
 
@@ -224,17 +205,8 @@ public class VaultHook extends ExternalAPI {
         public EconomyResponse depositPlayer(String playerName, double amount) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .map(user -> {
-                        BankingMediator.Result result = bankingMediator.deposit(user,
-                                BankingTypeRegistry.CHECKING,
-                                BigDecimal.valueOf(amount));
-                        switch (result) {
-                            case OK:
-                                return new EconomyResponse(amount, getBalance(playerName), EconomyResponse.ResponseType.SUCCESS, null);
-                            default:
-                                return null;
-                        }
-                    })
+                    .filter(user -> user.deposit(amount, BankingMediator.getServerBank().getBaseCurrency()))
+                    .map(user -> new EconomyResponse(amount, getBalance(playerName), EconomyResponse.ResponseType.SUCCESS, null))
                     .orElseGet(() -> new EconomyResponse(0, getBalance(playerName), EconomyResponse.ResponseType.FAILURE, null));
         }
 
@@ -242,17 +214,8 @@ public class VaultHook extends ExternalAPI {
         public EconomyResponse depositPlayer(OfflinePlayer player, double amount) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .map(user -> {
-                        BankingMediator.Result result = bankingMediator.deposit(user,
-                                BankingTypeRegistry.CHECKING,
-                                BigDecimal.valueOf(amount));
-                        switch (result) {
-                            case OK:
-                                return new EconomyResponse(amount, getBalance(player), EconomyResponse.ResponseType.SUCCESS, null);
-                            default:
-                                return null;
-                        }
-                    })
+                    .filter(user -> user.deposit(amount, BankingMediator.getServerBank().getBaseCurrency()))
+                    .map(user -> new EconomyResponse(amount, getBalance(player), EconomyResponse.ResponseType.SUCCESS, null))
                     .orElseGet(() -> new EconomyResponse(0, getBalance(player), EconomyResponse.ResponseType.FAILURE, null));
         }
 
