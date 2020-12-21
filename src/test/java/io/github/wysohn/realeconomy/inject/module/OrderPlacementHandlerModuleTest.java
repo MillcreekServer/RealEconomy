@@ -8,7 +8,9 @@ import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
+import io.github.wysohn.rapidframework3.testmodules.MockConfigModule;
 import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
+import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
@@ -39,6 +41,7 @@ public class OrderPlacementHandlerModuleTest {
     public void init() {
         moduleList.add(new OrderPlacementHandlerModule());
         moduleList.add(new OrderSQLModule());
+        moduleList.add(new MockConfigModule(Pair.of("database.type", "sqlite")));
         moduleList.add(new MockShutdownModule(() -> {
 
         }));
