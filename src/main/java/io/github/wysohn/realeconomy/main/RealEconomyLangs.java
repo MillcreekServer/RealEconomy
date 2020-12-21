@@ -106,7 +106,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Items_Format("&8: &6${double} ${string} &8[&bOrderId &d${integer}&8]"),
 
     Command_Buy_Desc("Buy a listed item. You need &borderId &7by using &d/items &7command."),
-    Command_Buy_Usage("&d/eco buy <order id> <price> &8- &7Bid to purchase the given asset.",
+    Command_Buy_Usage("&d/eco buy <order id> <price> <amount> &8- &7Bid to purchase the given asset.",
             "&7Bidding on asset does not guarantee the successful trade.",
             "&7Trade is made whenever &6there is a listed order with the price below the price you provided&7."),
     Command_Buy_NotEnoughCurrency("&cNot enough currency in your account.",
