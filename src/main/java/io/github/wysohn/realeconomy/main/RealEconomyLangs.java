@@ -106,7 +106,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Items_Format("&8: &6${double} ${string} &8[&bOrderId &d${integer}&8]"),
 
     Command_Buy_Desc("Buy a listed item. You need &borderId &7by using &d/items &7command."),
-    Command_Buy_Usage("&d/eco buy <order id> <price> <currency> &8- &7Bid to purchase the given asset.",
+    Command_Buy_Usage("&d/eco buy <order id> <price> &8- &7Bid to purchase the given asset.",
             "&7Bidding on asset does not guarantee the successful trade.",
             "&7Trade is made whenever &6there is a listed order with the price below the price you provided&7."),
     Command_Buy_NotEnoughCurrency("&cNot enough currency in your account.",
@@ -116,7 +116,7 @@ public enum RealEconomyLangs implements ILang {
             " it may means that you have typed the wrong orderId, or the target item is no longer valid."),
 
     Command_Sell_Desc("Sell an item using the item in your hand."),
-    Command_Sell_Usage("&d/eco sell <price> <currency> &8- &7sell the item in hand for specified price."),
+    Command_Sell_Usage("&d/eco sell <price> &8- &7sell the item in hand for specified price."),
 
     Command_Orders_Desc("List all orders issued by you."),
     Command_Orders_Usage("&d/eco orders &8- &7list all orders."),
