@@ -36,8 +36,11 @@ public class TradeMediator extends Mediator {
     public static final Map<Material, String> MATERIAL_CATEGORY_MAP = new EnumMap<>(Material.class);
     public static final String MATERIALS = "materials";
     public static final String MATERIAL_CATEGORY_DEFAULT = "item";
+    public static final String DENY_LIST = "denyItemsList";
 
     private final ExecutorService tradeExecutor = Executors.newSingleThreadExecutor();
+
+    private final Set<Material> itemDenySet = new HashSet<>();
 
     private final Logger logger;
     private final ManagerConfig config;
@@ -86,6 +89,26 @@ public class TradeMediator extends Mediator {
                 config.put(MATERIALS + "." + material, MATERIAL_CATEGORY_DEFAULT);
             });
         }
+
+        if (!config.get(DENY_LIST).isPresent()) {
+            itemDenySet.add(Material.WRITTEN_BOOK);
+            config.put(DENY_LIST, new ArrayList<>(itemDenySet));
+        }
+        itemDenySet.clear();
+        config.get(DENY_LIST)
+                .map(List.class::cast)
+                .ifPresent(list -> ((List<String>) list).stream()
+                        .map(matName -> {
+                            try {
+                                return Material.valueOf(matName);
+                            } catch (IllegalArgumentException ex) {
+                                logger.warning("Invalid material name found for " + DENY_LIST);
+                                logger.warning(matName);
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .forEach(itemDenySet::add));
     }
 
     @Override
@@ -104,6 +127,10 @@ public class TradeMediator extends Mediator {
 
     public DataProvider<OrderInfo> getPrice(String category) {
         return assetListingManager.getListedOrderProvider(category);
+    }
+
+    public boolean isDeniedType(Material material) {
+        return itemDenySet.contains(material);
     }
 
     /**

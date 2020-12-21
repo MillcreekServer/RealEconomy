@@ -23,6 +23,7 @@ import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -48,6 +49,7 @@ public class TradeAccountGUI implements InventoryProvider {
 
     private final ManagerLanguage lang;
     private final BankingMediator bankingMediator;
+    private final TradeMediator tradeMediator;
     private final NamespacedKey keySerialized;
     private final Function<Player, User> userFunction;
 
@@ -57,10 +59,12 @@ public class TradeAccountGUI implements InventoryProvider {
 
     public TradeAccountGUI(ManagerLanguage lang,
                            BankingMediator bankingMediator,
+                           TradeMediator tradeMediator,
                            NamespacedKey keySerialized,
                            Function<Player, User> userFunction) {
         this.lang = lang;
         this.bankingMediator = bankingMediator;
+        this.tradeMediator = tradeMediator;
         this.keySerialized = keySerialized;
         this.userFunction = userFunction;
     }
@@ -156,6 +160,14 @@ public class TradeAccountGUI implements InventoryProvider {
         InventoryClickEvent event = (InventoryClickEvent) data.getEvent();
         ItemStack slot = event.getCurrentItem();
         ItemStack cursor = event.getCursor();
+
+        if (cursor != null
+                && tradeMediator.isDeniedType(cursor.getType())
+                && event.getAction() == InventoryAction.PLACE_ALL) {
+            //trying to place illegal item into GUI. Stop right away.
+            event.setCancelled(true);
+            return;
+        }
 
         if (event.getAction() != InventoryAction.PLACE_ALL
                 && event.getAction() != InventoryAction.PICKUP_ALL) {

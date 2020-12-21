@@ -55,6 +55,7 @@ public enum RealEconomyLangs implements ILang {
             " &7Use &d/bank open ${string} &7to open an account."),
     Command_Common_InvalidAmount("&cAmount must be larger than 0."),
     Command_Common_InvalidAccountType("&6${string} &cis not a valid account type!"),
+    Command_Common_DeniedTradeType("&cThis item cannot be traded."),
 
     Command_Wallet_Desc("Check your wallet to see how much currency you have. &cThis doesn't" +
             " show your currency in your bank accounts."),

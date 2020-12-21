@@ -624,15 +624,20 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     return;
                                 }
 
+                                if (tradeMediator.isDeniedType(itemStack.getType())) {
+                                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DeniedTradeType);
+                                    return;
+                                }
+
                                 AssetSignature signature = new ItemStackSignature(itemStack);
-                                if(tradeMediator.sellAsset(user,
+                                if (tradeMediator.sellAsset(user,
                                         signature,
                                         price,
                                         bank.getBaseCurrency(),
                                         itemStack.getAmount(),
                                         () -> {
                                             user.getSender().getInventory().setItemInMainHand(null);
-                                            bank.addAccountAsset(user, signature.create(new HashMap<String, Object>(){{
+                                            bank.addAccountAsset(user, signature.create(new HashMap<String, Object>() {{
                                                 put(PhysicalAssetSignature.KEY_AMOUNT, itemStack.getAmount());
                                             }}));
                                         })){
