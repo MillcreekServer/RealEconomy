@@ -144,8 +144,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 })
         );
         list.add(new SubCommand.Builder("pay", 3)
-                .withDescription(RealEconomyLangs.Command_Wallet_Desc)
-                .addUsage(RealEconomyLangs.Command_Wallet_Usage)
+                .withDescription(RealEconomyLangs.Command_Pay_Desc)
+                .addUsage(RealEconomyLangs.Command_Pay_Usage)
                 .addTabCompleter(0, TabCompleters.PLAYER)
                 .addTabCompleter(1, TabCompleters.hint("<amount>"))
                 .addTabCompleter(2, TabCompleters.hint("<currency>"))
