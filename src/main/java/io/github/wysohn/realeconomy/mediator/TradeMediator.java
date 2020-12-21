@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Singleton
 public class TradeMediator extends Mediator {
@@ -92,7 +93,9 @@ public class TradeMediator extends Mediator {
 
         if (!config.get(DENY_LIST).isPresent()) {
             itemDenySet.add(Material.WRITTEN_BOOK);
-            config.put(DENY_LIST, new ArrayList<>(itemDenySet));
+            config.put(DENY_LIST, new ArrayList<>(itemDenySet.stream()
+                    .map(Material::name)
+                    .collect(Collectors.toList())));
         }
         itemDenySet.clear();
         config.get(DENY_LIST)
