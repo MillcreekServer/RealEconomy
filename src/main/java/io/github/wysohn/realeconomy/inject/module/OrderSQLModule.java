@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
+import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.utils.sql.SQLSession;
@@ -21,8 +22,46 @@ public class OrderSQLModule extends AbstractModule {
     @OrderSQL
     SQLSession sqlSession(@PluginDirectory File pluginDir,
                           IPluginResourceProvider resourceProvider,
-                          IShutdownHandle shutdownHandle) throws SQLException {
-        return SQLSession.Builder.sqlite(new File(pluginDir, "orders.db"))
+                          IShutdownHandle shutdownHandle,
+                          ManagerConfig config) throws SQLException {
+        SQLSession.Builder builder = null;
+        try {
+            if (config.get("database.type")
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .map("mysql"::equals)
+                    .orElse(false)) {
+                builder = SQLSession.Builder.mysql(config.get("database.host")
+                                .filter(String.class::isInstance)
+                                .map(String.class::cast)
+                                .orElseThrow(RuntimeException::new),
+                        config.get("database.name")
+                                .filter(String.class::isInstance)
+                                .map(String.class::cast)
+                                .orElseThrow(RuntimeException::new),
+                        config.get("database.user")
+                                .filter(String.class::isInstance)
+                                .map(String.class::cast)
+                                .orElseThrow(RuntimeException::new),
+                        config.get("database.password")
+                                .filter(String.class::isInstance)
+                                .map(String.class::cast)
+                                .orElseThrow(RuntimeException::new));
+            } else {
+                config.put("database.type", "sqlite");
+                config.put("database.host", "127.0.0.1");
+                config.put("database.name", "realeconomy");
+                config.put("database.user", "re");
+                config.put("database.password", "re");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            if (builder == null)
+                builder = SQLSession.Builder.sqlite(new File(pluginDir, "orders.db"));
+        }
+
+        return builder
                 .createTable("buy_orders", tableInitializer -> tableInitializer.ifNotExist()
                         .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
