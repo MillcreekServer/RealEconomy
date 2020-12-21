@@ -12,7 +12,7 @@ plugins {
     id 'groovy'
 }
 
-project.version = '1.8.2'
+project.version = '1.8.3'
 
 ext {
     id = project.name
