@@ -12,6 +12,7 @@ import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -53,6 +54,7 @@ public class TradeAccountGUITest {
     private Function<Player, User> function;
     private NamespacedKey namespacedKey;
     private BankingMediator bankingMediator;
+    private TradeMediator tradeMediator;
     private ManagerLanguage language;
     private Server server;
 
@@ -60,6 +62,7 @@ public class TradeAccountGUITest {
     public void init() throws Exception {
         language = mock(ManagerLanguage.class);
         bankingMediator = mock(BankingMediator.class);
+        tradeMediator = mock(TradeMediator.class);
         namespacedKey = new NamespacedKey("test", "ser");
         function = mock(Function.class);
         server = mock(Server.class, RETURNS_DEEP_STUBS);
@@ -67,7 +70,7 @@ public class TradeAccountGUITest {
         field.setAccessible(true);
         field.set(null, server);
 
-        tradeAccountGUI = new TradeAccountGUI(language, bankingMediator, namespacedKey, function);
+        tradeAccountGUI = new TradeAccountGUI(language, bankingMediator, tradeMediator, namespacedKey, function);
 
         when(language.parse(any(User.class), any())).thenReturn(new String[]{"Message"});
         when(language.parse(any(User.class), any(), any())).thenReturn(new String[]{"Message"});

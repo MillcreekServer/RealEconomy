@@ -52,6 +52,7 @@ public class TradeMediatorTest {
             String key = (String) invocation.getArguments()[1];
             return Optional.ofNullable(subConfig.get(key));
         });
+        when(config.get(eq(TradeMediator.DENY_LIST))).thenReturn(Optional.empty());
 
         moduleList.add(new MockLoggerModule());
         moduleList.add(new AbstractModule() {
