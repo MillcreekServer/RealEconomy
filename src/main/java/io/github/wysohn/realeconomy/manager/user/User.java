@@ -217,9 +217,11 @@ public class User extends BukkitPlayer implements IBankUser {
                     .map(Reference::get)
                     .map(AssetListing::toString)
                     .orElse("N/A");
+
+            int amountTraded = Math.min(info.getAmount(), info.getStock());
             lang.enqueueMessage(this, RealEconomyLangs.DelayedMessage_Format, (s, man) ->
                     man.addDate(new Date(System.currentTimeMillis()))
-                            .addString(typeStr).addString(listingStr).addInteger(info.getAmount())
+                            .addString(typeStr).addString(listingStr).addInteger(amountTraded)
                             .addString(finalMessage));
         }
     }
