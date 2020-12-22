@@ -21,6 +21,7 @@ import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -121,7 +122,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 try {
                     pstmt.setString(1, listingUuid.toString());
                     pstmt.setInt(2, categoryId);
-                    pstmt.setLong(3, System.currentTimeMillis());
+                    pstmt.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
                     pstmt.setString(4, issuer.getUuid().toString());
                     pstmt.setDouble(5, price);
                     pstmt.setString(6, currency.getKey().toString());
@@ -214,7 +215,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 try {
                     pstmt.setString(1, listingUuid.toString());
                     pstmt.setInt(2, categoryId);
-                    pstmt.setLong(3, System.currentTimeMillis());
+                    pstmt.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
                     pstmt.setString(4, seller.toString());
                     pstmt.setString(5, buyer.toString());
                     pstmt.setDouble(6, price);
