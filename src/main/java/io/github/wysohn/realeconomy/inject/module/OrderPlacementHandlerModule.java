@@ -8,6 +8,7 @@ import io.github.wysohn.rapidframework3.core.paging.Range;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
+import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.rapidframework3.utils.sql.SQLSession;
 import io.github.wysohn.rapidframework3.utils.trie.StringListTrie;
 import io.github.wysohn.realeconomy.inject.annotation.OrderSQL;
@@ -38,6 +39,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         orderPlacementHandler.INSERT_SELL = Metrics.resourceToString(resourceProvider, "insert_sell_order.sql");
         orderPlacementHandler.INSERT_CATEGORY = Metrics.resourceToString(resourceProvider, "insert_category.sql");
         orderPlacementHandler.INSERT_LOG = Metrics.resourceToString(resourceProvider, "insert_trade_log.sql");
+        orderPlacementHandler.INSERT_LISTING_NAME = Metrics.resourceToString(resourceProvider, "insert_listing_name.sql");
         orderPlacementHandler.UPDATE_BUY = Metrics.resourceToString(resourceProvider, "update_buy_orders.sql");
         orderPlacementHandler.UPDATE_SELL = Metrics.resourceToString(resourceProvider, "update_sell_orders.sql");
         orderPlacementHandler.DELETE_BUY = Metrics.resourceToString(resourceProvider, "delete_buy_order.sql");
@@ -85,6 +87,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         private String INSERT_SELL;
         private String INSERT_CATEGORY;
         private String INSERT_LOG;
+        private String INSERT_LISTING_NAME;
         private String UPDATE_BUY;
         private String UPDATE_SELL;
         private String DELETE_BUY;
@@ -285,6 +288,24 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         @Override
         public StringListTrie categoryList() {
             return categoryTrie;
+        }
+
+        @Override
+        public void setListingName(UUID listingUuid, String name) {
+            Validation.assertNotNull(listingUuid);
+            Validation.assertNotNull(name);
+
+            String sql = INSERT_LISTING_NAME;
+
+            ordersSession.execute(sql, (pstmt) -> {
+                try {
+                    pstmt.setString(1, listingUuid.toString());
+                    pstmt.setString(2, name);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, index -> {
+            });
         }
 
         @Override

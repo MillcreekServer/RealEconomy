@@ -12,6 +12,11 @@ import java.sql.SQLException;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+/**
+ * The helper to process various order transactions.
+ * <p>
+ * Methods must be implemented in a thread-safe way, yet they are expected to be blocking operation.
+ */
 public interface IOrderPlacementHandler {
     /**
      * Add order for sell or purchase.
@@ -130,6 +135,17 @@ public interface IOrderPlacementHandler {
      * @return
      */
     StringListTrie categoryList();
+
+    /**
+     * Method to be used to update the listingUuid mapping. This will not be used by plugin itself,
+     * but it can be useful for the cross-platform service that queries the order sql database directly.
+     * If not set by this method, the other service that rely on the data of order sql database have no way
+     * to identify what items are involved in the transaction.
+     *
+     * @param listingUuid target listing UUID
+     * @param name        the name to be mapped with for the given listing UUID
+     */
+    void setListingName(UUID listingUuid, String name);
 
     /**
      * Get DataProvider for the currently listed selling orders.

@@ -101,6 +101,11 @@ public class OrderSQLModule extends AbstractModule {
                         .field("price", "double precision", SQLSession.Attribute.NOT_NULL)
                         .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL))
+                .createTable("listing_names", tableInitializer -> tableInitializer.ifNotExist()
+                        .field("id", "integer",
+                                SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
+                        .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL, SQLSession.Attribute.UNIQUE)
+                        .field("name", "text", SQLSession.Attribute.NOT_NULL))
                 .build();
     }
 }

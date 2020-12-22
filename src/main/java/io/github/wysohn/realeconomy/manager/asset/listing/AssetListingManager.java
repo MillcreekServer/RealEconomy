@@ -8,6 +8,7 @@ import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
+import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
@@ -43,6 +44,7 @@ import java.util.logging.Logger;
 public class AssetListingManager extends AbstractManagerElementCaching<UUID, AssetListing> {
     private final IOrderPlacementHandler orderPlacementHandler;
     private final Map<AssetSignature, UUID> signatureUUIDMap = new HashMap<>();
+    private final ITaskSupervisor taskSupervisor;
 
     @Inject
     public AssetListingManager(@Named("pluginName") String pluginName,
@@ -52,10 +54,12 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                                IShutdownHandle shutdownHandle,
                                ISerializer serializer,
                                ITypeAsserter asserter,
+                               Injector injector,
                                IOrderPlacementHandler orderPlacementHandler,
-                               Injector injector) {
+                               ITaskSupervisor taskSupervisor) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, AssetListing.class);
         this.orderPlacementHandler = orderPlacementHandler;
+        this.taskSupervisor = taskSupervisor;
     }
 
     @Override
@@ -76,7 +80,10 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
     @Override
     public void enable() throws Exception {
         super.enable();
-        forEach(listing -> signatureUUIDMap.put(listing.getSignature(), listing.getKey()));
+        forEach(listing -> {
+            signatureUUIDMap.put(listing.getSignature(), listing.getKey());
+            orderPlacementHandler.setListingName(listing.getKey(), listing.getSignature().toString());
+        });
     }
 
     @Override
@@ -109,6 +116,10 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 .ifPresent(listing -> {
                     listing.setSignature(signature);
                     signatureUUIDMap.put(signature, listing.getKey());
+
+                    // process blocking operation asynchronously
+                    taskSupervisor.async(() ->
+                            orderPlacementHandler.setListingName(listing.getKey(), listing.getSignature().toString()));
                 });
 
         return true;
