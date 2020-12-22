@@ -425,7 +425,7 @@ public class TradeMediator extends Mediator {
                             } else if (newAmount > 0) {
                                 assetListingManager.editOrder(tradeInfo.getBuyId(),
                                         OrderType.BUY,
-                                        newStock);
+                                        newAmount);
                             } else {
                                 throw new RuntimeException("new amount became negative. How?");
                             }
