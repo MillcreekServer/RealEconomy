@@ -306,7 +306,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         }
 
         private class OrderDataProvider implements Function<Range, List<OrderInfo>>, Supplier<Integer> {
-            private static final String COLUMN_COUNT = "rows";
+            private static final String COLUMN_COUNT = "rows_count";
 
             private final int categoryId;
             private final boolean queryAll;
