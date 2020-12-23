@@ -47,7 +47,8 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         moduleList.add(new PluginInfoModule("test", "test", "test"));
         moduleList.add(new TypeAsserterModule());
         moduleList.add(new MockLoggerModule());
-        moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3)));
+        moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3),
+                Pair.of("database.type", "sqlite")));
         moduleList.add(new MockPluginDirectoryModule());
         moduleList.add(new MockSerializerModule(mockSerializer));
         moduleList.add(new MockShutdownModule(() -> {

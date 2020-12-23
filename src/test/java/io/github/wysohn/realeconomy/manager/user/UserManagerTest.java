@@ -91,7 +91,8 @@ public class UserManagerTest {
         moduleList.add(new MockLoggerModule());
         moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3),
                 Pair.of(UserManager.DROP_CURRENCY_ON_DEATH, true),
-                Pair.of(UserManager.CHECK_PICKUP_BY_PLAYER_ONLY, false)));
+                Pair.of(UserManager.CHECK_PICKUP_BY_PLAYER_ONLY, false),
+                Pair.of("database.type", "sqlite")));
         moduleList.add(new MockPluginDirectoryModule());
         moduleList.add(new MockSerializerModule(mockSerializer));
         moduleList.add(new MockShutdownModule(() -> {
