@@ -9,9 +9,11 @@ import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.paging.DataProviderProxy;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
+import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 
 import javax.inject.Inject;
@@ -20,6 +22,7 @@ import javax.inject.Singleton;
 import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -28,6 +31,8 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
     private final Map<String, UUID> codeMap = new HashMap<>();
 
     private final ManagerConfig config;
+    private final IOrderPlacementHandler orderPlacementHandler;
+    private final ITaskSupervisor task;
 
     private DataProvider<Currency> currenciesProvider;
 
@@ -40,9 +45,13 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
             IShutdownHandle shutdownHandle,
             ISerializer serializer,
             ITypeAsserter asserter,
-            Injector injector) {
+            Injector injector,
+            IOrderPlacementHandler orderPlacementHandler,
+            ITaskSupervisor task) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, Currency.class);
         this.config = config;
+        this.orderPlacementHandler = orderPlacementHandler;
+        this.task = task;
     }
 
     @Override
@@ -65,7 +74,15 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
         super.enable();
 
         // remap code to UUID
-        forEach(currency -> codeMap.put(currency.getCode(), currency.getKey()));
+        forEach(currency -> {
+            codeMap.put(currency.getCode(), currency.getKey());
+            orderPlacementHandler.setCurrencyName(currency.getKey(), currency.getStringKey(), currency.getCode());
+            try {
+                orderPlacementHandler.commitOrders();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
 
         if (!config.get(KEY_MAX_LEN).isPresent()) {
             config.put(KEY_MAX_LEN, 3);
@@ -131,7 +148,16 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
 
                     currency.setStringKey(name);
                     currency.setCode(finalCode);
+
                     codeMap.put(finalCode, currency.getKey());
+                    task.async(() -> {
+                        orderPlacementHandler.setCurrencyName(currency.getKey(), name, finalCode);
+                        try {
+                            orderPlacementHandler.commitOrders();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                    });
                 });
         return Result.OK;
     }
@@ -154,7 +180,16 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
                 .ifPresent(currency -> {
                     String previousCode = currency.getCode();
                     currency.setCode(newCode);
+
                     codeMap.put(newCode, currency.getKey());
+                    task.async(() -> {
+                        orderPlacementHandler.setCurrencyName(currency.getKey(), name, newCode);
+                        try {
+                            orderPlacementHandler.commitOrders();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                    });
                     if (previousCode != null)
                         codeMap.remove(previousCode);
                 });

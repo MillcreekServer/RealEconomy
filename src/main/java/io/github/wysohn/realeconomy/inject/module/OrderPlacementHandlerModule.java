@@ -40,6 +40,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         orderPlacementHandler.INSERT_CATEGORY = Metrics.resourceToString(resourceProvider, "insert_category.sql");
         orderPlacementHandler.INSERT_LOG = Metrics.resourceToString(resourceProvider, "insert_trade_log.sql");
         orderPlacementHandler.INSERT_LISTING_NAME = Metrics.resourceToString(resourceProvider, "insert_listing_name.sql");
+        orderPlacementHandler.INSERT_CURRENCY_NAME = Metrics.resourceToString(resourceProvider, "insert_currency_name.sql");
         orderPlacementHandler.UPDATE_BUY = Metrics.resourceToString(resourceProvider, "update_buy_orders.sql");
         orderPlacementHandler.UPDATE_SELL = Metrics.resourceToString(resourceProvider, "update_sell_orders.sql");
         orderPlacementHandler.DELETE_BUY = Metrics.resourceToString(resourceProvider, "delete_buy_order.sql");
@@ -88,6 +89,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         private String INSERT_CATEGORY;
         private String INSERT_LOG;
         private String INSERT_LISTING_NAME;
+        private String INSERT_CURRENCY_NAME;
         private String UPDATE_BUY;
         private String UPDATE_SELL;
         private String DELETE_BUY;
@@ -301,6 +303,26 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 try {
                     pstmt.setString(1, listingUuid.toString());
                     pstmt.setString(2, name);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, index -> {
+            });
+        }
+
+        @Override
+        public void setCurrencyName(UUID currencyUuid, String full, String shorter) {
+            Validation.assertNotNull(currencyUuid);
+            Validation.assertNotNull(full);
+            Validation.assertNotNull(shorter);
+
+            String sql = INSERT_CURRENCY_NAME;
+
+            ordersSession.execute(sql, (pstmt) -> {
+                try {
+                    pstmt.setString(1, currencyUuid.toString());
+                    pstmt.setString(2, full);
+                    pstmt.setString(3, shorter);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }

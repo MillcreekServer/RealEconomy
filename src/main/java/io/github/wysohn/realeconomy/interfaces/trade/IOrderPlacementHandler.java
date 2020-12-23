@@ -137,7 +137,9 @@ public interface IOrderPlacementHandler {
     StringListTrie categoryList();
 
     /**
-     * Method to be used to update the listingUuid mapping. This will not be used by plugin itself,
+     * Method to be used to update the listingUuid mapping.
+     * <p>
+     * This will not be used by plugin itself,
      * but it can be useful for the cross-platform service that queries the order sql database directly.
      * If not set by this method, the other service that rely on the data of order sql database have no way
      * to identify what items are involved in the transaction.
@@ -146,6 +148,20 @@ public interface IOrderPlacementHandler {
      * @param name        the name to be mapped with for the given listing UUID
      */
     void setListingName(UUID listingUuid, String name);
+
+    /**
+     * Method to be used to update the currencyUuid mapping. This will
+     * <p>
+     * This will not be used by plugin itself,
+     * but it can be useful for the cross-platform service that queries the order sql database directly.
+     * If not set by this method, the other service that rely on the data of order sql database have no way
+     * to identify what items are involved in the transaction.
+     *
+     * @param currencyUuid uuid of currency
+     * @param full         full name of currency
+     * @param shorter      short currency code
+     */
+    void setCurrencyName(UUID currencyUuid, String full, String shorter);
 
     /**
      * Get DataProvider for the currently listed selling orders.
