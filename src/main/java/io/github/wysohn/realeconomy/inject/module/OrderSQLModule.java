@@ -109,8 +109,7 @@ public class OrderSQLModule extends AbstractModule {
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
                         .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL, SQLSession.Attribute.UNIQUE)
                         .field("full", "text", SQLSession.Attribute.NOT_NULL)
-                        .field("short", "text", SQLSession.Attribute.NOT_NULL)
-                        .field("mark", "text", SQLSession.Attribute.NOT_NULL))
+                        .field("short", "text", SQLSession.Attribute.NOT_NULL))
                 .build();
     }
 }
