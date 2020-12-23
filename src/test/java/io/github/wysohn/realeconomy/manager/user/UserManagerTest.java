@@ -6,6 +6,7 @@ import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
@@ -15,6 +16,8 @@ import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckBalance;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckCurrency;
 import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
+import io.github.wysohn.realeconomy.inject.module.OrderPlacementHandlerModule;
+import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
 import io.github.wysohn.realeconomy.main.RealEconomy;
 import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
@@ -38,6 +41,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.util.LinkedList;
@@ -94,6 +100,8 @@ public class UserManagerTest {
         moduleList.add(new TaskSupervisorModule(taskSupervisor));
 
         moduleList.add(new NamespacedKeyModule());
+        moduleList.add(new OrderSQLModule());
+        moduleList.add(new OrderPlacementHandlerModule());
         moduleList.add(new AbstractModule() {
             @Provides
             RealEconomy realEconomy() {
@@ -130,6 +138,19 @@ public class UserManagerTest {
             @Provides
             AssetListingManager listingManager() {
                 return listingManager;
+            }
+
+            @Provides
+            IPluginResourceProvider resourceProvider() {
+                File folder = new File("src/main/resources/");
+                return name -> {
+                    try {
+                        return new FileInputStream(new File(folder, name));
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    return null;
+                };
             }
         });
     }
