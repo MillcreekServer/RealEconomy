@@ -9,6 +9,7 @@ import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
+import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.MockConfigModule;
 import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
@@ -32,6 +33,8 @@ import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -67,6 +70,36 @@ public class AssetListingManagerTest {
                         e.printStackTrace();
                     }
                     return null;
+                };
+            }
+
+            @Provides
+            ITaskSupervisor taskSupervisor() {
+                return new ITaskSupervisor() {
+                    @Override
+                    public <V> Future<V> sync(Callable<V> callable) {
+                        return null;
+                    }
+
+                    @Override
+                    public void sync(Runnable runnable) {
+                        runnable.run();
+                    }
+
+                    @Override
+                    public <V> Future<V> async(Callable<V> callable) {
+                        try {
+                            callable.call();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public void async(Runnable runnable) {
+                        runnable.run();
+                    }
                 };
             }
         });

@@ -69,8 +69,7 @@ public class OrderSQLModule extends AbstractModule {
                         .field(CATEGORY_ID, "integer")
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
-                        .field("price", "double precision",
-                                SQLSession.Attribute.KEY, SQLSession.Attribute.NOT_NULL)
+                        .field("price", "double precision", SQLSession.Attribute.NOT_NULL)
                         .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
@@ -81,8 +80,7 @@ public class OrderSQLModule extends AbstractModule {
                         .field(CATEGORY_ID, "integer")
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
-                        .field("price", "double precision",
-                                SQLSession.Attribute.KEY, SQLSession.Attribute.NOT_NULL)
+                        .field("price", "double precision", SQLSession.Attribute.NOT_NULL)
                         .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
