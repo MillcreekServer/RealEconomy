@@ -7,22 +7,17 @@ import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
-import io.github.wysohn.rapidframework3.interfaces.io.IPluginResourceProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
 import io.github.wysohn.rapidframework3.utils.Pair;
-import io.github.wysohn.realeconomy.inject.module.OrderPlacementHandlerModule;
-import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import org.junit.Before;
 import org.junit.Test;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -54,8 +49,6 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
         moduleList.add(new MockShutdownModule(() -> {
 
         }));
-        moduleList.add(new OrderSQLModule());
-        moduleList.add(new OrderPlacementHandlerModule());
         moduleList.add(new AbstractModule() {
             @Provides
             CentralBankingManager centralBankingManager() {
@@ -63,16 +56,8 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
             }
 
             @Provides
-            IPluginResourceProvider resourceProvider() {
-                File folder = new File("src/main/resources/");
-                return name -> {
-                    try {
-                        return new FileInputStream(new File(folder, name));
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                };
+            IOrderPlacementHandler orderPlacementHandler() {
+                return mock(IOrderPlacementHandler.class);
             }
 
             @Provides
