@@ -83,6 +83,11 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         forEach(listing -> {
             signatureUUIDMap.put(listing.getSignature(), listing.getKey());
             orderPlacementHandler.setListingName(listing.getKey(), listing.getSignature().toString());
+            try {
+                orderPlacementHandler.commitOrders();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         });
     }
 
@@ -118,8 +123,14 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                     signatureUUIDMap.put(signature, listing.getKey());
 
                     // process blocking operation asynchronously
-                    taskSupervisor.async(() ->
-                            orderPlacementHandler.setListingName(listing.getKey(), listing.getSignature().toString()));
+                    taskSupervisor.async(() -> {
+                        orderPlacementHandler.setListingName(listing.getKey(), listing.getSignature().toString());
+                        try {
+                            orderPlacementHandler.commitOrders();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                    });
                 });
 
         return true;
