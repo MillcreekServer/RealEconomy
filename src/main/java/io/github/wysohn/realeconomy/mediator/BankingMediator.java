@@ -5,6 +5,7 @@ import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
+import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
@@ -28,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Singleton
 public class BankingMediator extends Mediator {
@@ -110,26 +112,31 @@ public class BankingMediator extends Mediator {
         CentralBank centralBank = centralBankingManager.getOrNew(government.getUuid())
                 .map(Reference::get)
                 .orElseThrow(RuntimeException::new);
-        centralBank.setBankOwner(government);
 
-        CurrencyManager.Result result = currencyManager.newCurrency(name, code, centralBank);
-        if (result != CurrencyManager.Result.OK) {
+        return FailSensitiveTaskResult.of(() -> {
+            centralBank.setBankOwner(government);
+            government.setBaseBank(centralBank);
+
+            CurrencyManager.Result result = currencyManager.newCurrency(name, code, centralBank);
+            if (result != CurrencyManager.Result.OK) {
+                switch (result) {
+                    case DUP_NAME:
+                        return Result.DUP_NAME;
+                    case DUP_CODE:
+                        return Result.DUP_CODE;
+                    case CODE_LENGTH:
+                        return Result.CODE_LENGTH;
+                    default:
+                        throw new RuntimeException();
+                }
+            } else {
+                return Result.OK;
+            }
+        }, Result.OK).handleException(Throwable::printStackTrace).onFail(() -> {
             // delete the bank as currency creation failed
             centralBankingManager.delete(centralBank.getKey());
-
-            switch (result) {
-                case DUP_NAME:
-                    return Result.DUP_NAME;
-                case DUP_CODE:
-                    return Result.DUP_CODE;
-                case CODE_LENGTH:
-                    return Result.CODE_LENGTH;
-                default:
-                    throw new RuntimeException();
-            }
-        } else {
-            return Result.OK;
-        }
+            government.setBaseBank(null);
+        }).run();
     }
 
     public Result renameCurrency(String name, String newName) {
@@ -373,6 +380,18 @@ public class BankingMediator extends Mediator {
         }
     }
 
+    public static class FailSensitiveTaskResult extends FailSensitiveTaskGeneric<FailSensitiveTaskResult, Result> {
+
+        protected FailSensitiveTaskResult(Supplier<Result> task,
+                                          Result expected) {
+            super(task, expected);
+        }
+
+        public static FailSensitiveTaskResult of(Supplier<Result> task,
+                                                 Result expected) {
+            return new FailSensitiveTaskResult(task, expected);
+        }
+    }
 
     public enum Result {
         OK,
