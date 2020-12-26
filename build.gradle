@@ -10,9 +10,11 @@ buildscript {
 plugins {
     id 'java'
     id 'groovy'
+    id 'maven-publish'
 }
 
-project.version = '1.12.0'
+version = '1.12.0'
+group = 'io.github.wysohn'
 
 ext {
     id = project.name
@@ -317,4 +319,25 @@ compileTestJava {
     options.encoding = 'UTF-8'
 }
 
-sourceCompatibility = 1.8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+publishing {
+    repositories {
+        maven {
+            url = uri("https://maven.pkg.github.com/MillcreekServer/"+rootProject.name.toLowerCase())
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            artifactId = rootProject.name.toLowerCase()
+            from(components.java)
+        }
+    }
+}
