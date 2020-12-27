@@ -69,7 +69,7 @@ task writePluginYml {
     map.put("author", project.ext.author)
     map.put("authors", project.ext.authors)
     map.put("softdepend", [
-            "rapidframework",
+            "RapidFramework",
             "Vault",
             "PlaceholderAPI",
             "ProtocolLib",
