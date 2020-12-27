@@ -8,7 +8,7 @@ permissions:
 name: RealEconomy
 main: io.github.wysohn.realeconomy.main.RealEconomy
 softdepend:
-- rapidframework
+- RapidFramework
 - Vault
 - PlaceholderAPI
 - ProtocolLib
@@ -16,7 +16,7 @@ softdepend:
 - SmartInvs
 - ScoreboardScreen
 - Citizens
-version: 1.12.0
+version: 1.13.0
 commands:
   realeconomy:
     aliases:
