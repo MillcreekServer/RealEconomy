@@ -256,6 +256,12 @@ public class AssetListingManagerTest {
         }
 
         @Override
+        public int realizeAsset(Asset asset) {
+            ownedAssets.add(asset);
+            return 0;
+        }
+
+        @Override
         public IMemento saveState() {
             return null;
         }

@@ -4,14 +4,16 @@ import com.google.common.collect.Multimap;
 import fr.minuskube.inv.ItemClickData;
 import fr.minuskube.inv.content.InventoryContents;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
+import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
+import io.github.wysohn.realeconomy.interfaces.banking.IAssetHolder;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.user.User;
-import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -42,35 +44,47 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
-public class TradeAccountGUITest {
+public class AssetTransferGUITest {
 
-    private TradeAccountGUI tradeAccountGUI;
-    private Function<Player, User> function;
+    private AssetTransferGUI assetTransferGUI;
+    private Function<Player, ICommandSender> function;
     private NamespacedKey namespacedKey;
-    private BankingMediator bankingMediator;
     private TradeMediator tradeMediator;
     private ManagerLanguage language;
     private Server server;
+    private IAssetHolder assetHolder;
+    private IFinancialEntity financialEntity;
+    private Predicate<Player> playerPredicate;
 
     @Before
     public void init() throws Exception {
         language = mock(ManagerLanguage.class);
-        bankingMediator = mock(BankingMediator.class);
         tradeMediator = mock(TradeMediator.class);
         namespacedKey = new NamespacedKey("test", "ser");
         function = mock(Function.class);
+        assetHolder = mock(IAssetHolder.class);
+        financialEntity = mock(IFinancialEntity.class);
+        playerPredicate = mock(Predicate.class);
+
         server = mock(Server.class, RETURNS_DEEP_STUBS);
         Field field = Bukkit.class.getDeclaredField("server");
         field.setAccessible(true);
         field.set(null, server);
 
-        tradeAccountGUI = new TradeAccountGUI(language, bankingMediator, tradeMediator, namespacedKey, function);
+        assetTransferGUI = new AssetTransferGUI(language,
+                tradeMediator,
+                namespacedKey,
+                function,
+                assetHolder,
+                financialEntity,
+                playerPredicate);
 
         when(language.parse(any(User.class), any())).thenReturn(new String[]{"Message"});
         when(language.parse(any(User.class), any(), any())).thenReturn(new String[]{"Message"});
@@ -91,11 +105,10 @@ public class TradeAccountGUITest {
         when(player.getUniqueId()).thenReturn(uuid);
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
-        when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
 
-        tradeAccountGUI.init(player, contents);
-        tradeAccountGUI.update(player, contents);
+        assetTransferGUI.init(player, contents);
+        assetTransferGUI.update(player, contents);
     }
 
     @Test
@@ -116,17 +129,18 @@ public class TradeAccountGUITest {
         when(player.getUniqueId()).thenReturn(uuid);
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
-        when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
         when(bank.hasAccount(eq(user), any(IBankingType.class))).thenReturn(true);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
+        when(assetHolder.assetDataProvider()).thenReturn(dataProvider);
+        when(playerPredicate.test(any(Player.class))).thenReturn(true);
         when(dataProvider.size()).thenReturn(45);
         when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
         when(server.getItemFactory()).thenReturn(itemFactory);
         when(itemFactory.getItemMeta(any())).thenReturn(meta);
         when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainer);
 
-        tradeAccountGUI.init(player, contents);
-        tradeAccountGUI.update(player, contents);
+        assetTransferGUI.init(player, contents);
+        assetTransferGUI.update(player, contents);
 
         verify(dataProvider).get(0, 45);
     }
@@ -150,17 +164,18 @@ public class TradeAccountGUITest {
         when(player.getUniqueId()).thenReturn(uuid);
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
-        when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
         when(bank.hasAccount(eq(user), any(IBankingType.class))).thenReturn(true);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
+        when(assetHolder.assetDataProvider()).thenReturn(dataProvider);
+        when(playerPredicate.test(any(Player.class))).thenReturn(true);
         when(dataProvider.size()).thenReturn(46);
         when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
         when(server.getItemFactory()).thenReturn(itemFactory);
         when(itemFactory.getItemMeta(any())).thenReturn(meta);
         when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainer);
 
-        tradeAccountGUI.init(player, contents);
-        tradeAccountGUI.update(player, contents);
+        assetTransferGUI.init(player, contents);
+        assetTransferGUI.update(player, contents);
 
         verify(dataProvider).get(0, 45);
         verify(dataProvider, never()).get(1, 45);
@@ -185,18 +200,19 @@ public class TradeAccountGUITest {
         when(player.getUniqueId()).thenReturn(uuid);
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
-        when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
         when(bank.hasAccount(eq(user), any(IBankingType.class))).thenReturn(true);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
+        when(assetHolder.assetDataProvider()).thenReturn(dataProvider);
+        when(playerPredicate.test(any(Player.class))).thenReturn(true);
         when(dataProvider.size()).thenReturn(46);
         when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
         when(server.getItemFactory()).thenReturn(itemFactory);
         when(itemFactory.getItemMeta(any())).thenReturn(meta);
         when(meta.getPersistentDataContainer()).thenReturn(persistentDataContainer);
 
-        Whitebox.setInternalState(tradeAccountGUI, "page", 1);
-        tradeAccountGUI.init(player, contents);
-        tradeAccountGUI.update(player, contents);
+        Whitebox.setInternalState(assetTransferGUI, "page", 1);
+        assetTransferGUI.init(player, contents);
+        assetTransferGUI.update(player, contents);
 
         verify(dataProvider).get(1, 45);
     }
@@ -221,8 +237,9 @@ public class TradeAccountGUITest {
         when(player.getUniqueId()).thenReturn(uuid);
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
-        when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
+        when(assetHolder.assetDataProvider()).thenReturn(dataProvider);
+        when(playerPredicate.test(any(Player.class))).thenReturn(true);
         when(dataProvider.size()).thenReturn(46);
         when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
         when(server.getItemFactory()).thenReturn(itemFactory);
@@ -231,18 +248,17 @@ public class TradeAccountGUITest {
 
         InventoryClickEvent clickEvent = mock(InventoryClickEvent.class);
         InventoryAction action = InventoryAction.PLACE_ALL;
-        ItemStack cursor = TradeAccountGUI.assetToItem(namespacedKey, language, user, asset);
+        ItemStack cursor = AssetTransferGUI.assetToItem(namespacedKey, language, user, asset);
         when(data.getEvent()).thenReturn(clickEvent);
         when(clickEvent.getAction()).thenReturn(action);
         when(clickEvent.getCursor()).thenReturn(cursor);
 
-        tradeAccountGUI.init(player, contents);
-        tradeAccountGUI.update(player, contents);
+        assetTransferGUI.init(player, contents);
+        assetTransferGUI.update(player, contents);
 
-        Method method = TradeAccountGUI.class.getDeclaredMethod("clickedSlot",
-                Player.class, AbstractBank.class, ItemClickData.class);
+        Method method = AssetTransferGUI.class.getDeclaredMethod("clickedSlot", ItemClickData.class);
         method.setAccessible(true);
-        method.invoke(tradeAccountGUI, player, bank, data);
+        method.invoke(assetTransferGUI, data);
     }
 
     @Test
@@ -265,8 +281,9 @@ public class TradeAccountGUITest {
         when(player.getUniqueId()).thenReturn(uuid);
         when(user.getUuid()).thenReturn(uuid);
         when(function.apply(eq(player))).thenReturn(user);
-        when(bankingMediator.getUsingBank(eq(user))).thenReturn(bank);
         when(bank.accountAssetProvider(eq(user))).thenReturn(dataProvider);
+        when(assetHolder.assetDataProvider()).thenReturn(dataProvider);
+        when(playerPredicate.test(any(Player.class))).thenReturn(true);
         when(dataProvider.size()).thenReturn(46);
         when(dataProvider.get(anyInt(), anyInt())).thenReturn(assetList);
         when(server.getItemFactory()).thenReturn(itemFactory);
@@ -275,18 +292,17 @@ public class TradeAccountGUITest {
 
         InventoryClickEvent clickEvent = mock(InventoryClickEvent.class);
         InventoryAction action = InventoryAction.PLACE_ALL;
-        ItemStack slot = TradeAccountGUI.assetToItem(namespacedKey, language, user, asset);
+        ItemStack slot = AssetTransferGUI.assetToItem(namespacedKey, language, user, asset);
         when(data.getEvent()).thenReturn(clickEvent);
         when(clickEvent.getAction()).thenReturn(action);
         when(clickEvent.getCurrentItem()).thenReturn(slot);
 
-        tradeAccountGUI.init(player, contents);
-        tradeAccountGUI.update(player, contents);
+        assetTransferGUI.init(player, contents);
+        assetTransferGUI.update(player, contents);
 
-        Method method = TradeAccountGUI.class.getDeclaredMethod("clickedSlot",
-                Player.class, AbstractBank.class, ItemClickData.class);
+        Method method = AssetTransferGUI.class.getDeclaredMethod("clickedSlot", ItemClickData.class);
         method.setAccessible(true);
-        method.invoke(tradeAccountGUI, player, bank, data);
+        method.invoke(assetTransferGUI, data);
     }
 
     @Test
@@ -309,13 +325,13 @@ public class TradeAccountGUITest {
         Item asset = new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND)));
         asset.setAmount(8853);
 
-        ItemStack itemStack = TradeAccountGUI.assetToItem(namespacedKey, language, user, asset);
-        Asset restored = TradeAccountGUI.itemToAsset(namespacedKey, itemStack);
+        ItemStack itemStack = AssetTransferGUI.assetToItem(namespacedKey, language, user, asset);
+        Asset restored = AssetTransferGUI.itemToAsset(namespacedKey, itemStack);
 
-        assertEquals(8853, TradeAccountGUI.assetAmount(restored));
+        assertEquals(8853, AssetTransferGUI.assetAmount(restored));
         assertTrue(restored instanceof Item);
         assertEquals(new ItemStack(Material.DIAMOND),
-                ((ItemStackSignature)restored.getSignature()).getItemStack());
+                ((ItemStackSignature) restored.getSignature()).getItemStack());
     }
 
     private class TempContainer implements PersistentDataContainer {

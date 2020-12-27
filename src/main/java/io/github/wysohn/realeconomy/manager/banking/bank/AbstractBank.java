@@ -2,6 +2,7 @@ package io.github.wysohn.realeconomy.manager.banking.bank;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Validation;
@@ -24,7 +25,7 @@ import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.util.*;
 
-public abstract class AbstractBank extends CachedElement<UUID> implements IFinancialEntity, IAssetHolder {
+public abstract class AbstractBank extends CachedElement<UUID> implements IPluginObject, IFinancialEntity, IAssetHolder {
     public static final String BANK_MARK = "\u2608";
 
     private transient final Object transactionLock = new Object();

@@ -13,6 +13,7 @@ import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
@@ -603,6 +604,11 @@ public class OrderPlacementHandlerModuleTest {
         @Override
         public boolean withdraw(BigDecimal value, Currency currency) {
             return false;
+        }
+
+        @Override
+        public int realizeAsset(Asset asset) {
+            return 0;
         }
 
         @Override

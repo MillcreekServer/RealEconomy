@@ -6,6 +6,7 @@ import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.main.Metrics;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
 import java.math.BigDecimal;
@@ -103,6 +104,12 @@ public class CentralBank extends AbstractBank {
                     return true;
                 })
                 .orElseGet(() -> super.withdraw(value, currency));
+    }
+
+    @Override
+    public int realizeAsset(Asset asset) {
+        addAsset(asset);
+        return 0;
     }
 
     @Override

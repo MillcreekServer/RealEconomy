@@ -447,7 +447,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                         if (BankingTypeRegistry.TRADING.equals(type)) {
                             getMain().api().getAPI(SmartInvAPI.class).ifPresent(smartInvAPI ->
-                                    smartInvAPI.openTradeAccountGUI(sender));
+                                    smartInvAPI.openTradeAccountGUI(bank, sender));
                         } else {
                             getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Assets_InvalidType);
                         }

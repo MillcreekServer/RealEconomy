@@ -259,5 +259,10 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         public TempBank(UUID key) {
             super(key);
         }
+
+        @Override
+        public int realizeAsset(Asset asset) {
+            return 0;
+        }
     }
 }

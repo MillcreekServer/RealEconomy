@@ -5,15 +5,19 @@ import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
+import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
+import io.github.wysohn.realeconomy.interfaces.banking.IAssetHolder;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
+import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
@@ -258,7 +262,7 @@ public class BankingMediator extends Mediator {
             IFinancialEntity to,
             BigDecimal amount,
             Currency currency) {
-        return send(new BankAccountWrapper(from, type), to, amount, currency);
+        return send(new BankAccountWrapper(getUsingBank(from), from, type), to, amount, currency);
     }
 
     public TransactionUtil.Result send(
@@ -267,7 +271,7 @@ public class BankingMediator extends Mediator {
             IBankingType type,
             BigDecimal amount,
             Currency currency) {
-        return send(from, new BankAccountWrapper(to, type), amount, currency);
+        return send(from, new BankAccountWrapper(getUsingBank(to), to, type), amount, currency);
     }
 
     public TransactionUtil.Result send(
@@ -277,10 +281,18 @@ public class BankingMediator extends Mediator {
             IBankingType to_type,
             BigDecimal amount,
             Currency currency) {
-        return send(new BankAccountWrapper(from, from_type),
-                new BankAccountWrapper(to, to_type),
+        return send(new BankAccountWrapper(getUsingBank(from), from, from_type),
+                new BankAccountWrapper(getUsingBank(to), to, to_type),
                 amount,
                 currency);
+    }
+
+    public BankAccountWrapper wrapAccount(AbstractBank bank, IBankUser user, IBankingType type) {
+        return new BankAccountWrapper(bank, user, type);
+    }
+
+    public AssetStorageWrapper wrapStorage(AbstractBank bank, IBankUser user) {
+        return new AssetStorageWrapper(bank, user);
     }
 
     public boolean isInBank(IBankUser user) {
@@ -320,13 +332,18 @@ public class BankingMediator extends Mediator {
     }
 
     public class BankAccountWrapper implements IFinancialEntity {
+        private final AbstractBank bank;
         private final IBankUser user;
         private final IBankingType type;
 
-        public BankAccountWrapper(IBankUser user, IBankingType type) {
+        public BankAccountWrapper(AbstractBank bank,
+                                  IBankUser user,
+                                  IBankingType type) {
+            Validation.assertNotNull(bank);
             Validation.assertNotNull(user);
             Validation.assertNotNull(type);
 
+            this.bank = bank;
             this.user = user;
             this.type = type;
         }
@@ -347,26 +364,26 @@ public class BankingMediator extends Mediator {
         public BigDecimal balance(Currency currency) {
             verifyCurrency(currency);
 
-            return BankingMediator.this.balance(user, type);
+            return BankingMediator.this.balance(bank, user, type);
         }
 
         @Override
         public boolean deposit(BigDecimal value, Currency currency) {
             verifyCurrency(currency);
 
-            return BankingMediator.this.deposit(user, type, value) == Result.OK;
+            return BankingMediator.this.deposit(bank, user, type, value) == Result.OK;
         }
 
         @Override
         public boolean withdraw(BigDecimal value, Currency currency) {
             verifyCurrency(currency);
 
-            return BankingMediator.this.withdraw(user, type, value) == Result.OK;
+            return BankingMediator.this.withdraw(bank, user, type, value) == Result.OK;
         }
 
         @Override
-        public UUID getUuid() {
-            return user.getUuid();
+        public int realizeAsset(Asset asset) {
+            return user.realizeAsset(asset);
         }
 
         @Override
@@ -377,6 +394,41 @@ public class BankingMediator extends Mediator {
         @Override
         public void restoreState(IMemento iMemento) {
             user.restoreState(iMemento);
+        }
+    }
+
+    public class AssetStorageWrapper implements IAssetHolder {
+        private final AbstractBank bank;
+        private final IBankUser user;
+
+        public AssetStorageWrapper(AbstractBank bank, IBankUser user) {
+            this.bank = bank;
+            this.user = user;
+        }
+
+        @Override
+        public void addAsset(Asset asset) {
+            bank.addAsset(asset);
+        }
+
+        @Override
+        public int removeAsset(AssetSignature signature, int amount) {
+            return bank.removeAsset(signature, amount);
+        }
+
+        @Override
+        public DataProvider<Asset> assetDataProvider() {
+            return bank.assetDataProvider();
+        }
+
+        @Override
+        public IMemento saveState() {
+            return bank.saveState();
+        }
+
+        @Override
+        public void restoreState(IMemento savedState) {
+            bank.restoreState(savedState);
         }
     }
 

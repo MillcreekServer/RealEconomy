@@ -9,7 +9,7 @@ public interface IGovernment extends IBankOwner, IPluginObject {
      * Called once when a bank is established by a government.
      * Use this method to keep track of the owned bank.
      *
-     * @param bank the UUID of the central bank to be owning. Can be null to reset
+     * @param bank the central bank to be owning. Can be null to reset
      */
     void setBaseBank(CentralBank bank);
 }
