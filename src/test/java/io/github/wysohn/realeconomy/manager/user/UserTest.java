@@ -13,8 +13,8 @@ import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
-import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
+import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import org.junit.Before;
 import org.junit.Test;
 

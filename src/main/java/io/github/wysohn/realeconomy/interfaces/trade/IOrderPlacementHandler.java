@@ -3,10 +3,11 @@ package io.github.wysohn.realeconomy.interfaces.trade;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.trie.StringListTrie;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
-import io.github.wysohn.realeconomy.manager.asset.listing.OrderInfo;
-import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
-import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
+import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
+import io.github.wysohn.realeconomy.manager.listing.OrderInfo;
+import io.github.wysohn.realeconomy.manager.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
 
 import java.sql.SQLException;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public interface IOrderPlacementHandler {
      * {@link #commitOrders()} must be invoked to finalize the transaction.
      *
      * @param listingUuid uuid of asset listing specified in
-     *                    {@link io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager}. This method doesn't manually
+     *                    {@link AssetListingManager}. This method doesn't manually
      *                    check if the given UUID is actually valid.
      * @param category    category of the asset
      * @param type        order type

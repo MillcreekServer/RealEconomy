@@ -1,4 +1,4 @@
-package io.github.wysohn.realeconomy.manager.asset.listing;
+package io.github.wysohn.realeconomy.manager.listing;
 
 public enum OrderType {
     // The enum order must match with the value used in SQL table

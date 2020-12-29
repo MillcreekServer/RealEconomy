@@ -1,4 +1,4 @@
-package io.github.wysohn.realeconomy.manager.asset.listing;
+package io.github.wysohn.realeconomy.manager.listing;
 
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;

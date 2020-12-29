@@ -25,8 +25,9 @@ public interface IAssetHolder extends IEntitySnapshot {
      *
      * @param signature
      * @param amount
-     * @return the amount of assets removed. If there were sufficient asset exist in the holder's container,
-     * this value should match with the given amount. 0 if nothing has done.
+     * @return the amount of assets removed. If there were sufficient asset exist
+     * in the holder's container, this value should match with the given amount.
+     * 0 if nothing has done.
      */
     int removeAsset(AssetSignature signature, int amount);
 

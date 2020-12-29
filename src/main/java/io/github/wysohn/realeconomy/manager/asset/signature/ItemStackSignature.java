@@ -7,6 +7,7 @@ import io.github.wysohn.rapidframework3.core.message.Message;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
+import io.github.wysohn.realeconomy.manager.listing.AssetListing;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -19,7 +20,7 @@ import java.util.UUID;
 /**
  * Unlike the original ItemStack, it does not keep track of the amount of items in stack.
  * Number of items must be tracked separately in the
- * {@link io.github.wysohn.realeconomy.manager.asset.listing.AssetListing}.
+ * {@link AssetListing}.
  * As stated in {@link AssetSignature}, it should not contain any mutable attributes.
  * <p>
  * When creating Asset, {@link PhysicalAssetSignature#KEY_AMOUNT} must be in meta info

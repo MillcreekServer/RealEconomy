@@ -31,4 +31,19 @@ public abstract class AssetSignature {
     public abstract Asset create(Map<String, Object> metaData);
 
     public abstract Message[] toMessage(ManagerLanguage lang, ICommandSender sender);
+
+    @Override
+    public int hashCode() {
+        throw new RuntimeException();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        throw new RuntimeException();
+    }
+
+    @Override
+    public String toString() {
+        throw new RuntimeException();
+    }
 }

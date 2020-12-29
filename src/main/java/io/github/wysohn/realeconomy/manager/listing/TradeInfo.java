@@ -1,4 +1,4 @@
-package io.github.wysohn.realeconomy.manager.asset.listing;
+package io.github.wysohn.realeconomy.manager.listing;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
