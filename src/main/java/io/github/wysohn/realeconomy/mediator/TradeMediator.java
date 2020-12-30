@@ -11,7 +11,6 @@ import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
-import io.github.wysohn.realeconomy.manager.asset.signature.PhysicalAssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -401,7 +400,7 @@ public class TradeMediator extends Mediator {
 
                         // give asset to the buyer account
                         finalBank.addAccountAsset(buyer, signature.create(new HashMap<String, Object>() {{
-                            put(PhysicalAssetSignature.KEY_AMOUNT, amountsRemoved);
+                            put(AssetSignature.KEY_NUMERIC_MEASURE, amountsRemoved);
                         }}));
 
                         // adjust the removed amount

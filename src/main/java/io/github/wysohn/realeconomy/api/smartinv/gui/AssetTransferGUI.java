@@ -20,6 +20,7 @@ import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.PhysicalAsset;
+import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.ChatColor;
@@ -198,7 +199,7 @@ public class AssetTransferGUI implements InventoryProvider {
                 // cursor -> asset store
                 ItemStackSignature signature = new ItemStackSignature(cursor);
                 Asset asset = signature.create(new HashMap<String, Object>() {{
-                    put(ItemStackSignature.KEY_AMOUNT, cursor.getAmount());
+                    put(AssetSignature.KEY_NUMERIC_MEASURE, cursor.getAmount());
                 }});
                 assetStore.addAsset(asset);
             }
@@ -220,7 +221,7 @@ public class AssetTransferGUI implements InventoryProvider {
     private boolean transferAsset(IAssetHolder from, IFinancialEntity to, Asset asset) {
         // remove asset from sender
         int assetAmount = assetAmount(asset);
-        if (from.removeAsset(asset.getSignature(), assetAmount) != assetAmount)
+        if (from.removeAsset(asset.getSignature(), assetAmount).size() > 0)
             return false;
 
         // give it to receiver

@@ -18,6 +18,16 @@ public class Check extends Asset {
     }
 
     @Override
+    public double getNumericalMeasure() {
+        throw new RuntimeException();
+    }
+
+    @Override
+    public void setNumericalMeasure(double value) {
+        throw new RuntimeException();
+    }
+
+    @Override
     public Asset clone() {
         throw new RuntimeException();
     }

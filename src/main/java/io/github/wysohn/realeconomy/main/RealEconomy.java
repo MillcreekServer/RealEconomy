@@ -29,7 +29,6 @@ import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
-import io.github.wysohn.realeconomy.manager.asset.signature.PhysicalAssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
@@ -638,7 +637,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         () -> {
                                             user.getSender().getInventory().setItemInMainHand(null);
                                             bank.addAccountAsset(user, signature.create(new HashMap<String, Object>() {{
-                                                put(PhysicalAssetSignature.KEY_AMOUNT, itemStack.getAmount());
+                                                put(AssetSignature.KEY_NUMERIC_MEASURE, itemStack.getAmount());
                                             }}));
                                         })){
 

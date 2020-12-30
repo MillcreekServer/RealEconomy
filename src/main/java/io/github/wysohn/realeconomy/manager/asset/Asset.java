@@ -58,9 +58,26 @@ public abstract class Asset implements GUISlotIcon {
     }
 
     @Override
-    public ItemStack getIcon(){
+    public ItemStack getIcon() {
         return new ItemStack(Material.PAPER);
     }
+
+    /**
+     * get numerical measure of this asset. This depends on the type of the Asset.
+     * For example, Item asset may return the number of items in the stack.
+     * Currency based asset (Check, Bond, Loan, etc.) may return the amount of currency.
+     *
+     * @return current value. Must provide non-zero positive, or the asset is meaningless.
+     */
+    public abstract double getNumericalMeasure();
+
+    /**
+     * Set numerical measure of this asset. Refer to {@link #getNumericalMeasure()}
+     * for the details.
+     *
+     * @param value the value to set. Must provide non-zero positive, or the asset is meaningless.
+     */
+    public abstract void setNumericalMeasure(double value);
 
     public abstract Asset clone();
 

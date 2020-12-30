@@ -6,5 +6,4 @@ public abstract class PhysicalAssetSignature extends AssetSignature {
         return true;
     }
 
-    public static final String KEY_AMOUNT = "amount";
 }

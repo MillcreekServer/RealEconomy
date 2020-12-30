@@ -5,6 +5,7 @@ import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 public enum RealEconomyLangs implements ILang {
     Wallet("Wallet"),
     Currencies("Currencies"),
+    Electricity("Electricity"),
 
     BankingType_Checking("Checking Account"),
     BankingType_Trading("Trading Account"),

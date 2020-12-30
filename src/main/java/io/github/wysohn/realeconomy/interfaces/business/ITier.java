@@ -17,7 +17,7 @@ public interface ITier {
      * Every process is per second, so you can use decimal numbers
      * to make the process slower. For example, if you set the value
      * of DIAMOND to 0.25, it will take 4 seconds to fill 1 DIAMOND requirement,
-     * which is defined by {@link #requirement()}
+     * and the total required amount is defined by {@link #requirement()}
      *
      * @return
      */
@@ -25,7 +25,7 @@ public interface ITier {
 
     /**
      * Map of input assets to be used by this business.
-     * Production of this process will halt if not enough assets exist in the
+     * Production will halt if not enough assets exist in the
      * asset store as much as specified by this method.
      *
      * @return
@@ -39,5 +39,5 @@ public interface ITier {
      */
     TierInfoMap outputs();
 
-    long endOfLife();
+    long timeToLive();
 }

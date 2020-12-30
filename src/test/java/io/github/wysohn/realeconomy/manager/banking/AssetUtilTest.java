@@ -1,66 +1,76 @@
 package io.github.wysohn.realeconomy.manager.banking;
 
-import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
-import io.github.wysohn.realeconomy.manager.asset.PhysicalAsset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.asset.signature.ElectricitySignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.Server;
+import org.bukkit.inventory.ItemFactory;
+import org.bukkit.inventory.ItemStack;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class AssetUtilTest {
 
+    @Before
+    public void init() throws Exception {
+        Server server = mock(Server.class);
+        Field field = Bukkit.class.getDeclaredField("server");
+        field.setAccessible(true);
+        field.set(null, server);
+
+        ItemFactory itemFactory = mock(ItemFactory.class);
+        when(server.getItemFactory()).thenReturn(itemFactory);
+    }
+
     @Test
     public void addAsset() {
         List<Asset> ownedAssets = new ArrayList<>();
-        Asset asset1 = mock(Asset.class);
-        PhysicalAsset asset2 = mock(PhysicalAsset.class);
-        Asset asset3 = mock(Asset.class);
 
-        Asset asset1Clone = mock(Asset.class);
-        PhysicalAsset asset2Clone = mock(PhysicalAsset.class);
-        Asset asset3Clone = mock(Asset.class);
+        ItemStackSignature itemStackSignature = new ItemStackSignature(new ItemStack(Material.DIAMOND));
+        ElectricitySignature electricitySignature = new ElectricitySignature();
 
-        AssetSignature asset1Signature = mock(AssetSignature.class);
-        ItemStackSignature asset2Signature = mock(ItemStackSignature.class);
-        AssetSignature asset3Signature = mock(AssetSignature.class);
+        AssetUtil.addAsset(ownedAssets, itemStackSignature.create(new HashMap<String, Object>() {{
+            put(AssetSignature.KEY_NUMERIC_MEASURE, 33.0);
+        }}));
+        AssetUtil.addAsset(ownedAssets, electricitySignature.create(new HashMap<String, Object>() {{
+            put(AssetSignature.KEY_NUMERIC_MEASURE, 1088.443);
+        }}));
+        assertEquals(2, AssetUtil.assetDataProvider(ownedAssets).size());
 
-        when(asset1.clone()).thenReturn(asset1Clone);
-        when(asset1Clone.getSignature()).thenReturn(asset1Signature);
-        when(asset2.clone()).thenReturn(asset2Clone);
-        when(asset2Clone.getSignature()).thenReturn(asset2Signature);
-        when(asset3.clone()).thenReturn(asset3Clone);
-        when(asset3Clone.getSignature()).thenReturn(asset3Signature);
+        AssetUtil.removeAsset(ownedAssets, new ItemStackSignature(new ItemStack(Material.DIAMOND)), 15);
+        AssetUtil.removeAsset(ownedAssets, new ElectricitySignature(), 392.44);
+        assertEquals(33.0 - 15.0, ownedAssets.get(0).getNumericalMeasure(), 0.00001);
+        assertEquals(1088.443 - 392.44, ownedAssets.get(1).getNumericalMeasure(), 0.00001);
+        assertEquals(2, AssetUtil.assetDataProvider(ownedAssets).size());
 
-        AssetUtil.addAsset(ownedAssets, asset3);
-        AssetUtil.addAsset(ownedAssets, asset1);
-        AssetUtil.addAsset(ownedAssets, asset2);
+        AssetUtil.addAsset(ownedAssets, itemStackSignature.create(new HashMap<String, Object>() {{
+            put(AssetSignature.KEY_NUMERIC_MEASURE, 64.0);
+        }}));
+        AssetUtil.addAsset(ownedAssets, electricitySignature.create(new HashMap<String, Object>() {{
+            put(AssetSignature.KEY_NUMERIC_MEASURE, 10000.0);
+        }}));
+        assertEquals(4, AssetUtil.assetDataProvider(ownedAssets).size());
 
-        assertTrue(ownedAssets.contains(asset1Clone));
-        assertTrue(ownedAssets.contains(asset2Clone));
-        assertTrue(ownedAssets.contains(asset3Clone));
+        AssetUtil.removeAsset(ownedAssets, new ItemStackSignature(new ItemStack(Material.DIAMOND)), 48);
+        AssetUtil.removeAsset(ownedAssets, new ElectricitySignature(), 3000.0);
+        assertEquals(33.0 - 15.0 + 64 - 48, ownedAssets.get(0).getNumericalMeasure(), 0.00001);
+        assertEquals(1088.443 - 392.44 + 10000.0 - 3000.0, ownedAssets.get(1).getNumericalMeasure(), 0.00001);
+        assertEquals(2, AssetUtil.assetDataProvider(ownedAssets).size());
 
-        DataProvider<Asset> dataProvider = AssetUtil.assetDataProvider(ownedAssets);
-        assertEquals(ownedAssets, dataProvider.get(0, 3));
-
-        assertEquals(1, AssetUtil.removeAsset(ownedAssets, asset1Signature, 1));
-        when(asset2Clone.getAmount()).thenReturn(364);
-        assertEquals(300, AssetUtil.removeAsset(ownedAssets, asset2Signature, 300));
-        assertEquals(1, AssetUtil.removeAsset(ownedAssets, asset3Signature, 1));
-        when(asset2Clone.getAmount()).thenReturn(64);
-        assertEquals(64, AssetUtil.removeAsset(ownedAssets, asset2Signature, 100));
-
-        AssetUtil.addAsset(ownedAssets, asset2);
-        when(asset2Clone.getAmount()).thenReturn(100);
-        assertEquals(100, AssetUtil.removeAsset(ownedAssets, asset2Signature, 100));
-
-        assertEquals(0, ownedAssets.size());
+        AssetUtil.removeAsset(ownedAssets, new ItemStackSignature(new ItemStack(Material.DIAMOND)), 33.0 - 15.0 + 64 - 48);
+        AssetUtil.removeAsset(ownedAssets, new ElectricitySignature(), 1088.443 - 392.44 + 10000.0 - 3000.0);
+        assertEquals(0, AssetUtil.assetDataProvider(ownedAssets).size());
     }
 }

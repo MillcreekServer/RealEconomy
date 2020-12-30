@@ -283,7 +283,7 @@ dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
     implementation 'org.spigotmc:spigot-api:1.16.+'
-    implementation "io.github.wysohn:rapidframework:3.14.3"
+    implementation "io.github.wysohn:rapidframework:3.14.11"
     implementation "com.github.MilkBowl:VaultAPI:1.7"
 
     testCompile 'junit:junit:4.+'

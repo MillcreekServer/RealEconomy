@@ -23,7 +23,7 @@ import java.util.UUID;
  * {@link AssetListing}.
  * As stated in {@link AssetSignature}, it should not contain any mutable attributes.
  * <p>
- * When creating Asset, {@link PhysicalAssetSignature#KEY_AMOUNT} must be in meta info
+ * When creating Asset, {@link AssetSignature#KEY_NUMERIC_MEASURE} must be in meta info
  */
 public class ItemStackSignature extends PhysicalAssetSignature {
     private final ItemStack itemStack;
@@ -57,7 +57,7 @@ public class ItemStackSignature extends PhysicalAssetSignature {
     public Asset create(Map<String, Object> metaData) {
         Item item = new Item(UUID.randomUUID(), this);
         // fail early if amount is not set
-        item.setAmount((int) Objects.requireNonNull(metaData.get(KEY_AMOUNT)));
+        item.setNumericalMeasure((double) Objects.requireNonNull(metaData.get(KEY_NUMERIC_MEASURE)));
         return item;
     }
 

@@ -2,22 +2,30 @@ package io.github.wysohn.realeconomy.manager.business.types;
 
 import com.google.inject.Inject;
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.ITier;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.banking.AssetUtil;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractBusiness extends CachedElement<UUID> implements IBusiness {
     @Inject
     private transient AssetListingManager assetListingManager;
 
+    private transient Map<AssetSignature, Double> requirements;
+    private transient Map<AssetSignature, Double> fulfillment;
+    private transient Map<AssetSignature, Double> inputs;
+    private transient Map<AssetSignature, Double> outputs;
+
     private final List<Asset> ownedAssets = new ArrayList<>();
-    private final Map<AssetSignature, Double> currentProgress = new HashMap<>();
-    private final Map<AssetSignature, Double> productionStorage = new HashMap<>();
+    private final Map<AssetSignature, Double> currentProgress = new ConcurrentHashMap<>();
+    private final Map<AssetSignature, Double> productionStorage = new ConcurrentHashMap<>();
 
     private UUID ownerUuid;
     private ITier tier;
@@ -30,6 +38,11 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
 
         this.ownerUuid = ownerUuid;
         this.tier = tier;
+    }
+
+    @Override
+    public UUID getUuid() {
+        return getKey();
     }
 
     @Override
@@ -58,10 +71,40 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
         notifyObservers();
     }
 
-    private transient Map<AssetSignature, Double> requirements;
-    private transient Map<AssetSignature, Double> fulfillment;
-    private transient Map<AssetSignature, Double> inputs;
-    private transient Map<AssetSignature, Double> outputs;
+    @Override
+    public boolean isEstablished() {
+        return established;
+    }
+
+    @Override
+    public boolean endOfLife() {
+        return tier.timeToLive() >= 0 && System.currentTimeMillis() > tier.timeToLive();
+    }
+
+    @Override
+    public void addAsset(Asset asset) {
+        AssetUtil.addAsset(ownedAssets, asset);
+    }
+
+    @Override
+    public Collection<Asset> removeAsset(AssetSignature signature, int amount) {
+        return AssetUtil.removeAsset(ownedAssets, signature, amount);
+    }
+
+    @Override
+    public DataProvider<Asset> assetDataProvider() {
+        return AssetUtil.assetDataProvider(ownedAssets);
+    }
+
+    @Override
+    public Map<AssetSignature, Double> getCurrentProgress() {
+        return currentProgress;
+    }
+
+    @Override
+    public Map<AssetSignature, Double> getProductionStorage() {
+        return productionStorage;
+    }
 
     @Override
     public void init() {
@@ -74,11 +117,11 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     @Override
     public void update() {
         // end of life
-        if (tier.endOfLife() >= 0 && System.currentTimeMillis() > tier.endOfLife())
+        if (endOfLife())
             return;
 
         // establishment process
-        if (!established) {
+        if (requirements.size() > 1 && !established) {
             established = true;
             requirements.forEach((sign, required) -> {
                 double current = currentProgress.getOrDefault(sign, 0.0);
@@ -93,10 +136,45 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
         }
 
         // or production
-        // 1. remove item from asset store
-        // 2. fill the production store
-        // 3. produce only if queue has enough assets
-        // 4. store outputs in asset store
+        // remove item from asset store and fill production store
+        inputs.forEach((sign, required) -> AssetUtil.removeAsset(ownedAssets,
+                sign,
+                required).forEach(removed -> {
+            double updated = productionStorage.getOrDefault(sign, 0.0) + removed.getNumericalMeasure();
+            productionStorage.put(sign, updated);
+        }));
+
+        // produce only if queue has enough assets
+        for (Map.Entry<AssetSignature, Double> entry : inputs.entrySet()) {
+            AssetSignature sign = entry.getKey();
+            double required = entry.getValue();
+            double current = productionStorage.getOrDefault(sign, 0.0);
+
+            // if at least one fail, entire production is skipped
+            if (current < required) {
+                return;
+            }
+        }
+
+        // adjust amount in production storage
+        inputs.forEach((sign, required) -> {
+            if (required <= 0.0)
+                return;
+
+            double current = productionStorage.getOrDefault(sign, 0.0);
+            productionStorage.put(sign, current - required);
+        });
+
+        // produce outputs
+        outputs.forEach((sign, amount) -> {
+            if (amount <= 0.0)
+                return;
+
+            Asset asset = sign.create(new HashMap<String, Object>() {{
+                put(AssetSignature.KEY_NUMERIC_MEASURE, amount);
+            }});
+            AssetUtil.addAsset(ownedAssets, asset);
+        });
     }
 
     @Override
