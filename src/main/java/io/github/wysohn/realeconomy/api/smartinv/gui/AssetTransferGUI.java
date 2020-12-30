@@ -221,7 +221,11 @@ public class AssetTransferGUI implements InventoryProvider {
     private boolean transferAsset(IAssetHolder from, IFinancialEntity to, Asset asset) {
         // remove asset from sender
         int assetAmount = assetAmount(asset);
-        if (from.removeAsset(asset.getSignature(), assetAmount).size() > 0)
+        if (from.removeAsset(asset.getSignature(), assetAmount).stream()
+                .map(Asset::getNumericalMeasure)
+                .reduce(Double::sum)
+                .map(val -> Double.compare(val, assetAmount) != 0)
+                .orElse(false))
             return false;
 
         // give it to receiver
