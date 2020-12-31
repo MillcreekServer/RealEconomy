@@ -10,6 +10,7 @@ import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
+import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.business.BusinessManager;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierAdapter;
@@ -26,7 +27,6 @@ import java.util.logging.Logger;
 public abstract class AbstractBusinessManager<V extends AbstractBusiness>
         extends AbstractManagerElementCaching<UUID, V>
         implements IBusinessProvider {
-    public static final String DEFAULT_SUB_TYPE = "default";
 
     private final AssetListingManager listingManager;
 
@@ -133,15 +133,14 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
 
         private void updateConfig() {
             Validation.assertNotNull(name);
-            if (tierConfigs.get(name + "." + DEFAULT_SUB_TYPE).isPresent())
+            if (tierConfigs.get(name + "." + ITier.DEFAULT_SUB_TYPE).isPresent())
                 return;
 
-            tierConfigs.put(name + "." + DEFAULT_SUB_TYPE + "." + TierAdapter.REQUIREMENT, requirement);
-            tierConfigs.put(name + "." + DEFAULT_SUB_TYPE + "." + TierAdapter.FULFILLMENT, fulfillment);
-            tierConfigs.put(name + "." + DEFAULT_SUB_TYPE + "." + TierAdapter.INPUT, input);
-            tierConfigs.put(name + "." + DEFAULT_SUB_TYPE + "." + TierAdapter.OUTPUT, output);
-            tierConfigs.put(name + "." + DEFAULT_SUB_TYPE + "." + TierAdapter.TIME_TO_LIVE_MIN, timeToLiveMin);
-            tierConfigs.put(name + "." + DEFAULT_SUB_TYPE + "." + TierAdapter.TIME_TO_LIVE_MAX, timeToLiveMax);
+            tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.REQUIREMENT, requirement);
+            tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.INPUT, input);
+            tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.OUTPUT, output);
+            tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.TIME_TO_LIVE_MIN, timeToLiveMin);
+            tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.TIME_TO_LIVE_MAX, timeToLiveMax);
         }
     }
 }

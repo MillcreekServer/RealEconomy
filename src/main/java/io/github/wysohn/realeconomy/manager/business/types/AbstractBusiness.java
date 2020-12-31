@@ -25,7 +25,6 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     private transient AssetListingManager assetListingManager;
 
     private transient Map<AssetSignature, Double> requirements;
-    private transient Map<AssetSignature, Double> fulfillment;
     private transient Map<AssetSignature, Double> inputs;
     private transient Map<AssetSignature, Double> outputs;
     private final List<Asset> ownedAssets = new ArrayList<>();
@@ -35,7 +34,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
 
     private UUID ownerUuid;
     private ITier tier;
-    private String subType = AbstractBusinessManager.DEFAULT_SUB_TYPE;
+    private String subType = ITier.DEFAULT_SUB_TYPE;
     private long establishmentTime;
     private boolean established;
     private long timeToLive = 0;
@@ -152,6 +151,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
                 currentProgress.put(progress.key, progress.value);
             }
         }
+        notifyObservers();
     }
 
     @Override
@@ -185,6 +185,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
                 productionStorage.put(value.key, value.value);
             }
         }
+        notifyObservers();
     }
 
     @Override
@@ -206,12 +207,13 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     public void setUpgrade(IUpgrade upgrade, int level) {
         Validation.assertNotNull(upgrade);
         upgrades.put(upgrade.getUuid(), level);
+
+        notifyObservers();
     }
 
     @Override
     public void init() {
         requirements = tier.requirement(subType).getAll(assetListingManager);
-        fulfillment = tier.fulfillment(subType).getAll(assetListingManager);
         inputs = tier.inputs(subType).getAll(assetListingManager);
         outputs = tier.outputs(subType).getAll(assetListingManager);
         timeToLive = getRandomTTL(tier.timeToLiveMin(subType), tier.timeToLiveMax(subType));
@@ -228,6 +230,9 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
             return RANDOM.nextLong() % timeToLiveMax;
 
         long diff = timeToLiveMax - timeToLiveMin;
+        if (diff <= 0)
+            return timeToLiveMin;
+
         return timeToLiveMin + (RANDOM.nextLong() % diff);
     }
 
@@ -265,25 +270,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
             if (!handleDuration(inputs, productionStorage))
                 return;
 
-            // adjust amount in production storage
-            inputs.forEach((sign, required) -> {
-                if (required <= 0.0)
-                    return;
-
-                double current = productionStorage.getOrDefault(sign, 0.0);
-                productionStorage.put(sign, current - required);
-            });
-
-            // produce outputs
-            outputs.forEach((sign, amount) -> {
-                if (amount <= 0.0)
-                    return;
-
-                Asset asset = sign.create(new HashMap<String, Object>() {{
-                    put(AssetSignature.KEY_NUMERIC_MEASURE, amount);
-                }});
-                AssetUtil.addAsset(ownedAssets, asset);
-            });
+            produceOutput();
         }
     }
 
@@ -313,6 +300,8 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
                 destination.put(sign, updated);
             });
         });
+
+        notifyObservers();
     }
 
     private boolean handleDuration(Map<AssetSignature, Double> required, Map<AssetSignature, Double> destination) {
@@ -324,6 +313,30 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
         }
 
         return destination.getOrDefault(new DurationSignature(), 0.0) >= requiredDuration;
+    }
+
+    private void produceOutput() {
+        // adjust amount in production storage
+        inputs.forEach((sign, required) -> {
+            if (required <= 0.0)
+                return;
+
+            double current = productionStorage.getOrDefault(sign, 0.0);
+            productionStorage.put(sign, current - required);
+        });
+
+        // produce outputs
+        outputs.forEach((sign, amount) -> {
+            if (amount <= 0.0)
+                return;
+
+            Asset asset = sign.create(new HashMap<String, Object>() {{
+                put(AssetSignature.KEY_NUMERIC_MEASURE, amount);
+            }});
+            AssetUtil.addAsset(ownedAssets, asset);
+        });
+
+        notifyObservers();
     }
 
     @Override

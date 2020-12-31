@@ -60,21 +60,17 @@ public class AbstractBusinessTest extends AbstractBukkitManagerTest {
 
     private void prepareConfigs(ITier tier,
                                 Map<AssetSignature, Double> requirementMap,
-                                Map<AssetSignature, Double> fulfillmentMap,
                                 Map<AssetSignature, Double> inputsMap,
                                 Map<AssetSignature, Double> outputsMap) {
         TierInfoMap requirement = mock(TierInfoMap.class);
-        TierInfoMap fulfillment = mock(TierInfoMap.class);
         TierInfoMap inputs = mock(TierInfoMap.class);
         TierInfoMap outputs = mock(TierInfoMap.class);
 
-        when(tier.requirement()).thenReturn(requirement);
-        when(tier.fulfillment()).thenReturn(fulfillment);
-        when(tier.inputs()).thenReturn(inputs);
-        when(tier.outputs()).thenReturn(outputs);
+        when(tier.requirement(any())).thenReturn(requirement);
+        when(tier.inputs(any())).thenReturn(inputs);
+        when(tier.outputs(any())).thenReturn(outputs);
 
         when(requirement.getAll(eq(listingManager))).thenReturn(requirementMap);
-        when(fulfillment.getAll(eq(listingManager))).thenReturn(fulfillmentMap);
         when(inputs.getAll(eq(listingManager))).thenReturn(inputsMap);
         when(outputs.getAll(eq(listingManager))).thenReturn(outputsMap);
     }
@@ -82,18 +78,17 @@ public class AbstractBusinessTest extends AbstractBukkitManagerTest {
     @Test
     public void testEstablishment() {
         ITier tier = mock(ITier.class);
-        when(tier.timeToLive()).thenReturn(-1L);
+        when(tier.timeToLiveMax()).thenReturn(-1L);
 
-        TempBusiness tempBusiness = new TempBusiness(UUID.randomUUID(), UUID.randomUUID(), tier);
+        TempBusiness tempBusiness = new TempBusiness(UUID.randomUUID());
+        addFakeObserver(tempBusiness);
+        tempBusiness.replaceTier(tier);
         Guice.createInjector(moduleList).injectMembers(tempBusiness);
 
         prepareConfigs(tier,
                 new HashMap<AssetSignature, Double>() {{
                     put(new ItemStackSignature(new ItemStack(Material.STONE)), 23.0);
                     put(new ElectricitySignature(), 10000.35);
-                }}, new HashMap<AssetSignature, Double>() {{
-                    put(new ItemStackSignature(new ItemStack(Material.STONE)), 1.0);
-                    put(new ElectricitySignature(), 120.89);
                 }}, new HashMap<AssetSignature, Double>() {{
 
                 }}, new HashMap<AssetSignature, Double>() {{
@@ -122,16 +117,17 @@ public class AbstractBusinessTest extends AbstractBukkitManagerTest {
     @Test
     public void testProduction() {
         ITier tier = mock(ITier.class);
-        when(tier.timeToLive()).thenReturn(-1L);
+        when(tier.timeToLiveMax()).thenReturn(-1L);
 
-        TempBusiness tempBusiness = new TempBusiness(UUID.randomUUID(), UUID.randomUUID(), tier);
+        TempBusiness tempBusiness = new TempBusiness(UUID.randomUUID());
+        addFakeObserver(tempBusiness);
+        tempBusiness.replaceTier(tier);
         Guice.createInjector(moduleList).injectMembers(tempBusiness);
         addFakeObserver(tempBusiness);
 
         // basically, it's a furnace using electricity
         prepareConfigs(tier,
                 new HashMap<AssetSignature, Double>() {{
-                }}, new HashMap<AssetSignature, Double>() {{
                 }}, new HashMap<AssetSignature, Double>() {{
                     put(new ItemStackSignature(new ItemStack(Material.COBBLESTONE)), 5.0);
                     put(new ElectricitySignature(), 22.68);
@@ -175,10 +171,8 @@ public class AbstractBusinessTest extends AbstractBukkitManagerTest {
     }
 
     private static class TempBusiness extends AbstractBusiness {
-        public TempBusiness(UUID key,
-                            UUID ownerUuid,
-                            ITier tier) {
-            super(key, ownerUuid, tier);
+        public TempBusiness(UUID key) {
+            super(key);
         }
 
         @Override

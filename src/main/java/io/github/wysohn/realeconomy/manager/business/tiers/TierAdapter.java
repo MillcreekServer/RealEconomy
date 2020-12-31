@@ -8,8 +8,6 @@ import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
  * - "default": # business sub type
  * - - "requirement" # configs
  * - - - "UUID":Double
- * - - "fulfillment"
- * - - - "UUID":Double
  * - - "input"
  * - - - "UUID":Double
  * - - "output"
@@ -23,7 +21,6 @@ import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
  */
 public class TierAdapter implements ITier {
     public static final String REQUIREMENT = "requirement";
-    public static final String FULFILLMENT = "fulfillment";
     public static final String INPUT = "input";
     public static final String OUTPUT = "output";
     public static final String TIME_TO_LIVE_MIN = "timeToLive.min";
@@ -51,15 +48,6 @@ public class TierAdapter implements ITier {
         Object requirementSection = keyValueStorage.get(subSection, REQUIREMENT).orElseThrow(() ->
                 new RuntimeException(REQUIREMENT + " section is missing in " + subSection));
         return new TierInfoMap(keyValueStorage, requirementSection);
-    }
-
-    @Override
-    public TierInfoMap fulfillment(String subType) {
-        Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
-                new RuntimeException(subType + " section is missing."));
-        Object fulfillmentSection = keyValueStorage.get(subSection, FULFILLMENT).orElseThrow(() ->
-                new RuntimeException(FULFILLMENT + " section is missing in " + subSection));
-        return new TierInfoMap(keyValueStorage, fulfillmentSection);
     }
 
     @Override

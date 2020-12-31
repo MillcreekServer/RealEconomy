@@ -3,12 +3,18 @@ package io.github.wysohn.realeconomy.interfaces.business.tiers;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierInfoMap;
 
 public interface ITier {
+    String DEFAULT_SUB_TYPE = "default";
+
     /**
      * String version of tier
      *
      * @return
      */
     String name();
+
+    default TierInfoMap requirement() {
+        return requirement(DEFAULT_SUB_TYPE);
+    }
 
     /**
      * Map of required assets and its amount to establish the business.
@@ -20,17 +26,10 @@ public interface ITier {
      */
     TierInfoMap requirement(String subType);
 
-    /**
-     * Map of amount of resources per assets to be filled.
-     * Every process is per second, so you can use decimal numbers
-     * to make the process slower. For example, if you set the value
-     * of DIAMOND to 0.25, it will take 4 seconds to fill 1 DIAMOND requirement,
-     * and the total required amount is defined by {@link #requirement()}
-     *
-     * @param subType subtype of this tier.
-     * @return
-     */
-    TierInfoMap fulfillment(String subType);
+
+    default TierInfoMap inputs() {
+        return inputs(DEFAULT_SUB_TYPE);
+    }
 
     /**
      * Map of input assets to be used by this business.
@@ -42,6 +41,11 @@ public interface ITier {
      */
     TierInfoMap inputs(String subType);
 
+
+    default TierInfoMap outputs() {
+        return outputs(DEFAULT_SUB_TYPE);
+    }
+
     /**
      * Map of output assets to be produced by this business.
      *
@@ -49,6 +53,10 @@ public interface ITier {
      * @return
      */
     TierInfoMap outputs(String subType);
+
+    default long timeToLiveMin() {
+        return timeToLiveMin(DEFAULT_SUB_TYPE);
+    }
 
     /**
      * Decides how long this business will last.
@@ -59,6 +67,10 @@ public interface ITier {
      */
     default long timeToLiveMin(String subType) {
         return -1L;
+    }
+
+    default long timeToLiveMax() {
+        return timeToLiveMax(DEFAULT_SUB_TYPE);
     }
 
     /**
