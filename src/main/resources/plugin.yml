@@ -1,6 +1,6 @@
 api-version: '1.13'
-depend: [
-  ]
+depend:
+- RapidFramework
 author: wysohn
 permissions:
   realeconomy:
@@ -8,7 +8,6 @@ permissions:
 name: RealEconomy
 main: io.github.wysohn.realeconomy.main.RealEconomy
 softdepend:
-- RapidFramework
 - Vault
 - PlaceholderAPI
 - ProtocolLib
