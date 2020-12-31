@@ -10,6 +10,7 @@ import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.interfaces.business.upgrades.IUpgrade;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.asset.signature.DurationSignature;
 import io.github.wysohn.realeconomy.manager.banking.AssetUtil;
 import io.github.wysohn.realeconomy.manager.business.upgrades.UpgradeRegistry;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
@@ -35,7 +36,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     private UUID ownerUuid;
     private ITier tier;
     private String subType = AbstractBusinessManager.DEFAULT_SUB_TYPE;
-    private final long establishmentTime;
+    private long establishmentTime;
     private boolean established;
     private long timeToLive = 0;
 
@@ -220,7 +221,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
         if (timeToLiveMax < timeToLiveMin)
             throw new RuntimeException("Max is less than min");
 
-        if (timeToLiveMin < 0 && timeToLiveMax < 0)
+        if (timeToLiveMax < 0)
             return -1;
 
         if (timeToLiveMin < 0)
@@ -239,57 +240,30 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
         // establishment process
         if (requirements.size() > 1 && !established) {
             synchronized (currentProgress) {
-                // remove from asset store and fill progress
-                requirements.forEach((sign, required) -> {
-                    double current = currentProgress.getOrDefault(sign, 0.0);
-                    AssetUtil.removeAsset(ownedAssets,
-                            sign,
-                            required - current).forEach(removed -> {
-                        double updated = currentProgress.getOrDefault(sign, 0.0) + removed.getNumericalMeasure();
-                        currentProgress.put(sign, updated);
-                    });
-                });
-
-                // check if all filled
-                for (Map.Entry<AssetSignature, Double> entry : requirements.entrySet()) {
-                    AssetSignature sign = entry.getKey();
-                    double required = entry.getValue();
-                    double current = currentProgress.getOrDefault(sign, 0.0);
-
-                    // at least one condition not met
-                    if (current < required) {
-                        return;
-                    }
+                if (!allFilled(requirements, currentProgress)) {
+                    transferAssets(requirements, currentProgress);
+                    return;
                 }
+
+                // finally, duration requirement
+                if (!handleDuration(requirements, currentProgress))
+                    return;
             }
 
+            establishmentTime = System.currentTimeMillis();
             established = true;
         }
 
         // or production
         // remove item from asset store and fill production store
         synchronized (productionStorage) {
-            inputs.forEach((sign, required) -> {
-                double current = productionStorage.getOrDefault(sign, 0.0);
-                AssetUtil.removeAsset(ownedAssets,
-                        sign,
-                        required - current).forEach(removed -> {
-                    double updated = productionStorage.getOrDefault(sign, 0.0) + removed.getNumericalMeasure();
-                    productionStorage.put(sign, updated);
-                });
-            });
-
-            // produce only if queue has enough assets
-            for (Map.Entry<AssetSignature, Double> entry : inputs.entrySet()) {
-                AssetSignature sign = entry.getKey();
-                double required = entry.getValue();
-                double current = productionStorage.getOrDefault(sign, 0.0);
-
-                // if at least one fail, entire production is skipped
-                if (current < required) {
-                    return;
-                }
+            if (!allFilled(inputs, productionStorage)) {
+                transferAssets(inputs, productionStorage);
+                return;
             }
+
+            if (!handleDuration(inputs, productionStorage))
+                return;
 
             // adjust amount in production storage
             inputs.forEach((sign, required) -> {
@@ -311,6 +285,45 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
                 AssetUtil.addAsset(ownedAssets, asset);
             });
         }
+    }
+
+    private boolean allFilled(Map<AssetSignature, Double> required, Map<AssetSignature, Double> destination) {
+        for (Map.Entry<AssetSignature, Double> entry : required.entrySet()) {
+            AssetSignature sign = entry.getKey();
+            double requiredAmount = entry.getValue();
+            double currentAmount = destination.getOrDefault(sign, 0.0);
+
+            // if at least one fail, entire production is skipped
+            if (currentAmount < requiredAmount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void transferAssets(Map<AssetSignature, Double> required, Map<AssetSignature, Double> destination) {
+        // remove from asset store and fill progress
+        required.forEach((sign, requiredAmount) -> {
+            double current = destination.getOrDefault(sign, 0.0);
+            AssetUtil.removeAsset(ownedAssets,
+                    sign,
+                    requiredAmount - current).forEach(removed -> {
+                double updated = destination.getOrDefault(sign, 0.0) + removed.getNumericalMeasure();
+                destination.put(sign, updated);
+            });
+        });
+    }
+
+    private boolean handleDuration(Map<AssetSignature, Double> required, Map<AssetSignature, Double> destination) {
+        // duration should be handled separately.
+        double requiredDuration = required.getOrDefault(new DurationSignature(), 0.0);
+        if (requiredDuration > 0.0) {
+            double currentDuration = destination.getOrDefault(new DurationSignature(), 0.0);
+            destination.put(new DurationSignature(), currentDuration + 1.0); // add 1.0 per second
+        }
+
+        return destination.getOrDefault(new DurationSignature(), 0.0) >= requiredDuration;
     }
 
     @Override
