@@ -1,4 +1,4 @@
-package io.github.wysohn.realeconomy.manager.business;
+package io.github.wysohn.realeconomy.manager.business.tiers;
 
 import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.utils.Validation;
@@ -51,4 +51,6 @@ public class TierInfoMap {
 
         storage.put(section, listing.getKey().toString(), value);
     }
+
+
 }

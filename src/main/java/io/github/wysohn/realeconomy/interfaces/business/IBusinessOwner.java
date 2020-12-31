@@ -1,11 +1,11 @@
 package io.github.wysohn.realeconomy.interfaces.business;
 
 public interface IBusinessOwner {
-    boolean addBusiness(IBusiness business);
+    boolean addBusiness(IUpgradable business);
 
-    boolean removeBusiness(IBusiness business);
+    boolean removeBusiness(IUpgradable business);
 
-    boolean isOwnerOf(IBusiness business);
+    boolean isOwnerOf(IUpgradable business);
 
-    boolean hasBusinessByType(Class<? extends IBusiness> type);
+    boolean hasBusinessByType(Class<? extends IUpgradable> type);
 }

@@ -6,6 +6,7 @@ public enum RealEconomyLangs implements ILang {
     Wallet("Wallet"),
     Currencies("Currencies"),
     Electricity("Electricity"),
+    Duration("Duration"),
 
     BankingType_Checking("Checking Account"),
     BankingType_Trading("Trading Account"),

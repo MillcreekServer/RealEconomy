@@ -4,27 +4,25 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.inject.module.GsonSerializerModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
-import io.github.wysohn.realeconomy.interfaces.IVisitor;
-import io.github.wysohn.realeconomy.interfaces.business.ITier;
+import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ElectricitySignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
-import io.github.wysohn.realeconomy.manager.business.TierInfoMap;
+import io.github.wysohn.realeconomy.manager.business.tiers.TierInfoMap;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Server;
 import org.bukkit.inventory.ItemFactory;
 import org.bukkit.inventory.ItemStack;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -33,19 +31,14 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class AbstractBusinessTest {
+public class AbstractBusinessTest extends AbstractBukkitManagerTest {
     private final List<Module> moduleList = new LinkedList<>();
     private AssetListingManager listingManager;
 
     @Before
     public void init() throws Exception {
-        Server server = mock(Server.class);
-        Field field = Bukkit.class.getDeclaredField("server");
-        field.setAccessible(true);
-        field.set(null, server);
-
         ItemFactory itemFactory = mock(ItemFactory.class);
-        when(server.getItemFactory()).thenReturn(itemFactory);
+        when(Bukkit.getItemFactory()).thenReturn(itemFactory);
         when(itemFactory.equals(any(), any())).thenReturn(false);
 
         listingManager = mock(AssetListingManager.class);
@@ -117,15 +110,12 @@ public class AbstractBusinessTest {
             seconds++;
 
             if (seconds == 23) {
-                assertEquals(23.0, tempBusiness.getCurrentProgress()
-                        .get(new ItemStackSignature(new ItemStack(Material.STONE))), 0.00001);
+                assertEquals(23.0, tempBusiness.getCurrentProgress().get(new ItemStackSignature(new ItemStack(Material.STONE))), 0.00001);
             }
         }
 
-        assertEquals(1.0 * 23, tempBusiness.getCurrentProgress()
-                .get(new ItemStackSignature(new ItemStack(Material.STONE))), 0.00001);
-        assertEquals(120.89 * 83, tempBusiness.getCurrentProgress()
-                .get(new ElectricitySignature()), 0.00001);
+        assertEquals(1.0 * 23, tempBusiness.getCurrentProgress().get(new ItemStackSignature(new ItemStack(Material.STONE))), 0.00001);
+        assertEquals(120.89 * 83, tempBusiness.getCurrentProgress().get(new ElectricitySignature()), 0.00001);
         assertEquals(84, seconds);
     }
 
@@ -136,6 +126,7 @@ public class AbstractBusinessTest {
 
         TempBusiness tempBusiness = new TempBusiness(UUID.randomUUID(), UUID.randomUUID(), tier);
         Guice.createInjector(moduleList).injectMembers(tempBusiness);
+        addFakeObserver(tempBusiness);
 
         // basically, it's a furnace using electricity
         prepareConfigs(tier,
@@ -159,9 +150,8 @@ public class AbstractBusinessTest {
         }}));
 
         tempBusiness.update();
-        assertEquals(5.0,
-                tempBusiness.getProductionStorage().get(new ItemStackSignature(new ItemStack(Material.COBBLESTONE))), 0.00001);
-        assertEquals(14.33, tempBusiness.getProductionStorage().getOrDefault(new ElectricitySignature(), 0.0), 0.00001);
+        assertEquals(5.0, tempBusiness.getProductionMaterials().get(new ItemStackSignature(new ItemStack(Material.COBBLESTONE))), 0.00001);
+        assertEquals(14.33, tempBusiness.getProductionMaterials().getOrDefault(new ElectricitySignature(), 0.0), 0.00001);
 
         // now has enough resources, so resources in the storage will be consumed
         tempBusiness.addAsset(new ElectricitySignature().create(new HashMap<String, Object>() {{
@@ -169,9 +159,8 @@ public class AbstractBusinessTest {
         }}));
 
         tempBusiness.update();
-        assertEquals(5.0,
-                tempBusiness.getProductionStorage().get(new ItemStackSignature(new ItemStack(Material.COBBLESTONE))), 0.00001);
-        assertEquals(14.33, tempBusiness.getProductionStorage().getOrDefault(new ElectricitySignature(), 0.0), 0.00001);
+        assertEquals(5.0, tempBusiness.getProductionMaterials().get(new ItemStackSignature(new ItemStack(Material.COBBLESTONE))), 0.00001);
+        assertEquals(14.33, tempBusiness.getProductionMaterials().getOrDefault(new ElectricitySignature(), 0.0), 0.00001);
 
         // 10 seconds passed
         tempBusiness.addAsset(new ElectricitySignature().create(new HashMap<String, Object>() {{
@@ -190,16 +179,6 @@ public class AbstractBusinessTest {
                             UUID ownerUuid,
                             ITier tier) {
             super(key, ownerUuid, tier);
-        }
-
-        @Override
-        public boolean addVisitor(IVisitor visitor) {
-            return false;
-        }
-
-        @Override
-        public boolean removeVisitor(IVisitor visitor) {
-            return false;
         }
 
         @Override
