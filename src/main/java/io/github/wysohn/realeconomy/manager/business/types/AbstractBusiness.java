@@ -2,6 +2,7 @@ package io.github.wysohn.realeconomy.manager.business.types;
 
 import com.google.inject.Inject;
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.Validation;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractBusiness extends CachedElement<UUID> implements IBusiness {
     private static final Random RANDOM = new Random();
+    public static final DurationSignature DURATION_SIGNATURE = new DurationSignature();
 
     @Inject
     private transient AssetListingManager assetListingManager;
@@ -27,11 +29,13 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     private transient Map<AssetSignature, Double> requirements;
     private transient Map<AssetSignature, Double> inputs;
     private transient Map<AssetSignature, Double> outputs;
+
     private final List<Asset> ownedAssets = new ArrayList<>();
     private final Map<AssetSignature, Double> currentProgress = new HashMap<>();
     private final Map<AssetSignature, Double> productionStorage = new HashMap<>();
     private final Map<UUID, Integer> upgrades = new ConcurrentHashMap<>();
 
+    private final Map<String, String> stringStore = new HashMap<>();
     private UUID ownerUuid;
     private ITier tier;
     private String subType = ITier.DEFAULT_SUB_TYPE;
@@ -108,7 +112,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     }
 
     @Override
-    public Collection<Asset> removeAsset(AssetSignature signature, int amount) {
+    public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
         Collection<Asset> assets = AssetUtil.removeAsset(ownedAssets, signature, amount);
         if (assets.size() > 0)
             notifyObservers();
@@ -212,6 +216,29 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     }
 
     @Override
+    public String getData(String key) {
+        synchronized (stringStore) {
+            return stringStore.get(key);
+        }
+    }
+
+    @Override
+    public boolean hasData(String key) {
+        synchronized (stringStore) {
+            return stringStore.containsKey(key);
+        }
+    }
+
+    @Override
+    public void putData(String key, String value) {
+        synchronized (stringStore) {
+            stringStore.put(key, value);
+        }
+
+        notifyObservers();
+    }
+
+    @Override
     public void init() {
         requirements = tier.requirement(subType).getAll(assetListingManager);
         inputs = tier.inputs(subType).getAll(assetListingManager);
@@ -264,19 +291,23 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
         synchronized (productionStorage) {
             if (!allFilled(inputs, productionStorage)) {
                 transferAssets(inputs, productionStorage);
-                return;
             }
 
             if (!handleDuration(inputs, productionStorage))
                 return;
 
-            produceOutput();
+            if (allFilled(inputs, productionStorage)) {
+                produceOutput();
+            }
         }
     }
 
     private boolean allFilled(Map<AssetSignature, Double> required, Map<AssetSignature, Double> destination) {
         for (Map.Entry<AssetSignature, Double> entry : required.entrySet()) {
             AssetSignature sign = entry.getKey();
+            if (sign.equals(DURATION_SIGNATURE)) // duration is handled separately
+                continue;
+
             double requiredAmount = entry.getValue();
             double currentAmount = destination.getOrDefault(sign, 0.0);
 
@@ -330,7 +361,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
             if (amount <= 0.0)
                 return;
 
-            Asset asset = sign.create(new HashMap<String, Object>() {{
+            Asset asset = sign.asset(new HashMap<String, Object>() {{
                 put(AssetSignature.KEY_NUMERIC_MEASURE, amount);
             }});
             AssetUtil.addAsset(ownedAssets, asset);
@@ -342,5 +373,65 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     @Override
     public void stop() {
 
+    }
+
+    @Override
+    public IMemento saveState() {
+        return new ParentMemento(this);
+    }
+
+    @Override
+    public void restoreState(IMemento iMemento) {
+        ParentMemento memento = (ParentMemento) iMemento;
+
+        ownedAssets.clear();
+        ownedAssets.addAll(memento.ownedAssets);
+
+        currentProgress.clear();
+        currentProgress.putAll(memento.currentProgress);
+
+        productionStorage.clear();
+        productionStorage.putAll(memento.productionStorage);
+
+        upgrades.clear();
+        upgrades.putAll(memento.upgrades);
+
+        ownerUuid = memento.ownerUuid;
+        tier = memento.tier;
+        subType = memento.subType;
+        establishmentTime = memento.establishmentTime;
+        established = memento.established;
+        timeToLive = memento.timeToLive;
+    }
+
+    protected class ParentMemento implements IMemento {
+        private final List<Asset> ownedAssets = new ArrayList<>();
+        private final Map<AssetSignature, Double> currentProgress = new HashMap<>();
+        private final Map<AssetSignature, Double> productionStorage = new HashMap<>();
+        private final Map<UUID, Integer> upgrades = new ConcurrentHashMap<>();
+
+        private final UUID ownerUuid;
+        private final ITier tier;
+        private final String subType;
+        private final long establishmentTime;
+        private final boolean established;
+        private long timeToLive = 0;
+
+        public ParentMemento(AbstractBusiness business) {
+            business.ownedAssets.stream()
+                    .map(Asset::clone)
+                    .forEach(ownedAssets::add);
+
+            currentProgress.putAll(business.currentProgress);
+            productionStorage.putAll(business.productionStorage);
+            upgrades.putAll(business.upgrades);
+
+            ownerUuid = business.ownerUuid;
+            tier = business.tier;
+            subType = business.subType;
+            establishmentTime = business.establishmentTime;
+            established = business.established;
+            timeToLive = business.timeToLive;
+        }
     }
 }

@@ -12,6 +12,14 @@ public interface ITier {
      */
     String name();
 
+    /**
+     * Verify if the given 'subType' is valid to be used.
+     *
+     * @param subType
+     * @return
+     */
+    boolean verifySubType(String subType);
+
     default TierInfoMap requirement() {
         return requirement(DEFAULT_SUB_TYPE);
     }

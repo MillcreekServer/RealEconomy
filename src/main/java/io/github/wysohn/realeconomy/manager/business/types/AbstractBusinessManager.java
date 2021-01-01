@@ -10,11 +10,13 @@ import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
+import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
-import io.github.wysohn.realeconomy.manager.business.BusinessManager;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierAdapter;
+import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
+import io.github.wysohn.realeconomy.mediator.BusinessMediator;
 
 import java.io.File;
 import java.lang.ref.Reference;
@@ -29,6 +31,7 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
         implements IBusinessProvider {
 
     private final AssetListingManager listingManager;
+    protected final IVisitStateProvider visitStateProvider;
 
     public AbstractBusinessManager(String pluginName,
                                    Logger logger,
@@ -39,13 +42,15 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
                                    ITypeAsserter asserter,
                                    Injector injector,
                                    Class<V> type,
-                                   AssetListingManager listingManager) {
+                                   AssetListingManager listingManager,
+                                   IVisitStateProvider visitStateProvider) {
         super(pluginName, logger, config, new File(pluginDir, "business"), shutdownHandle, serializer, asserter, injector, type);
         this.listingManager = listingManager;
+        this.visitStateProvider = visitStateProvider;
 
         dependsOn(AssetListingManager.class);
 
-        BusinessManager.registerProvider(this);
+        BusinessMediator.registerBusinessProvider(this);
     }
 
     @Override
@@ -67,9 +72,50 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
 
     @Override
     public void enable() throws Exception {
-        DefaultConfigBuilder builder = new DefaultConfigBuilder(BusinessManager.getTierConfigs(), listingManager);
+        super.enable();
+
+        DefaultConfigBuilder builder = new DefaultConfigBuilder(BusinessMediator.getTierConfigs(), listingManager);
         addDefaultConfig(builder);
         builder.updateConfig();
+    }
+
+    /**
+     * Open a new business of the type defined in {@link #getTierName()}.
+     *
+     * @param ownerUuid UUID of the owner
+     * @param subType   sub-type of the business.
+     * @return newly created business
+     */
+    @Override
+    public V openNewBusiness(UUID ownerUuid, String subType) {
+        Validation.assertNotNull(ownerUuid);
+        Validation.assertNotNull(subType);
+
+        ITier tier = TierRegistry.fromString(getTierName());
+        if (tier == null)
+            throw new RuntimeException("tier " + getTierName() + " does not exist in the config!");
+
+        if (!tier.verifySubType(subType))
+            throw new RuntimeException("tier " + getTierName() + " does not have subType " + subType + " in the config!");
+
+        UUID uuid = UUID.randomUUID();
+        getOrNew(uuid)
+                .map(Reference::get)
+                .ifPresent(business -> {
+                    business.setOwnerUuid(ownerUuid);
+                    business.replaceTier(tier);
+                });
+
+        return get(uuid).map(Reference::get).orElseThrow(RuntimeException::new);
+    }
+
+    @Override
+    public boolean deleteBusiness(IBusiness business) {
+        if (!get(business.getUuid()).isPresent())
+            return false;
+
+        delete(business.getUuid());
+        return true;
     }
 
     protected abstract void addDefaultConfig(DefaultConfigBuilder defaultConfigBuilder);
@@ -80,7 +126,6 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
 
         private String name;
         private final Map<UUID, Double> requirement = new HashMap<>();
-        private final Map<UUID, Double> fulfillment = new HashMap<>();
         private final Map<UUID, Double> input = new HashMap<>();
         private final Map<UUID, Double> output = new HashMap<>();
         private long timeToLiveMin = -1L;
@@ -100,12 +145,6 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
         public DefaultConfigBuilder putRequirement(AssetSignature signature, double amount) {
             listingManager.newListing(signature);
             requirement.put(listingManager.fromSignature(signature).getKey(), amount);
-            return this;
-        }
-
-        public DefaultConfigBuilder putFulfillment(AssetSignature signature, double amount) {
-            listingManager.newListing(signature);
-            fulfillment.put(listingManager.fromSignature(signature).getKey(), amount);
             return this;
         }
 

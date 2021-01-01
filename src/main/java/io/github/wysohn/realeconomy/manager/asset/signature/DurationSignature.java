@@ -8,6 +8,7 @@ import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Duration;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -19,8 +20,10 @@ public class DurationSignature extends AssetSignature {
     public static final String KEY_DURATION_MILLIS = "key_duration";
 
     @Override
-    public boolean isPhysical() {
-        return false;
+    public Asset asset(Double numericMeasure) {
+        return asset(new HashMap<String, Object>() {{
+            put(KEY_DURATION_MILLIS, numericMeasure);
+        }});
     }
 
     @Override
@@ -34,7 +37,7 @@ public class DurationSignature extends AssetSignature {
     }
 
     @Override
-    public Asset create(Map<String, Object> metaData) {
+    public Asset asset(Map<String, Object> metaData) {
         Duration duration = new Duration(UUID.randomUUID(), this);
         duration.setNumericalMeasure((double) Objects.requireNonNull(metaData.get(KEY_DURATION_MILLIS)));
         return duration;
@@ -45,5 +48,23 @@ public class DurationSignature extends AssetSignature {
         String parsed = lang.parseFirst(sender, RealEconomyLangs.Duration);
         return MessageBuilder.forMessage(parsed)
                 .build();
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+
+        return getClass() == obj.getClass();
+    }
+
+    @Override
+    public String toString() {
+        return "Duration";
     }
 }

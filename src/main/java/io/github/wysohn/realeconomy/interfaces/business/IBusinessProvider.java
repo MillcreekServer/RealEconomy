@@ -1,5 +1,8 @@
 package io.github.wysohn.realeconomy.interfaces.business;
 
+import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
+import io.github.wysohn.realeconomy.manager.business.types.AbstractBusiness;
+
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,4 +25,29 @@ public interface IBusinessProvider {
      * to store the businesses.
      */
     Set<UUID> keys();
+
+    default AbstractBusiness openNewBusiness(UUID ownerUuid) {
+        return openNewBusiness(ownerUuid, ITier.DEFAULT_SUB_TYPE);
+    }
+
+    /**
+     * Open a new business from this specific business provider.
+     *
+     * @param ownerUuid UUID of owner
+     * @param subType   the special tag to distinguish sub-types of a same business. For example, if the
+     *                  business is about mining, it may specialize to coal business, then use this
+     *                  parameter to distinguish them.
+     * @return newly created business. Note that this operation always success and create a new business
+     * with different UUID. The caller has to store the UUID to keep track of the business instance.
+     */
+    AbstractBusiness openNewBusiness(UUID ownerUuid, String subType);
+
+    boolean deleteBusiness(IBusiness business);
+
+    /**
+     * Name of tier, or as known as the name of business.
+     *
+     * @return
+     */
+    String getTierName();
 }

@@ -29,7 +29,7 @@ public class AssetListing extends CachedElement<UUID> {
     }
 
     public Asset create(Map<String, Object> metaData) {
-        return signature.create(metaData);
+        return signature.asset(metaData);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.github.wysohn.realeconomy.interfaces.business;
 
 import java.util.Set;
+import java.util.UUID;
 
 public interface IVisitStateProvider {
     /**
@@ -14,9 +15,11 @@ public interface IVisitStateProvider {
      * as 'actively involved.' In this way, the activity, mining in the area, will be
      * customized depending on the setup of the business.
      *
-     * @param member target member
+     * @param memberUuid target member
      * @return set of businesses. This usually has to be only one, but who knows? Can be empty
      * but never null.
      */
-    Set<IBusiness> getUsingBusiness(IBusinessMember member);
+    Set<IBusiness> getUsingBusiness(UUID memberUuid);
+
+    boolean isMember(IBusiness business, UUID memberUuid);
 }

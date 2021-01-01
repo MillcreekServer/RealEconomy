@@ -209,7 +209,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         notifyObservers();
     }
 
-    public int removeAccountAsset(IBankUser user, AssetSignature signature, int amount) {
+    public Collection<Asset> removeAccountAsset(IBankUser user, AssetSignature signature, int amount) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -222,10 +222,10 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
             throw new RuntimeException("Account of " + user + " does not exist.");
 
         TradingAccount account = (TradingAccount) accountMap.get(BankingTypeRegistry.TRADING);
-        int i = account.removeAsset(signature, amount).size();
-        if (i > 0)
+        Collection<Asset> removed = account.removeAsset(signature, amount);
+        if (removed.size() > 0)
             notifyObservers();
-        return i;
+        return removed;
     }
 
     public DataProvider<Asset> accountAssetProvider(IBankUser user) {
@@ -316,7 +316,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
     }
 
     @Override
-    public Collection<Asset> removeAsset(AssetSignature signature, int amount) {
+    public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 

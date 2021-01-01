@@ -25,7 +25,7 @@ public class ElectricitySignature extends UtilityAssetSignature {
     }
 
     @Override
-    public Asset create(Map<String, Object> metaData) {
+    public Asset asset(Map<String, Object> metaData) {
         Electricity electricity = new Electricity(UUID.randomUUID(), this);
         electricity.setNumericalMeasure((double) Objects.requireNonNull(metaData.get(KEY_NUMERIC_MEASURE)));
         return electricity;
@@ -35,5 +35,23 @@ public class ElectricitySignature extends UtilityAssetSignature {
     public Message[] toMessage(ManagerLanguage lang, ICommandSender sender) {
         return MessageBuilder.forMessage(lang.parseFirst(sender, RealEconomyLangs.Electricity))
                 .build();
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+
+        return getClass() == obj.getClass();
+    }
+
+    @Override
+    public String toString() {
+        return "Electricity";
     }
 }

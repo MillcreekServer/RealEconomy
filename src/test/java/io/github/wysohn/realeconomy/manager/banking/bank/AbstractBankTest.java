@@ -248,7 +248,9 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
         bank.putAccount(user, BankingTypeRegistry.TRADING);
         bank.addAccountAsset(user, asset);
-        assertEquals(1, bank.removeAccountAsset(user, assetSignature, 1));
+
+        assertEquals(1.0, bank.removeAccountAsset(user, assetSignature, 1).stream()
+                .map(Asset::getNumericalMeasure).reduce(Double::sum).orElse(1.0), 0.000001);
     }
 
     public static class TempBank extends AbstractBank {

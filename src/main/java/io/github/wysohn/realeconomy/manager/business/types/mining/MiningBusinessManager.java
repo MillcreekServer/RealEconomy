@@ -1,13 +1,17 @@
 package io.github.wysohn.realeconomy.manager.business.types.mining;
 
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
+import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
+import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
+import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
 import io.github.wysohn.realeconomy.main.Metrics;
 import io.github.wysohn.realeconomy.manager.asset.signature.DurationSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ElectricitySignature;
@@ -16,6 +20,7 @@ import io.github.wysohn.realeconomy.manager.asset.signature.LabourSignature;
 import io.github.wysohn.realeconomy.manager.business.types.AbstractBusinessManager;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -23,27 +28,16 @@ import org.bukkit.inventory.ItemStack;
 
 import javax.inject.Named;
 import java.io.File;
-import java.util.EnumMap;
-import java.util.Map;
+import java.lang.ref.Reference;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+@Singleton
 public class MiningBusinessManager extends AbstractBusinessManager<MiningBusiness> implements Listener {
     public static final String TIER_NAME = "mining";
-
-    // special blocks that re-generates and also yield more labour points.
-    private static final Map<Material, Double> SPECIAL_BLOCKS = new EnumMap<>(Material.class);
-
-    static {
-        SPECIAL_BLOCKS.put(Material.COBBLESTONE, 0.5);
-        SPECIAL_BLOCKS.put(Material.COAL_ORE, 5.0);
-        SPECIAL_BLOCKS.put(Material.DIAMOND_ORE, 240.0);
-        SPECIAL_BLOCKS.put(Material.EMERALD_ORE, 300.0);
-        SPECIAL_BLOCKS.put(Material.GOLD_ORE, 80.0);
-        SPECIAL_BLOCKS.put(Material.IRON_ORE, 10.0);
-        SPECIAL_BLOCKS.put(Material.LAPIS_ORE, 120.0);
-        SPECIAL_BLOCKS.put(Material.REDSTONE_ORE, 30.0);
-    }
 
     public MiningBusinessManager(@Named("pluginName") String pluginName,
                                  @PluginLogger Logger logger,
@@ -53,9 +47,10 @@ public class MiningBusinessManager extends AbstractBusinessManager<MiningBusines
                                  ISerializer serializer,
                                  ITypeAsserter asserter,
                                  Injector injector,
-                                 AssetListingManager listingManager) {
+                                 AssetListingManager listingManager,
+                                 IVisitStateProvider visitStateProvider) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer,
-                asserter, injector, MiningBusiness.class, listingManager);
+                asserter, injector, MiningBusiness.class, listingManager, visitStateProvider);
     }
 
     @Override
@@ -69,7 +64,13 @@ public class MiningBusinessManager extends AbstractBusinessManager<MiningBusines
     }
 
     @Override
+    public String getTierName() {
+        return TIER_NAME;
+    }
+
+    @Override
     protected void addDefaultConfig(DefaultConfigBuilder defaultConfigBuilder) {
+        // simple coal mine as default
         defaultConfigBuilder.name(TIER_NAME)
                 .putRequirement(new DurationSignature(), Metrics.DAY)
                 .putRequirement(new ItemStackSignature(new ItemStack(Material.SPRUCE_LOG)), 250.0)
@@ -84,6 +85,15 @@ public class MiningBusinessManager extends AbstractBusinessManager<MiningBusines
 
     @EventHandler
     public void onBreak(BlockBreakEvent event) {
-
+        Player player = event.getPlayer();
+        Set<IBusiness> visiting = visitStateProvider.getUsingBusiness(player.getUniqueId());
+        visiting.stream()
+                .map(IPluginObject::getUuid)
+                .map(this::get)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(Reference::get)
+                .filter(Objects::nonNull)
+                .forEach(miningBusiness -> miningBusiness.blockBreak(event, visitStateProvider));
     }
 }

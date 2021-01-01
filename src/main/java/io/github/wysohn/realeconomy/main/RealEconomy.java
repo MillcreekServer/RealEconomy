@@ -3,6 +3,7 @@ package io.github.wysohn.realeconomy.main;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.main.AbstractBukkitPlugin;
+import io.github.wysohn.rapidframework3.bukkit.manager.location.ManagerPlayerLocation;
 import io.github.wysohn.rapidframework3.core.command.ArgumentMappers;
 import io.github.wysohn.rapidframework3.core.command.EnumArgumentMapper;
 import io.github.wysohn.rapidframework3.core.command.SubCommand;
@@ -34,6 +35,7 @@ import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
+import io.github.wysohn.realeconomy.manager.business.types.mining.MiningBusinessManager;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import io.github.wysohn.realeconomy.manager.listing.AssetListing;
@@ -79,7 +81,10 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 CentralBankingManager.class,
                 AssetListingManager.class,
                 CurrencyManager.class,
-                UserManager.class
+                UserManager.class,
+                ManagerPlayerLocation.class,
+
+                MiningBusinessManager.class
         ));
         pluginMainBuilder.addModule(new MediatorModule(
                 BankingMediator.class,
@@ -99,13 +104,16 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 CustomTypeAdapters.ACCOUNT,
                 CustomTypeAdapters.BANKING_TYPE,
                 CustomTypeAdapters.ASSET,
-                CustomTypeAdapters.ASSET_SIGNATURE
+                CustomTypeAdapters.ASSET_SIGNATURE,
+                CustomTypeAdapters.ORE_INFO
         ));
         pluginMainBuilder.addModule(new TypeAsserterModule());
         pluginMainBuilder.addModule(new CapitalLimitModule());
         pluginMainBuilder.addModule(new OrderSQLModule());
         pluginMainBuilder.addModule(new NamespacedKeyModule());
         pluginMainBuilder.addModule(new OrderPlacementHandlerModule());
+        pluginMainBuilder.addModule(new BlockGeneratorModule());
+        pluginMainBuilder.addModule(new BusinessConstantsModule());
         //TODO and some other modules as your need...
     }
 
@@ -636,7 +644,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         itemStack.getAmount(),
                                         () -> {
                                             user.getSender().getInventory().setItemInMainHand(null);
-                                            bank.addAccountAsset(user, signature.create(new HashMap<String, Object>() {{
+                                            bank.addAccountAsset(user, signature.asset(new HashMap<String, Object>() {{
                                                 put(AssetSignature.KEY_NUMERIC_MEASURE, itemStack.getAmount());
                                             }}));
                                         })){

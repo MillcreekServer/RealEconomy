@@ -198,7 +198,7 @@ public class AssetTransferGUI implements InventoryProvider {
             } else {
                 // cursor -> asset store
                 ItemStackSignature signature = new ItemStackSignature(cursor);
-                Asset asset = signature.create(new HashMap<String, Object>() {{
+                Asset asset = signature.asset(new HashMap<String, Object>() {{
                     put(AssetSignature.KEY_NUMERIC_MEASURE, cursor.getAmount());
                 }});
                 assetStore.addAsset(asset);

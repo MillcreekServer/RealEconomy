@@ -42,6 +42,11 @@ public class TierAdapter implements ITier {
     }
 
     @Override
+    public boolean verifySubType(String subType) {
+        return keyValueStorage.get(section, subType).isPresent();
+    }
+
+    @Override
     public TierInfoMap requirement(String subType) {
         Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));

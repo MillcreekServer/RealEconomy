@@ -41,10 +41,10 @@ public class AssetUtilTest {
         ItemStackSignature itemStackSignature = new ItemStackSignature(new ItemStack(Material.DIAMOND));
         ElectricitySignature electricitySignature = new ElectricitySignature();
 
-        AssetUtil.addAsset(ownedAssets, itemStackSignature.create(new HashMap<String, Object>() {{
+        AssetUtil.addAsset(ownedAssets, itemStackSignature.asset(new HashMap<String, Object>() {{
             put(AssetSignature.KEY_NUMERIC_MEASURE, 33.0);
         }}));
-        AssetUtil.addAsset(ownedAssets, electricitySignature.create(new HashMap<String, Object>() {{
+        AssetUtil.addAsset(ownedAssets, electricitySignature.asset(new HashMap<String, Object>() {{
             put(AssetSignature.KEY_NUMERIC_MEASURE, 1088.443);
         }}));
         assertEquals(2, AssetUtil.assetDataProvider(ownedAssets).size());
@@ -55,10 +55,10 @@ public class AssetUtilTest {
         assertEquals(1088.443 - 392.44, ownedAssets.get(1).getNumericalMeasure(), 0.00001);
         assertEquals(2, AssetUtil.assetDataProvider(ownedAssets).size());
 
-        AssetUtil.addAsset(ownedAssets, itemStackSignature.create(new HashMap<String, Object>() {{
+        AssetUtil.addAsset(ownedAssets, itemStackSignature.asset(new HashMap<String, Object>() {{
             put(AssetSignature.KEY_NUMERIC_MEASURE, 64.0);
         }}));
-        AssetUtil.addAsset(ownedAssets, electricitySignature.create(new HashMap<String, Object>() {{
+        AssetUtil.addAsset(ownedAssets, electricitySignature.asset(new HashMap<String, Object>() {{
             put(AssetSignature.KEY_NUMERIC_MEASURE, 10000.0);
         }}));
         assertEquals(4, AssetUtil.assetDataProvider(ownedAssets).size());

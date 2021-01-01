@@ -54,7 +54,7 @@ public class ItemStackSignature extends PhysicalAssetSignature {
     }
 
     @Override
-    public Asset create(Map<String, Object> metaData) {
+    public Asset asset(Map<String, Object> metaData) {
         Item item = new Item(UUID.randomUUID(), this);
         // fail early if amount is not set
         item.setNumericalMeasure((double) Objects.requireNonNull(metaData.get(KEY_NUMERIC_MEASURE)));

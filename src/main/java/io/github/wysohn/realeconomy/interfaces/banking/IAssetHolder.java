@@ -31,7 +31,7 @@ public interface IAssetHolder extends IEntitySnapshot {
      * in the holder's container, this value should match with the given amount.
      * 0 if nothing has done.
      */
-    Collection<Asset> removeAsset(AssetSignature signature, int amount);
+    Collection<Asset> removeAsset(AssetSignature signature, double amount);
 
     DataProvider<Asset> assetDataProvider();
 }

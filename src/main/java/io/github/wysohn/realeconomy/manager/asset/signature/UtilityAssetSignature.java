@@ -10,11 +10,6 @@ public abstract class UtilityAssetSignature extends AssetSignature {
     }
 
     @Override
-    public boolean isPhysical() {
-        return false;
-    }
-
-    @Override
     public String category() {
         return "utility";
     }

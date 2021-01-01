@@ -10,6 +10,7 @@ import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -370,11 +371,12 @@ public class TradeMediator extends Mediator {
                     double price = tradeInfo.getAsk(); // use the seller defined price
 
                     // take asset from seller account
-                    int amountsRemoved;
-                    if (signature.isPhysical()) // amount varies only for physical assets
-                        amountsRemoved = finalBank.removeAccountAsset(seller, signature, amount);
-                    else
-                        amountsRemoved = finalBank.removeAccountAsset(seller, signature, 1);
+                    int amountsRemoved = finalBank.removeAccountAsset(seller, signature, amount).stream()
+                            .map(Asset::getNumericalMeasure)
+                            .reduce(Double::sum)
+                            .map(Number.class::cast)
+                            .map(Number::intValue)
+                            .orElse(0);
 
                     // trade only if at least one asset is removed successfully
                     if (amountsRemoved > 0) {
@@ -399,7 +401,7 @@ public class TradeMediator extends Mediator {
                         }
 
                         // give asset to the buyer account
-                        finalBank.addAccountAsset(buyer, signature.create(new HashMap<String, Object>() {{
+                        finalBank.addAccountAsset(buyer, signature.asset(new HashMap<String, Object>() {{
                             put(AssetSignature.KEY_NUMERIC_MEASURE, amountsRemoved);
                         }}));
 
