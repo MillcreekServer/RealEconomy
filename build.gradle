@@ -69,7 +69,6 @@ task writePluginYml {
     map.put("author", project.ext.author)
     map.put("authors", project.ext.authors)
     map.put("softdepend", [
-            "RapidFramework",
             "Vault",
             "PlaceholderAPI",
             "ProtocolLib",
@@ -78,7 +77,9 @@ task writePluginYml {
             "ScoreboardScreen",
             "Citizens"
     ])
-    map.put("depend", [])
+    map.put("depend", [
+            "RapidFramework"
+    ])
     map.put("commands", new LinkedHashMap<String, Object>() {
         {
             put(id.toLowerCase(), new HashMap<String, Object>() {
