@@ -3,6 +3,7 @@ package io.github.wysohn.realeconomy.manager.business.types;
 import com.google.inject.Injector;
 import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
+import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
@@ -20,10 +21,8 @@ import io.github.wysohn.realeconomy.mediator.BusinessMediator;
 
 import java.io.File;
 import java.lang.ref.Reference;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 public abstract class AbstractBusinessManager<V extends AbstractBusiness>
@@ -116,6 +115,25 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
 
         delete(business.getUuid());
         return true;
+    }
+
+    /**
+     * Out of all visiting businesses, filter all businesses with the type that matches
+     * with this business manager.
+     *
+     * @param playerUuid target player to query for
+     * @param consumer   consumer for the found businesses
+     */
+    protected void forEachApplicableBusiness(UUID playerUuid, Consumer<V> consumer) {
+        Set<IBusiness> visiting = visitStateProvider.getUsingBusiness(playerUuid);
+        visiting.stream()
+                .map(IPluginObject::getUuid)
+                .map(this::get)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(Reference::get)
+                .filter(Objects::nonNull)
+                .forEach(consumer);
     }
 
     protected abstract void addDefaultConfig(DefaultConfigBuilder defaultConfigBuilder);

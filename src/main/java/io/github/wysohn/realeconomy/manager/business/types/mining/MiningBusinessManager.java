@@ -6,11 +6,9 @@ import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
-import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
-import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
 import io.github.wysohn.realeconomy.main.Metrics;
 import io.github.wysohn.realeconomy.manager.asset.signature.DurationSignature;
@@ -26,12 +24,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
-import java.lang.ref.Reference;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -39,6 +34,7 @@ import java.util.logging.Logger;
 public class MiningBusinessManager extends AbstractBusinessManager<MiningBusiness> implements Listener {
     public static final String TIER_NAME = "mining";
 
+    @Inject
     public MiningBusinessManager(@Named("pluginName") String pluginName,
                                  @PluginLogger Logger logger,
                                  ManagerConfig config,
@@ -86,14 +82,7 @@ public class MiningBusinessManager extends AbstractBusinessManager<MiningBusines
     @EventHandler
     public void onBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
-        Set<IBusiness> visiting = visitStateProvider.getUsingBusiness(player.getUniqueId());
-        visiting.stream()
-                .map(IPluginObject::getUuid)
-                .map(this::get)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(Reference::get)
-                .filter(Objects::nonNull)
-                .forEach(miningBusiness -> miningBusiness.blockBreak(event, visitStateProvider));
+        forEachApplicableBusiness(player.getUniqueId(), miningBusiness ->
+                miningBusiness.blockBreak(event, visitStateProvider));
     }
 }

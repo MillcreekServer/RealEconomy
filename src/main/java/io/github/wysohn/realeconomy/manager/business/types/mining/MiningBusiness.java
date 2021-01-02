@@ -73,7 +73,6 @@ public class MiningBusiness extends AbstractBusiness {
      * Main thread
      *
      * @param event
-     * @param provider
      */
     void blockBreak(BlockBreakEvent event, IVisitStateProvider provider) {
         Block block = event.getBlock();

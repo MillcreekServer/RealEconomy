@@ -41,8 +41,7 @@ public class ChunkClaimManager
                              IShutdownHandle shutdownHandle,
                              ISerializer serializer,
                              ITypeAsserter asserter,
-                             Injector injector,
-                             Class<ChunkClaim> type) {
+                             Injector injector) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, ChunkClaim.class);
 
         BusinessMediator.registerVisitorStateProvider(this);
@@ -106,5 +105,13 @@ public class ChunkClaimManager
 
         businessToChunk.put(business.getUuid(), chunkLocation);
         chunkToBusiness.put(chunkLocation, business);
+    }
+
+    public void removeMapping(SimpleChunkLocation chunkLocation, IBusiness business) {
+        Validation.assertNotNull(chunkLocation);
+        Validation.assertNotNull(business);
+
+        businessToChunk.remove(business.getUuid());
+        chunkToBusiness.remove(chunkLocation);
     }
 }

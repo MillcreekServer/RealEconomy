@@ -1,5 +1,6 @@
 package io.github.wysohn.realeconomy.mediator;
 
+import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.factory.IStorageFactory;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
@@ -122,6 +123,8 @@ public class BusinessMediator extends Mediator {
         BUSINESSES_PROVIDERS.forEach((tier, provider) -> provider.keys().forEach(key ->
                 Optional.ofNullable(provider.getBusiness(key))
                         .ifPresent(IBusiness::stop)));
+
+        enabled = false;
     }
 
     public IBusiness getBusiness(UUID uuid) {
@@ -168,7 +171,16 @@ public class BusinessMediator extends Mediator {
             throw new RuntimeException("business has tier " + business.currentTier().name() + " but its provider" +
                     " is not found. Perhaps it was registered by another plugin, yet the plugin is not loaded?");
 
-        return BUSINESSES_PROVIDERS.get(business.currentTier().name()).deleteBusiness(business);
+        boolean deleteBusiness = BUSINESSES_PROVIDERS.get(business.currentTier().name()).deleteBusiness(business);
+        if (deleteBusiness) {
+            Optional.of(business)
+                    .map(chunkClaimManager::getChunkOfBusiness)
+                    .ifPresent(chunk -> {
+                        chunkClaimManager.removeMapping(chunk, business);
+                        chunkClaimManager.delete(chunk);
+                    });
+        }
+        return deleteBusiness;
     }
 
     public Set<IBusiness> getUsingBusiness(UUID memberUuid) {
@@ -200,8 +212,22 @@ public class BusinessMediator extends Mediator {
                         businessConsumer.accept(provider.getBusiness(key))));
     }
 
-    public Result openNewBusinessInChunk(String tierName, String subType, UUID owner, SimpleChunkLocation chunk) {
-        AbstractBusiness business = openNewBusiness(tierName, owner, subType);
+    /**
+     * This is to provide stand-alone support without any region claiming plugins.
+     * It will simply use claim as where a business can start, and members are simply
+     * stored in the {@link io.github.wysohn.realeconomy.manager.claim.ChunkClaim} as Set
+     * of UUIDs.
+     *
+     * @param tierName name of tier as specified in the tiers config
+     * @param subType  sub-type of the tier
+     * @param player   player who is going to own the claim where he or she is standing
+     * @return the result
+     */
+    public Result openNewBusinessInChunk(String tierName, String subType, BukkitPlayer player) {
+        UUID playerUuid = player.getUuid();
+        SimpleChunkLocation chunk = player.getScloc();
+
+        AbstractBusiness business = openNewBusiness(tierName, playerUuid, subType);
         if (business == null)
             return Result.NO_PROVIDER;
 
