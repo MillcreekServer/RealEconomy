@@ -3,7 +3,6 @@ package io.github.wysohn.realeconomy.manager.business.types;
 import com.google.inject.Injector;
 import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
-import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
@@ -11,7 +10,7 @@ import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
-import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
+import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierAdapter;
@@ -30,7 +29,7 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
         implements IBusinessProvider {
 
     private final AssetListingManager listingManager;
-    protected final IVisitStateProvider visitStateProvider;
+    protected final IClaimHandler visitStateProvider;
 
     public AbstractBusinessManager(String pluginName,
                                    Logger logger,
@@ -42,7 +41,7 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
                                    Injector injector,
                                    Class<V> type,
                                    AssetListingManager listingManager,
-                                   IVisitStateProvider visitStateProvider) {
+                                   IClaimHandler visitStateProvider) {
         super(pluginName, logger, config, new File(pluginDir, "business"), shutdownHandle, serializer, asserter, injector, type);
         this.listingManager = listingManager;
         this.visitStateProvider = visitStateProvider;
@@ -125,9 +124,8 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
      * @param consumer   consumer for the found businesses
      */
     protected void forEachApplicableBusiness(UUID playerUuid, Consumer<V> consumer) {
-        Set<IBusiness> visiting = visitStateProvider.getUsingBusiness(playerUuid);
+        Set<UUID> visiting = visitStateProvider.getUsingBusiness(playerUuid);
         visiting.stream()
-                .map(IPluginObject::getUuid)
                 .map(this::get)
                 .filter(Optional::isPresent)
                 .map(Optional::get)

@@ -3,12 +3,14 @@ package io.github.wysohn.realeconomy.manager.business.types;
 import com.google.inject.Inject;
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.interfaces.business.upgrades.IUpgrade;
+import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.DurationSignature;
@@ -236,6 +238,51 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
         }
 
         notifyObservers();
+    }
+
+    @Override
+    public Map<ILang, Object> properties() {
+        /*
+        tier: mining
+        subType: default
+        progress: --
+          diamond [25.0 / 50.0] (50%)
+          duration [1.0 / 100.0] (1%)
+        inputs: --
+          cobble 15.0/s
+          labour 120.0/s
+        outputs: --
+          stone 20.0/s
+         */
+        Map<ILang, Object> map = new HashMap<>();
+        map.put(RealEconomyLangs.Business_Tier, tier.name()); //TODO later let properties() to accept ICommandSender
+        synchronized (currentProgress) {
+            if (!established) {
+                map.put(RealEconomyLangs.Business_Progress, "&8--");
+                requirements.forEach((sign, require) -> {
+                    double current = currentProgress.getOrDefault(sign, 0.0);
+                    double percentage = require <= 0.0 ? 0.0 : current / require;
+                    map.put(RealEconomyLangs.Business_Pad, String.format("&7%-10s &8[&b%.2f &8/ &3%.2f&8] &8(&e%.2f&8)",
+                            sign, current, require, percentage));
+                });
+            }
+        }
+
+        if (established) {
+            map.put(RealEconomyLangs.Business_Input, "--");
+            inputs.forEach((sign, inputVal) -> {
+                map.put(RealEconomyLangs.Business_Pad, String.format("&7%-10s &c%.2f&8/&6s",
+                        sign, inputVal));
+            });
+
+            map.put(RealEconomyLangs.Business_Output, "--");
+            outputs.forEach((sign, outputVal) -> {
+                map.put(RealEconomyLangs.Business_Pad, String.format("&7%-10s &a%.2f&8/&6s",
+                        sign, outputVal));
+            });
+        }
+
+        return map;
     }
 
     @Override

@@ -8,7 +8,7 @@ import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitM
 import io.github.wysohn.rapidframework3.core.inject.module.GsonSerializerModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.data.SimpleLocation;
-import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
+import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.interfaces.business.types.mining.IBlockGenerator;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
@@ -43,7 +43,7 @@ public class MiningBusinessTest extends AbstractBukkitManagerTest {
     private final List<Module> moduleList = new LinkedList<>();
     private AssetListingManager listingManager;
     private IBlockGenerator blockGenerator;
-    private IVisitStateProvider visitStateProvider;
+    private IClaimHandler visitStateProvider;
 
     @Before
     public void init() throws Exception {
@@ -53,7 +53,7 @@ public class MiningBusinessTest extends AbstractBukkitManagerTest {
 
         listingManager = mock(AssetListingManager.class);
         blockGenerator = mock(IBlockGenerator.class);
-        visitStateProvider = mock(IVisitStateProvider.class);
+        visitStateProvider = mock(IClaimHandler.class);
 
         moduleList.add(new GsonSerializerModule(
                 CustomTypeAdapters.ACCOUNT,
@@ -110,7 +110,7 @@ public class MiningBusinessTest extends AbstractBukkitManagerTest {
         when(block.getLocation().getBlockY()).thenReturn(2);
         when(block.getLocation().getBlockZ()).thenReturn(3);
 
-        when(visitStateProvider.isMember(any(), any())).thenReturn(true);
+        when(visitStateProvider.isInBusiness(any(), any())).thenReturn(true);
         business.blockBreak(event, visitStateProvider);
         business.init();
         business.update();
@@ -146,7 +146,7 @@ public class MiningBusinessTest extends AbstractBukkitManagerTest {
         when(block.getLocation().getBlockZ()).thenReturn(3);
 
         // break 3 diamonds
-        when(visitStateProvider.isMember(any(), any())).thenReturn(true);
+        when(visitStateProvider.isInBusiness(any(), any())).thenReturn(true);
         business.blockBreak(event, visitStateProvider);
         business.blockBreak(event, visitStateProvider);
         business.blockBreak(event, visitStateProvider);

@@ -11,6 +11,15 @@ public enum RealEconomyLangs implements ILang {
     BankingType_Checking("Checking Account"),
     BankingType_Trading("Trading Account"),
 
+    Business_Tier("Tier"),
+    Business_Progress("Progress"),
+    Business_Input("Inputs"),
+    Business_Output("Outputs"),
+
+    MiningBusiness_LabourSources("LabourSources"),
+
+    Business_Pad("  "),
+
     GUI_PreviousPage("&dPrevious Page"),
     GUI_Home_Title("&dFirst Page"),
     GUI_Home_Lore("", "&7Current Page&8: &6${integer}"),
@@ -132,13 +141,39 @@ public enum RealEconomyLangs implements ILang {
     Command_Cancel_InvalidOrderType("&6${string} &cis not a valid order type."),
     Command_Cancel_Ownership("&cThat order is not issued by you."),
 
-    // /eco business open <type> <subtype>
+    // /eco business open <tier> <subtype>
+    // /eco business disband
     // /eco business info
     // /eco business invite <name>
     // /eco business kick <offline name>
-    // /eco business disband
-    Command_Business_(),
+    // /eco business tiers [tier]
+    Command_Business_Desc("Operate a business at this location."),
+    Command_Business_Usage("&d/eco bus[iness] open <tier> [subtype]",
+            " &8- &7Start a new business at this location. <tier> is main type of the business, and <subtype> is specialization" +
+                    " if exist. Check out &d/eco business tiers &7command to see the list of possible tiers.",
+            "&d/eco bus[iness] disband",
+            " &8 - &7Delete the business at this location completely. &cThere will be no refund!",
+            "&d/eco bus[iness] info",
+            " &8 - &7Check information of business at this location",
+            "&d/eco bus[iness] invite <name>",
+            " &8 - &7Invite the <name> to the business at this location. &dThis may or may not work depending on the server setting.",
+            "&d/eco bus[iness] kick <name>",
+            " &8 - &7Kick the <name> from the business at this location. &dThis may or may not work depending on the server setting.",
+            "&d/eco bus[iness] tiers [tier]",
+            " &8 - &7List all available tiers. You may specify [tier] to see the list of sub-types of the [tier]."),
+    Command_Business_TierNotFound("&7No tier named &6${string}&7."),
+    Command_Business_InvalidSubType("&7Sub-type &6${string} 7is not valid for tier &6${string}&7."),
+    Command_Business_Open_NoProvider("&cNo provider found. This is a bug! Report to admins."),
+    Command_Business_Open_DuplicatedLocation("&cThis business cannot be opened at this location."),
+    Command_Business_Open_Ok("&aBusiness is open and now operating."),
+    Command_Business_Disband_Ok("&aDisbanded the business."),
+    Command_Business_Disband_Failure("&cSomething went wrong. Non of the providers handled the deletion." +
+            " Report this to the admin"),
 
+    Command_Business_Common_NoBusinessUsing("&7No business found."),
+    Command_Business_Common_MultipleBusinessUsing("&7Found multiple businesses. One of them will be" +
+            " chosen randomly."),
+    Command_Business_Common_NotOwner("&7You are not the owner of the business."),
 
     Bank_Owner("&9Owner"),
     Bank_BaseCurrency("&9BaseCurrency"),

@@ -27,6 +27,8 @@ import io.github.wysohn.realeconomy.api.smartinv.SmartInvAPI;
 import io.github.wysohn.realeconomy.api.vault.VaultHook;
 import io.github.wysohn.realeconomy.inject.module.*;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
+import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
+import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
@@ -35,6 +37,7 @@ import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
+import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
 import io.github.wysohn.realeconomy.manager.business.types.mining.MiningBusinessManager;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -45,11 +48,13 @@ import io.github.wysohn.realeconomy.manager.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.manager.user.UserManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
+import io.github.wysohn.realeconomy.mediator.BusinessMediator;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.lang.ref.Reference;
@@ -718,6 +723,205 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                     return true;
                 }));
+        list.add(new SubCommand.Builder("business", -1)
+                .withAlias("bus")
+                .withDescription(RealEconomyLangs.Command_Business_Desc)
+                .addUsage(RealEconomyLangs.Command_Business_Usage)
+                .addTabCompleter(0, TabCompleters.simple("open", "disband", "info", "invite", "kick", "tiers"))
+                .addArgumentMapper(0, ArgumentMappers.STRING)
+                .action(new CommandAction() {
+                    final BusinessMediator businessMediator = getMain().getMediator(BusinessMediator.class)
+                            .orElseThrow(RuntimeException::new);
+
+                    @Override
+                    public boolean execute(ICommandSender sender, SubCommand.Arguments args) {
+                        User user = getUser(sender).orElse(null);
+                        if (user == null) {
+                            sender.sendMessageRaw("User instance not found.");
+                            return true;
+                        }
+
+                        Optional<String> optAction = args.get(0);
+                        if (!optAction.isPresent()) {
+                            return false;
+                        }
+
+                        switch (optAction.get()) {
+                            case "open":
+                                ITier tier = args.get(1)
+                                        .map(String.class::cast)
+                                        .map(TierRegistry::fromString)
+                                        .orElse(null);
+                                if (tier == null) {
+                                    getMain().lang().sendMessage(user, RealEconomyLangs.Command_Business_TierNotFound);
+                                    return true;
+                                }
+
+                                String subType = args.get(2)
+                                        .map(String.class::cast)
+                                        .orElse(null);
+
+                                return open(user, tier, subType);
+                            case "disband":
+                                return disband(user);
+                            case "info":
+                                return info(user);
+                            case "invite":
+                                Player invitee = args.get(1)
+                                        .map(String.class::cast)
+                                        .map(Bukkit::getPlayer)
+                                        .orElse(null);
+                                if (invitee == null) {
+                                    getMain().lang().sendMessage(user, DefaultLangs.General_NoSuchPlayer, ((sen, langman) ->
+                                            langman.addString(args.getAsString(1))));
+                                    return true;
+                                }
+
+                                return invite(user, invitee);
+                            case "kick":
+                                OfflinePlayer kicked = args.get(1)
+                                        .map(String.class::cast)
+                                        .map(Bukkit::getOfflinePlayer)
+                                        .orElse(null);
+                                if (kicked == null || kicked.getFirstPlayed() <= 0) {
+                                    getMain().lang().sendMessage(user, DefaultLangs.General_NoSuchPlayer, ((sen, langman) ->
+                                            langman.addString(args.getAsString(1))));
+                                    return true;
+                                }
+
+                                return kick(user, kicked);
+                            case "tiers":
+                                ITier targetTier = args.get(1)
+                                        .map(String.class::cast)
+                                        .map(TierRegistry::fromString)
+                                        .orElse(null);
+
+                                return tiers(user, targetTier);
+                            default:
+                                return false;
+                        }
+                    }
+
+                    private boolean open(User sender, ITier tier, String subType) {
+                        if (subType == null)
+                            subType = ITier.DEFAULT_SUB_TYPE;
+
+                        if (!tier.verifySubType(subType)) {
+                            String displayName = tier.displayName(sender);
+                            String finalSubType = subType;
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_InvalidSubType, ((sen, langman) ->
+                                    langman.addString(finalSubType).addString(displayName)));
+                            return true;
+                        }
+
+                        switch (businessMediator.openNewBusinessLocation(tier.name(), subType, sender)) {
+                            case NO_PROVIDER:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Open_NoProvider);
+                                break;
+                            case DUP_LOCATION:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Open_DuplicatedLocation);
+                                break;
+                            case OK:
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Open_Ok);
+                                break;
+                        }
+
+                        return true;
+                    }
+
+                    private IBusiness getCurrentBusiness(User sender) {
+                        List<IBusiness> current = businessMediator.getUsingBusiness(sender.getUuid()).stream()
+                                .map(businessMediator::getBusiness)
+                                .collect(Collectors.toList());
+
+                        if (current.size() < 1) {
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Common_NoBusinessUsing);
+                            return null;
+                        }
+
+                        if (current.size() > 1) {
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Common_MultipleBusinessUsing);
+                        }
+
+                        return current.get(0);
+                    }
+
+                    private boolean disband(User sender) {
+                        Optional.ofNullable(getCurrentBusiness(sender)).ifPresent(business -> {
+                            if (!Objects.equals(sender.getUuid(), business.getOwnerUuid())) {
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Common_NotOwner);
+                                return;
+                            }
+
+                            if (businessMediator.deleteBusiness(business)) {
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Disband_Ok);
+                            } else {
+                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Disband_Failure);
+                            }
+                        });
+
+                        return true;
+                    }
+
+                    private boolean info(User sender) {
+                        Optional.ofNullable(getCurrentBusiness(sender)).ifPresent(business -> {
+                            getMain().lang().sendProperty(sender, business);
+                        });
+                        return true;
+                    }
+
+                    private boolean invite(User sender, Player target) {
+
+                    }
+
+                    private boolean kick(User sender, OfflinePlayer target) {
+
+                    }
+
+                    private boolean tiers(User sender, ITier tier) {
+                        getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
+                        /**
+                         * mining [hover]
+                         * farming [hover]
+                         * ...
+                         */
+                        if (tier == null) {
+                            for (ITier value : TierRegistry.values()) {
+                                sendTierDetails(sender, value, true);
+                            }
+                        }
+                        /**
+                         * mining
+                         * - coal
+                         * - diamond
+                         * - ...
+                         */
+                        else {
+                            sendTierDetails(sender, tier, false);
+                        }
+                        getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
+                        return true;
+                    }
+
+                    private void sendTierDetails(User user, ITier tier, boolean useHover) {
+                        if (useHover) {
+                            MessageBuilder builder = MessageBuilder.forMessage(tier.displayName(user));
+                            Optional.ofNullable(tier.description(user))
+                                    .ifPresent(arr -> {
+                                        StringBuilder desc = new StringBuilder();
+                                        for (String msg : arr) {
+                                            desc.append(msg);
+                                            desc.append('\n');
+                                        }
+                                        builder.withHoverShowText(desc.toString());
+                                    });
+                            getMain().lang().sendRawMessage(user, builder.build());
+                        } else {
+                            user.sendMessageRaw(tier.displayName(user));
+                            Optional.ofNullable(tier.description(user)).ifPresent(user::sendMessageRaw);
+                        }
+                    }
+                }));
 
         getMain().comm().linkMainCommand("bal", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("balance", "realeconomy", "wallet");
@@ -729,6 +933,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
         getMain().comm().linkMainCommand("buy", "realeconomy", "buy");
         getMain().comm().linkMainCommand("sell", "realeconomy", "sell");
         getMain().comm().linkMainCommand("cancel", "realeconomy", "cancel");
+        getMain().comm().linkMainCommand("business", "realeconomy", "business");
     }
 
     /**

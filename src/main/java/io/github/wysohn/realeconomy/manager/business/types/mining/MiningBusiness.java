@@ -2,8 +2,10 @@ package io.github.wysohn.realeconomy.manager.business.types.mining;
 
 import io.github.wysohn.rapidframework3.data.SimpleLocation;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
-import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
+import io.github.wysohn.rapidframework3.interfaces.language.ILang;
+import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.interfaces.business.types.mining.IBlockGenerator;
+import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.signature.LabourSignature;
 import io.github.wysohn.realeconomy.manager.business.types.AbstractBusiness;
 import org.bukkit.Location;
@@ -48,6 +50,21 @@ public class MiningBusiness extends AbstractBusiness {
     }
 
     @Override
+    public Map<ILang, Object> properties() {
+        Map<ILang, Object> map = super.properties();
+
+        if (isEstablished()) {
+            map.put(RealEconomyLangs.MiningBusiness_LabourSources, "--");
+            SPECIAL_BLOCKS.forEach((material, amount) -> {
+                map.put(RealEconomyLangs.Business_Pad, String.format("&6%-10s &8- &f%.2flp",
+                        material, amount));
+            });
+        }
+
+        return map;
+    }
+
+    @Override
     public void update() {
         super.update();
 
@@ -74,13 +91,13 @@ public class MiningBusiness extends AbstractBusiness {
      *
      * @param event
      */
-    void blockBreak(BlockBreakEvent event, IVisitStateProvider provider) {
+    void blockBreak(BlockBreakEvent event, IClaimHandler handler) {
         Block block = event.getBlock();
         Location location = block.getLocation();
 
         event.setCancelled(true);
 
-        if (provider.isMember(this, event.getPlayer().getUniqueId())) {
+        if (handler.isInBusiness(this, event.getPlayer().getUniqueId())) {
             // get labour point
             double labourPoints = SPECIAL_BLOCKS.getOrDefault(block.getType(), 0.1);
 

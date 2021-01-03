@@ -131,6 +131,12 @@ task writePluginYml {
                     put("description", "shortcut command of /eco cancel")
                 }
             })
+
+            put("business", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco business")
+                }
+            })
         }
     })
     map.put("permissions", new HashMap<String, Object>() {

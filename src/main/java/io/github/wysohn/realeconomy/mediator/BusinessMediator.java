@@ -4,15 +4,16 @@ import io.github.wysohn.rapidframework3.bukkit.data.BukkitPlayer;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.factory.IStorageFactory;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
-import io.github.wysohn.rapidframework3.data.SimpleChunkLocation;
+import io.github.wysohn.rapidframework3.data.SimpleLocation;
+import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
+import io.github.wysohn.rapidframework3.utils.OfferScheduler;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
-import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
+import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierAdapter;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
 import io.github.wysohn.realeconomy.manager.business.types.AbstractBusiness;
-import io.github.wysohn.realeconomy.manager.claim.ChunkClaimManager;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -22,10 +23,10 @@ import java.util.function.Consumer;
 
 @Singleton
 public class BusinessMediator extends Mediator {
-    public static final String KEY_CHUNK = "key_chunk";
+    public static final String KEY_LOC = "key_chunk";
 
     private static final Map<String, IBusinessProvider> BUSINESSES_PROVIDERS = new HashMap<>();
-    private static final Set<IVisitStateProvider> VISIT_STATE_PROVIDERS = new HashSet<>();
+    private static final Set<IClaimHandler> CLAIM_HANDLERS = new HashSet<>();
     private static IKeyValueStorage tierConfigs;
     private static boolean enabled = false;
 
@@ -54,17 +55,17 @@ public class BusinessMediator extends Mediator {
      * <p>
      * Must register before the plugin enables.
      *
-     * @param provider provider
-     * @throws RuntimeException same provider is registered again or plugin is already enabled.
+     * @param claimHandler claimHandler
+     * @throws RuntimeException same claimHandler is registered again or plugin is already enabled.
      */
-    public static void registerVisitorStateProvider(IVisitStateProvider provider) {
+    public static void registerClaimHandler(IClaimHandler claimHandler) {
         if (enabled)
             throw new RuntimeException("Must register before enabled.");
 
-        if (VISIT_STATE_PROVIDERS.contains(provider))
-            throw new RuntimeException("Duplicated provider " + provider);
+        if (CLAIM_HANDLERS.contains(claimHandler))
+            throw new RuntimeException("Duplicated claimHandler " + claimHandler);
 
-        VISIT_STATE_PROVIDERS.add(provider);
+        CLAIM_HANDLERS.add(claimHandler);
     }
 
     public static IKeyValueStorage getTierConfigs() {
@@ -73,31 +74,34 @@ public class BusinessMediator extends Mediator {
 
     //-----------------------------------------------------------------------------------------
 
-    private final ChunkClaimManager chunkClaimManager;
-
+    private final long OFFER_WAITING_SECS = 180L;
     private final long INTERVAL = 1000L;
+    private final ITaskSupervisor task;
     private Timer updateTimer;
+    private OfferScheduler offerScheduler;
 
     @Inject
     public BusinessMediator(@PluginDirectory File pluginDir,
                             IStorageFactory storageFactory,
-                            ChunkClaimManager chunkClaimManager) {
-        this.chunkClaimManager = chunkClaimManager;
+                            ITaskSupervisor task) {
+        this.task = task;
 
         tierConfigs = storageFactory.create(pluginDir, "tiers.yml");
     }
 
     @Override
     public void enable() throws Exception {
+        offerScheduler = new OfferScheduler(task, OFFER_WAITING_SECS * 1000L);
+
         tierConfigs.getKeys(false).forEach(name ->
                 TierRegistry.register(new TierAdapter(name, tierConfigs)));
 
         enabled = true;
 
         forEach(business -> {
-            if (business.hasData(KEY_CHUNK)) {
-                SimpleChunkLocation scloc = SimpleChunkLocation.valueOf(business.getData(KEY_CHUNK));
-                chunkClaimManager.updateMapping(scloc, business);
+            if (business.hasData(KEY_LOC)) {
+                SimpleLocation location = SimpleLocation.valueOf(business.getData(KEY_LOC));
+                updateMapping(location, business);
             }
         });
     }
@@ -149,6 +153,9 @@ public class BusinessMediator extends Mediator {
      * to prevent un-trackable business to be created, the caller must keep the UUID of business
      * all the time. If something went wrong, use {@link #deleteBusiness(IBusiness)} to
      * delete it, so the business is not 'ghosted.'
+     * <p>
+     * This only creates the business itself, so to make a business that is linked with the specific
+     * location, use {@link #openNewBusinessLocation(String, String, BukkitPlayer)} instead.
      *
      * @param tier      name of business tier set in the tier config
      * @param ownerUuid business owner uuid
@@ -173,20 +180,18 @@ public class BusinessMediator extends Mediator {
 
         boolean deleteBusiness = BUSINESSES_PROVIDERS.get(business.currentTier().name()).deleteBusiness(business);
         if (deleteBusiness) {
-            Optional.of(business)
-                    .map(chunkClaimManager::getChunkOfBusiness)
-                    .ifPresent(chunk -> {
-                        chunkClaimManager.removeMapping(chunk, business);
-                        chunkClaimManager.delete(chunk);
-                    });
+            CLAIM_HANDLERS.forEach(provider -> {
+                SimpleLocation location = provider.getLocationOfBusiness(business);
+                provider.removeMapping(location, business);
+            });
         }
         return deleteBusiness;
     }
 
-    public Set<IBusiness> getUsingBusiness(UUID memberUuid) {
-        Set<IBusiness> visiting = new HashSet<>();
-        for (IVisitStateProvider visitStateProvider : VISIT_STATE_PROVIDERS) {
-            Optional.of(visitStateProvider)
+    public Set<UUID> getUsingBusiness(UUID memberUuid) {
+        Set<UUID> visiting = new HashSet<>();
+        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+            Optional.of(claimHandler)
                     .map(provider -> provider.getUsingBusiness(memberUuid))
                     .ifPresent(visiting::addAll);
         }
@@ -194,10 +199,54 @@ public class BusinessMediator extends Mediator {
     }
 
     public boolean isMember(IBusiness business, UUID memberUuid) {
-        for (IVisitStateProvider visitStateProvider : VISIT_STATE_PROVIDERS) {
-            if (visitStateProvider.isMember(business, memberUuid))
+        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+            if (claimHandler.isInBusiness(business, memberUuid))
                 return true;
         }
+        return false;
+    }
+
+    public UUID queryBusiness(SimpleLocation location) {
+        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+            UUID businessUuid = claimHandler.queryBusiness(location);
+            if (businessUuid != null)
+                return businessUuid;
+        }
+
+        return null;
+    }
+
+    public SimpleLocation getLocationOfBusiness(IBusiness business) {
+        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+            SimpleLocation location = claimHandler.getLocationOfBusiness(business);
+            if (location != null)
+                return location;
+        }
+
+        return null;
+    }
+
+    public boolean updateMapping(SimpleLocation location, IBusiness business) {
+        if (CLAIM_HANDLERS.size() < 1)
+            throw new RuntimeException("No claim handlers found.");
+
+        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+            if (claimHandler.updateMapping(location, business))
+                return true;
+        }
+
+        return false;
+    }
+
+    public boolean removeMapping(SimpleLocation location, IBusiness business) {
+        if (CLAIM_HANDLERS.size() < 1)
+            throw new RuntimeException("No claim handlers found.");
+
+        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+            if (claimHandler.removeMapping(location, business))
+                return true;
+        }
+
         return false;
     }
 
@@ -212,31 +261,53 @@ public class BusinessMediator extends Mediator {
                         businessConsumer.accept(provider.getBusiness(key))));
     }
 
+    public boolean inviteToBusiness(UUID targetUuid, InviteResultHandle handle) {
+        return offerScheduler.sendOffer(targetUuid, (left) -> {
+
+        }, () -> {
+
+        }, () -> {
+
+        });
+    }
+
+    public boolean acceptInvitation(UUID targetUuid) {
+        return offerScheduler.acceptOffer(targetUuid);
+    }
+
+    public boolean denyInvitation(UUID targetUuid) {
+        return offerScheduler.declineOffer(targetUuid);
+    }
+
     /**
-     * This is to provide stand-alone support without any region claiming plugins.
-     * It will simply use claim as where a business can start, and members are simply
-     * stored in the {@link io.github.wysohn.realeconomy.manager.claim.ChunkClaim} as Set
-     * of UUIDs.
+     * Claim the current location and open a new business. The location here is arbitrary since
+     * we don't know what the location will be backed by. For example, the default implementation
+     * provided by RealEconomy will consider a 'chunk' as one unit of claim, so once the player
+     * claim the location, the entire chunk will belong to the player and the business opened.
+     * <p>
+     * On the other hand, if plugins like WorldGuard is supported in the future, the unit of claim
+     * is not necessarily a 'chunk,' so the meaning of claim will be different.
      *
      * @param tierName name of tier as specified in the tiers config
      * @param subType  sub-type of the tier
      * @param player   player who is going to own the claim where he or she is standing
      * @return the result
+     * @throws RuntimeException throws when no claim handler exist.
      */
-    public Result openNewBusinessInChunk(String tierName, String subType, BukkitPlayer player) {
+    public Result openNewBusinessLocation(String tierName, String subType, BukkitPlayer player) {
         UUID playerUuid = player.getUuid();
-        SimpleChunkLocation chunk = player.getScloc();
+        SimpleLocation location = player.getSloc();
 
         AbstractBusiness business = openNewBusiness(tierName, playerUuid, subType);
         if (business == null)
             return Result.NO_PROVIDER;
 
         try {
-            if (chunkClaimManager.getBusinessFromChunk(chunk) != null)
-                return Result.DUP_CHUNK;
+            if (queryBusiness(location) != null)
+                return Result.DUP_LOCATION;
 
-            business.putData(KEY_CHUNK, chunk.toString());
-            chunkClaimManager.updateMapping(chunk, business);
+            business.putData(KEY_LOC, location.toString());
+            updateMapping(location, business);
         } catch (Exception ex) {
             // if something is wrong, delete the business to avoid creating the ghosted businesses.
             deleteBusiness(business);
@@ -255,7 +326,15 @@ public class BusinessMediator extends Mediator {
         }
     }
 
+    public interface InviteResultHandle {
+        void handle(InviteResultHandle handle);
+    }
+
+    public enum InviteResult {
+        ACCEPT, TIMEOUT, DENY
+    }
+
     public enum Result {
-        NO_PROVIDER, DUP_CHUNK, OK
+        NO_PROVIDER, DUP_LOCATION, OK
     }
 }

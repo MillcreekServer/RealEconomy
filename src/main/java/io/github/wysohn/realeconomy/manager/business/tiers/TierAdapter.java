@@ -3,6 +3,8 @@ package io.github.wysohn.realeconomy.manager.business.tiers;
 import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 
+import java.util.Set;
+
 /**
  * "mining": # business type
  * - "default": # business sub type
@@ -44,6 +46,11 @@ public class TierAdapter implements ITier {
     @Override
     public boolean verifySubType(String subType) {
         return keyValueStorage.get(section, subType).isPresent();
+    }
+
+    @Override
+    public Set<String> listSubTypes() {
+        return keyValueStorage.getKeys(section, false);
     }
 
     @Override

@@ -1,6 +1,9 @@
 package io.github.wysohn.realeconomy.interfaces.business.tiers;
 
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierInfoMap;
+
+import java.util.Set;
 
 public interface ITier {
     String DEFAULT_SUB_TYPE = "default";
@@ -19,6 +22,8 @@ public interface ITier {
      * @return
      */
     boolean verifySubType(String subType);
+
+    Set<String> listSubTypes();
 
     default TierInfoMap requirement() {
         return requirement(DEFAULT_SUB_TYPE);
@@ -91,4 +96,20 @@ public interface ITier {
     default long timeToLiveMax(String subType) {
         return -1L;
     }
+
+    /**
+     * Display name to be shown to the user.
+     *
+     * @param sender target who will see the message
+     * @return the message
+     */
+    String displayName(ICommandSender sender);
+
+    /**
+     * Additional information to be shown
+     *
+     * @param sender target who will see the message
+     * @return the message
+     */
+    String[] description(ICommandSender sender);
 }

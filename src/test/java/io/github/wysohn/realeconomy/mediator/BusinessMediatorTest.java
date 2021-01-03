@@ -12,13 +12,14 @@ import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.core.main.PluginMain;
 import io.github.wysohn.rapidframework3.data.SimpleChunkLocation;
+import io.github.wysohn.rapidframework3.data.SimpleLocation;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.testmodules.*;
 import io.github.wysohn.realeconomy.inject.module.BusinessConstantsModule;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
-import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
+import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.interfaces.business.types.mining.IBlockGenerator;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
@@ -35,6 +36,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
@@ -49,7 +51,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
 
     private final List<AbstractModule> moduleList = new LinkedList<>();
     private IKeyValueStorage tierStorage;
-    private IVisitStateProvider visitStateProvider;
+    private IClaimHandler visitStateProvider;
     private AssetListingManager assetListingManager;
     private ISerializer serializer;
     private PluginMain main;
@@ -57,7 +59,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
     @Before
     public void init() {
         tierStorage = mock(IKeyValueStorage.class);
-        visitStateProvider = mock(IVisitStateProvider.class);
+        visitStateProvider = mock(IClaimHandler.class);
         assetListingManager = mock(AssetListingManager.class);
         serializer = mock(ISerializer.class);
         main = mock(PluginMain.class);
@@ -68,7 +70,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         moduleList.add(new MockStorageFactoryModule(tierStorage));
         moduleList.add(new AbstractModule() {
             @Provides
-            IVisitStateProvider visitStateProvider() {
+            IClaimHandler visitStateProvider() {
                 return visitStateProvider;
             }
 
@@ -200,7 +202,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         PlayerJoinEvent event = new PlayerJoinEvent(p, "join");
         listeners.forEach(playerTracker -> playerTracker.onJoin(event));
 
-        assertEquals(BusinessMediator.Result.OK, mediator.openNewBusinessInChunk("mining", ITier.DEFAULT_SUB_TYPE, player));
+        assertEquals(BusinessMediator.Result.OK, mediator.openNewBusinessLocation("mining", ITier.DEFAULT_SUB_TYPE, player));
         assertTrue(mediator.getUsingBusiness(uuid).size() > 0);
     }
 
@@ -215,7 +217,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         Object subTypeSection = mock(Object.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
-        SimpleChunkLocation chunk = new SimpleChunkLocation("world", 1, 2, 3);
+        SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
 
         managerPlayerLocation.enable();
 
@@ -225,12 +227,13 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
         when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
         when(player.getUuid()).thenReturn(uuid);
-        when(player.getScloc()).thenReturn(chunk);
+        when(player.getSloc()).thenReturn(location);
 
         mediator.enable();
 
-        assertEquals(BusinessMediator.Result.OK, mediator.openNewBusinessInChunk("mining", ITier.DEFAULT_SUB_TYPE, player));
-        assertTrue(mediator.isMember(chunkClaimManager.getBusinessFromChunk(chunk), uuid));
+        assertEquals(BusinessMediator.Result.OK, mediator.openNewBusinessLocation("mining", ITier.DEFAULT_SUB_TYPE, player));
+        assertTrue(mediator.isMember(mining.get(chunkClaimManager.queryBusiness(location))
+                .map(Reference::get).orElseThrow(RuntimeException::new), uuid));
     }
 
     @Test
@@ -262,7 +265,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
 
         mediator.enable();
 
-        BusinessMediator.Result result = mediator.openNewBusinessInChunk("mining", ITier.DEFAULT_SUB_TYPE, player);
+        BusinessMediator.Result result = mediator.openNewBusinessLocation("mining", ITier.DEFAULT_SUB_TYPE, player);
         verify(chunkClaimManager).updateMapping(any(), any());
         assertEquals(BusinessMediator.Result.OK, result);
     }
@@ -280,7 +283,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
 
         Field field3 = BusinessMediator.class.getDeclaredField("VISIT_STATE_PROVIDERS");
         field3.setAccessible(true);
-        Set<IVisitStateProvider> set = (Set<IVisitStateProvider>) field3.get(null);
+        Set<IClaimHandler> set = (Set<IClaimHandler>) field3.get(null);
         set.clear();
 
         Field field4 = TierRegistry.class.getDeclaredField("REGISTERED_TIERS");

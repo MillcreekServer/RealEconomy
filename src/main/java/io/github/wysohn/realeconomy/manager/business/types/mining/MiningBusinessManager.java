@@ -9,7 +9,7 @@ import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
-import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
+import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.main.Metrics;
 import io.github.wysohn.realeconomy.manager.asset.signature.DurationSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ElectricitySignature;
@@ -44,7 +44,7 @@ public class MiningBusinessManager extends AbstractBusinessManager<MiningBusines
                                  ITypeAsserter asserter,
                                  Injector injector,
                                  AssetListingManager listingManager,
-                                 IVisitStateProvider visitStateProvider) {
+                                 IClaimHandler visitStateProvider) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer,
                 asserter, injector, MiningBusiness.class, listingManager, visitStateProvider);
     }

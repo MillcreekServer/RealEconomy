@@ -16,7 +16,7 @@ import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
-import io.github.wysohn.realeconomy.interfaces.business.IVisitStateProvider;
+import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.mediator.BusinessMediator;
 
 import javax.inject.Named;
@@ -28,10 +28,13 @@ import java.util.logging.Logger;
 @Singleton
 public class ChunkClaimManager
         extends AbstractManagerElementCaching<SimpleChunkLocation, ChunkClaim>
-        implements IVisitStateProvider {
+        implements IClaimHandler {
+
+    public static final String KEY_ENABLE = "business.embeddedClaimManager";
 
     private final Map<UUID, SimpleChunkLocation> businessToChunk = new HashMap<>();
-    private final Map<SimpleChunkLocation, IBusiness> chunkToBusiness = new HashMap<>();
+
+    private final ManagerConfig config;
 
     @Inject
     public ChunkClaimManager(@Named("pluginName") String pluginName,
@@ -43,8 +46,9 @@ public class ChunkClaimManager
                              ITypeAsserter asserter,
                              Injector injector) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, ChunkClaim.class);
+        this.config = config;
 
-        BusinessMediator.registerVisitorStateProvider(this);
+        BusinessMediator.registerClaimHandler(this);
     }
 
     @Override
@@ -63,17 +67,45 @@ public class ChunkClaimManager
     }
 
     @Override
-    public Set<IBusiness> getUsingBusiness(UUID memberUuid) {
-        SimpleLocation location = ManagerPlayerLocation.getCurrentBlockLocation(memberUuid);
-        SimpleChunkLocation chunk = new SimpleChunkLocation(location);
-        if (chunkToBusiness.containsKey(chunk))
-            return Collections.singleton(chunkToBusiness.get(chunk));
-        else
-            return Collections.emptySet();
+    public void enable() throws Exception {
+        super.enable();
+
+        if (!config.get(KEY_ENABLE).isPresent()) {
+            config.put(KEY_ENABLE, true);
+        }
     }
 
     @Override
-    public boolean isMember(IBusiness business, UUID memberUuid) {
+    public int priority() {
+        return Integer.MAX_VALUE;
+    }
+
+    private boolean isManagerEnabled() {
+        return config.get(KEY_ENABLE)
+                .filter(Boolean.class::isInstance)
+                .map(Boolean.class::cast)
+                .orElse(false);
+    }
+
+    @Override
+    public Set<UUID> getUsingBusiness(UUID memberUuid) {
+        if (!isManagerEnabled())
+            return Collections.emptySet();
+
+        SimpleLocation location = ManagerPlayerLocation.getCurrentBlockLocation(memberUuid);
+        SimpleChunkLocation chunk = new SimpleChunkLocation(location);
+        return get(chunk)
+                .map(Reference::get)
+                .map(ChunkClaim::getBusinessUuid)
+                .map(Collections::singleton)
+                .orElseGet(Collections::emptySet);
+    }
+
+    @Override
+    public boolean isInBusiness(IBusiness business, UUID memberUuid) {
+        if (!isManagerEnabled())
+            return false;
+
         SimpleChunkLocation chunk = businessToChunk.get(business.getUuid());
         if (chunk == null)
             return true;
@@ -87,31 +119,63 @@ public class ChunkClaimManager
         return claim.hasMember(memberUuid);
     }
 
-    public IBusiness getBusinessFromChunk(SimpleChunkLocation chunk) {
-        Validation.assertNotNull(chunk);
+    @Override
+    public UUID queryBusiness(SimpleLocation location) {
+        if (!isManagerEnabled())
+            return null;
 
-        return chunkToBusiness.get(chunk);
+        Validation.assertNotNull(location);
+
+        return get(new SimpleChunkLocation(location))
+                .map(Reference::get)
+                .map(ChunkClaim::getBusinessUuid)
+                .orElse(null);
     }
 
-    public SimpleChunkLocation getChunkOfBusiness(IBusiness business) {
+    @Override
+    public SimpleLocation getLocationOfBusiness(IBusiness business) {
+        if (!isManagerEnabled())
+            return null;
+
         Validation.assertNotNull(business);
 
-        return businessToChunk.get(business.getUuid());
+        return Optional.ofNullable(businessToChunk.get(business.getUuid()))
+                .map(chunk -> new SimpleLocation(chunk.getWorld(),
+                        chunk.getI() << 4,
+                        0,
+                        chunk.getJ() << 4))
+                .orElse(null);
     }
 
-    public void updateMapping(SimpleChunkLocation chunkLocation, IBusiness business) {
-        Validation.assertNotNull(chunkLocation);
+    @Override
+    public boolean updateMapping(SimpleLocation location, IBusiness business) {
+        if (!isManagerEnabled())
+            return false;
+
+        Validation.assertNotNull(location);
         Validation.assertNotNull(business);
 
-        businessToChunk.put(business.getUuid(), chunkLocation);
-        chunkToBusiness.put(chunkLocation, business);
+        SimpleChunkLocation chunk = new SimpleChunkLocation(location);
+        getOrNew(chunk).map(Reference::get)
+                .ifPresent(chunkClaim -> {
+                    chunkClaim.setBusinessUuid(business.getUuid());
+                    businessToChunk.put(business.getUuid(), chunk);
+                });
+
+        return true;
     }
 
-    public void removeMapping(SimpleChunkLocation chunkLocation, IBusiness business) {
-        Validation.assertNotNull(chunkLocation);
+    @Override
+    public boolean removeMapping(SimpleLocation location, IBusiness business) {
+        if (!isManagerEnabled())
+            return false;
+
+        Validation.assertNotNull(location);
         Validation.assertNotNull(business);
 
         businessToChunk.remove(business.getUuid());
-        chunkToBusiness.remove(chunkLocation);
+        delete(new SimpleChunkLocation(location));
+
+        return true;
     }
 }
