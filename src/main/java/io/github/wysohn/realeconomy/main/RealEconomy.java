@@ -39,6 +39,7 @@ import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
 import io.github.wysohn.realeconomy.manager.business.types.mining.MiningBusinessManager;
+import io.github.wysohn.realeconomy.manager.claim.ChunkClaimManager;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import io.github.wysohn.realeconomy.manager.listing.AssetListing;
@@ -88,6 +89,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 CurrencyManager.class,
                 UserManager.class,
                 ManagerPlayerLocation.class,
+                ChunkClaimManager.class,
 
                 MiningBusinessManager.class
         ));
@@ -852,6 +854,9 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 break;
                             case OK:
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Open_Ok);
+                                break;
+                            default:
+                                sender.sendMessageRaw("&cUnknown problem.");
                                 break;
                         }
 

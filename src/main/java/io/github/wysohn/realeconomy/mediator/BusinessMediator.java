@@ -317,6 +317,7 @@ public class BusinessMediator extends Mediator {
             // if something is wrong, delete the business to avoid creating the ghosted businesses.
             deleteBusiness(business);
             ex.printStackTrace();
+            return Result.UNKNOWN;
         }
 
         return Result.OK;
@@ -340,6 +341,6 @@ public class BusinessMediator extends Mediator {
     }
 
     public enum Result {
-        NO_PROVIDER, DUP_LOCATION, OK
+        NO_PROVIDER, DUP_LOCATION, UNKNOWN, OK
     }
 }
