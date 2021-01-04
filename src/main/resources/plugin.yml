@@ -1,6 +1,6 @@
 api-version: '1.13'
-depend: [
-  ]
+depend:
+- RapidFramework
 author: wysohn
 permissions:
   realeconomy:
@@ -8,7 +8,6 @@ permissions:
 name: RealEconomy
 main: io.github.wysohn.realeconomy.main.RealEconomy
 softdepend:
-- RapidFramework
 - Vault
 - PlaceholderAPI
 - ProtocolLib
@@ -36,7 +35,7 @@ commands:
     description: shortcut command of /eco bank
   items:
     aliases:
-      - shop
+    - shop
     description: shortcut command of /eco items
   buy:
     description: shortcut command of /eco buy

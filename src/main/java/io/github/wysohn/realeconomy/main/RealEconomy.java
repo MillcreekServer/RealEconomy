@@ -731,11 +731,11 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         "addmember", "removemember", "tiers"))
                 .addArgumentMapper(0, ArgumentMappers.STRING)
                 .action(new CommandAction() {
+                    final BusinessMediator businessMediator = getMain().getMediator(BusinessMediator.class)
+                            .orElseThrow(RuntimeException::new);
+
                     @Override
                     public boolean execute(ICommandSender sender, SubCommand.Arguments args) {
-                        final BusinessMediator businessMediator = getMain().getMediator(BusinessMediator.class)
-                                .orElseThrow(RuntimeException::new);
-
                         User user = getUser(sender).orElse(null);
                         if (user == null) {
                             sender.sendMessageRaw("User instance not found.");
@@ -762,11 +762,11 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         .map(String.class::cast)
                                         .orElse(null);
 
-                                return open(businessMediator, user, tier, subType);
+                                return open(user, tier, subType);
                             case "disband":
-                                return disband(businessMediator, user);
+                                return disband(user);
                             case "info":
-                                return info(businessMediator, user);
+                                return info(user);
                             case "add":
                             case "addmember":
                                 IBusiness business = businessMediator.getUsingBusiness(sender.getUuid())
@@ -789,7 +789,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     return true;
                                 }
 
-                                return add(businessMediator, user, business, invitee.getUniqueId());
+                                return add(user, business, invitee.getUniqueId());
                             case "remove":
                             case "removemember":
                                 IBusiness business2 = businessMediator.getUsingBusiness(sender.getUuid())
@@ -812,7 +812,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     return true;
                                 }
 
-                                return remove(businessMediator, user, business2, invitee2.getUniqueId());
+                                return remove(user, business2, invitee2.getUniqueId());
                             case "tiers":
                                 ITier targetTier = args.get(1)
                                         .map(String.class::cast)
@@ -825,7 +825,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         }
                     }
 
-                    private boolean open(BusinessMediator businessMediator, User sender, ITier tier, String subType) {
+                    private boolean open(User sender, ITier tier, String subType) {
                         if (subType == null)
                             subType = ITier.DEFAULT_SUB_TYPE;
 
@@ -852,7 +852,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         return true;
                     }
 
-                    private IBusiness getCurrentBusiness(BusinessMediator businessMediator, User sender) {
+                    private IBusiness getCurrentBusiness(User sender) {
                         List<IBusiness> current = businessMediator.getUsingBusiness(sender.getUuid()).stream()
                                 .map(businessMediator::getBusiness)
                                 .collect(Collectors.toList());
@@ -877,8 +877,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         return true;
                     }
 
-                    private boolean disband(BusinessMediator businessMediator, User sender) {
-                        Optional.ofNullable(getCurrentBusiness(businessMediator, sender)).ifPresent(business -> {
+                    private boolean disband(User sender) {
+                        Optional.ofNullable(getCurrentBusiness(sender)).ifPresent(business -> {
                             if (!isOwner(sender, business))
                                 return;
 
@@ -892,17 +892,14 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         return true;
                     }
 
-                    private boolean info(BusinessMediator businessMediator, User sender) {
-                        Optional.ofNullable(getCurrentBusiness(businessMediator, sender)).ifPresent(business -> {
+                    private boolean info(User sender) {
+                        Optional.ofNullable(getCurrentBusiness(sender)).ifPresent(business -> {
                             getMain().lang().sendProperty(sender, business);
                         });
                         return true;
                     }
 
-                    private boolean add(BusinessMediator businessMediator,
-                                        User sender,
-                                        IBusiness business,
-                                        UUID target) {
+                    private boolean add(User sender, IBusiness business, UUID target) {
                         if (!isOwner(sender, business))
                             return false;
 
@@ -915,10 +912,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         return true;
                     }
 
-                    private boolean remove(BusinessMediator businessMediator,
-                                           User sender,
-                                           IBusiness business,
-                                           UUID target) {
+                    private boolean remove(User sender, IBusiness business, UUID target) {
                         if (!isOwner(sender, business))
                             return false;
 
