@@ -93,7 +93,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
         ));
         pluginMainBuilder.addModule(new MediatorModule(
                 BankingMediator.class,
-                TradeMediator.class
+                TradeMediator.class,
+                BusinessMediator.class
         ));
         pluginMainBuilder.addModule(new ExternalAPIModule(
                 Pair.of("SmartInvs", SmartInvAPI.class),
