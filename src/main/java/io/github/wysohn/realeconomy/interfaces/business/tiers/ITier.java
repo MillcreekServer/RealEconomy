@@ -101,7 +101,7 @@ public interface ITier {
      * Display name to be shown to the user.
      *
      * @param sender target who will see the message
-     * @return the message
+     * @return the message. Should not be null.
      */
     String displayName(ICommandSender sender);
 
@@ -109,7 +109,7 @@ public interface ITier {
      * Additional information to be shown
      *
      * @param sender target who will see the message
-     * @return the message
+     * @return the message; null to disable output
      */
     String[] description(ICommandSender sender);
 }

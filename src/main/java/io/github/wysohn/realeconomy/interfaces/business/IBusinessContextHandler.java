@@ -5,7 +5,7 @@ import io.github.wysohn.rapidframework3.data.SimpleLocation;
 import java.util.Set;
 import java.util.UUID;
 
-public interface IClaimHandler {
+public interface IBusinessContextHandler {
     /**
      * define priority of the handler. Higher the value, later it will handle.
      *
@@ -33,15 +33,44 @@ public interface IClaimHandler {
     Set<UUID> getUsingBusiness(UUID memberUuid);
 
     /**
-     * Check if the user is considered as 'member' of the business and is physically
-     * residing in the business.
+     * Add member to the business. This is not stored directly into the business itself,
+     * but it will be handled by whatever plugin that is responsible for it.
      * <p>
-     * For example) mining business is designed to work for users who is member of the business
-     * and also physically within the business area.
+     * Worldguard, for example, has concept of Owner group and Member group, so it is straight
+     * forward to implement. But different plugins may have different rule on how to handle
+     * members.
+     *
+     * @param business   target business to add member
+     * @param memberUuid uuid of member
+     * @return true if added; false otherwise
+     */
+    boolean addMember(IBusiness business, UUID memberUuid);
+
+    /**
+     * Remove member from the business. Refere to {@link #removeMember(IBusiness, UUID)}
+     * for more details.
+     *
+     * @param business   target business to remove member from
+     * @param memberUuid uuid of member
+     * @return true if removed; false otherwise
+     */
+    boolean removeMember(IBusiness business, UUID memberUuid);
+
+    /**
+     * Check if the user is considered as 'member' of the business.
      *
      * @param business   the business where the user is accessing
      * @param memberUuid the user to check
      * @return true if the user is member; false otherwise.
+     */
+    boolean isMember(IBusiness business, UUID memberUuid);
+
+    /**
+     * Check if the user is physically residing in the business.
+     *
+     * @param business   the business where the user is accessing
+     * @param memberUuid the user to check
+     * @return true if physically present; false otherwise.
      */
     boolean isInBusiness(IBusiness business, UUID memberUuid);
 

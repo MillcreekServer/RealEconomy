@@ -727,7 +727,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .withAlias("bus")
                 .withDescription(RealEconomyLangs.Command_Business_Desc)
                 .addUsage(RealEconomyLangs.Command_Business_Usage)
-                .addTabCompleter(0, TabCompleters.simple("open", "disband", "info", "invite", "kick", "tiers"))
+                .addTabCompleter(0, TabCompleters.simple("open", "disband", "info",
+                        "addmember", "removemember", "tiers"))
                 .addArgumentMapper(0, ArgumentMappers.STRING)
                 .action(new CommandAction() {
                     final BusinessMediator businessMediator = getMain().getMediator(BusinessMediator.class)
@@ -766,7 +767,18 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 return disband(user);
                             case "info":
                                 return info(user);
-                            case "invite":
+                            case "add":
+                            case "addmember":
+                                IBusiness business = businessMediator.getUsingBusiness(sender.getUuid())
+                                        .stream()
+                                        .findFirst()
+                                        .map(businessMediator::getBusiness)
+                                        .orElse(null);
+                                if (business == null) {
+                                    getMain().lang().sendMessage(user, RealEconomyLangs.Command_Business_Common_NoBusinessUsing);
+                                    return true;
+                                }
+
                                 Player invitee = args.get(1)
                                         .map(String.class::cast)
                                         .map(Bukkit::getPlayer)
@@ -777,19 +789,30 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     return true;
                                 }
 
-                                return invite(user, invitee);
-                            case "kick":
-                                OfflinePlayer kicked = args.get(1)
+                                return add(user, business, invitee.getUniqueId());
+                            case "remove":
+                            case "removemember":
+                                IBusiness business2 = businessMediator.getUsingBusiness(sender.getUuid())
+                                        .stream()
+                                        .findFirst()
+                                        .map(businessMediator::getBusiness)
+                                        .orElse(null);
+                                if (business2 == null) {
+                                    getMain().lang().sendMessage(user, RealEconomyLangs.Command_Business_Common_NoBusinessUsing);
+                                    return true;
+                                }
+
+                                OfflinePlayer invitee2 = args.get(1)
                                         .map(String.class::cast)
                                         .map(Bukkit::getOfflinePlayer)
                                         .orElse(null);
-                                if (kicked == null || kicked.getFirstPlayed() <= 0) {
+                                if (invitee2 == null) {
                                     getMain().lang().sendMessage(user, DefaultLangs.General_NoSuchPlayer, ((sen, langman) ->
                                             langman.addString(args.getAsString(1))));
                                     return true;
                                 }
 
-                                return kick(user, kicked);
+                                return remove(user, business2, invitee2.getUniqueId());
                             case "tiers":
                                 ITier targetTier = args.get(1)
                                         .map(String.class::cast)
@@ -846,12 +869,18 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         return current.get(0);
                     }
 
+                    private boolean isOwner(User sender, IBusiness business) {
+                        if (!Objects.equals(sender.getUuid(), business.getOwnerUuid())) {
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Common_NotOwner);
+                            return false;
+                        }
+                        return true;
+                    }
+
                     private boolean disband(User sender) {
                         Optional.ofNullable(getCurrentBusiness(sender)).ifPresent(business -> {
-                            if (!Objects.equals(sender.getUuid(), business.getOwnerUuid())) {
-                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Common_NotOwner);
+                            if (!isOwner(sender, business))
                                 return;
-                            }
 
                             if (businessMediator.deleteBusiness(business)) {
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Disband_Ok);
@@ -870,12 +899,30 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         return true;
                     }
 
-                    private boolean invite(User sender, Player target) {
+                    private boolean add(User sender, IBusiness business, UUID target) {
+                        if (!isOwner(sender, business))
+                            return false;
 
+                        if (!businessMediator.addMember(business, target)) {
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Add_AlreadyMember);
+                            return true;
+                        }
+
+                        getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Add_Ok);
+                        return true;
                     }
 
-                    private boolean kick(User sender, OfflinePlayer target) {
+                    private boolean remove(User sender, IBusiness business, UUID target) {
+                        if (!isOwner(sender, business))
+                            return false;
 
+                        if (!businessMediator.removeMember(business, target)) {
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Kick_NotMember);
+                            return true;
+                        }
+
+                        getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Kick_Ok);
+                        return true;
                     }
 
                     private boolean tiers(User sender, ITier tier) {

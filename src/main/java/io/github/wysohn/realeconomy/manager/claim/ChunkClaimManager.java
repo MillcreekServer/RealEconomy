@@ -16,7 +16,7 @@ import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
-import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
+import io.github.wysohn.realeconomy.interfaces.business.IBusinessContextHandler;
 import io.github.wysohn.realeconomy.mediator.BusinessMediator;
 
 import javax.inject.Named;
@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 @Singleton
 public class ChunkClaimManager
         extends AbstractManagerElementCaching<SimpleChunkLocation, ChunkClaim>
-        implements IClaimHandler {
+        implements IBusinessContextHandler {
 
     public static final String KEY_ENABLE = "business.embeddedClaimManager";
 
@@ -93,6 +93,9 @@ public class ChunkClaimManager
             return Collections.emptySet();
 
         SimpleLocation location = ManagerPlayerLocation.getCurrentBlockLocation(memberUuid);
+        if (location == null)
+            return Collections.emptySet();
+
         SimpleChunkLocation chunk = new SimpleChunkLocation(location);
         return get(chunk)
                 .map(Reference::get)
@@ -102,7 +105,43 @@ public class ChunkClaimManager
     }
 
     @Override
-    public boolean isInBusiness(IBusiness business, UUID memberUuid) {
+    public boolean addMember(IBusiness business, UUID memberUuid) {
+        if (!isManagerEnabled())
+            return false;
+
+        SimpleChunkLocation chunk = businessToChunk.get(business.getUuid());
+        if (chunk == null)
+            return false;
+
+        ChunkClaim claim = get(chunk)
+                .map(Reference::get)
+                .orElse(null);
+        if (claim == null)
+            return false;
+
+        return claim.addMember(memberUuid);
+    }
+
+    @Override
+    public boolean removeMember(IBusiness business, UUID memberUuid) {
+        if (!isManagerEnabled())
+            return false;
+
+        SimpleChunkLocation chunk = businessToChunk.get(business.getUuid());
+        if (chunk == null)
+            return false;
+
+        ChunkClaim claim = get(chunk)
+                .map(Reference::get)
+                .orElse(null);
+        if (claim == null)
+            return false;
+
+        return claim.removeMember(memberUuid);
+    }
+
+    @Override
+    public boolean isMember(IBusiness business, UUID memberUuid) {
         if (!isManagerEnabled())
             return false;
 
@@ -117,6 +156,24 @@ public class ChunkClaimManager
             return true;
 
         return claim.hasMember(memberUuid);
+    }
+
+    @Override
+    public boolean isInBusiness(IBusiness business, UUID memberUuid) {
+        if (!isManagerEnabled())
+            return false;
+
+        SimpleChunkLocation chunk = businessToChunk.get(business.getUuid());
+        if (chunk == null)
+            return false;
+
+        ChunkClaim claim = get(chunk)
+                .map(Reference::get)
+                .orElse(null);
+        if (claim == null)
+            return false;
+
+        return Objects.equals(business.getUuid(), claim.getBusinessUuid());
     }
 
     @Override

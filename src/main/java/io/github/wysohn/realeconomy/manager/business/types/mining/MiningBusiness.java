@@ -3,7 +3,7 @@ package io.github.wysohn.realeconomy.manager.business.types.mining;
 import io.github.wysohn.rapidframework3.data.SimpleLocation;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.language.ILang;
-import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
+import io.github.wysohn.realeconomy.interfaces.business.IBusinessContextHandler;
 import io.github.wysohn.realeconomy.interfaces.business.types.mining.IBlockGenerator;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.signature.LabourSignature;
@@ -91,7 +91,7 @@ public class MiningBusiness extends AbstractBusiness {
      *
      * @param event
      */
-    void blockBreak(BlockBreakEvent event, IClaimHandler handler) {
+    void blockBreak(BlockBreakEvent event, IBusinessContextHandler handler) {
         Block block = event.getBlock();
         Location location = block.getLocation();
 

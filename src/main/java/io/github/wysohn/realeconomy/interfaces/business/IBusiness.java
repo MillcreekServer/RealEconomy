@@ -6,7 +6,8 @@ import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 
 import java.util.UUID;
 
-public interface IBusiness extends IAssetHolder, IPluginObject, IUpgradable, IDelayedEstablishment, IProductionStorage, ISimpleStringStore {
+public interface IBusiness extends IAssetHolder, IPluginObject, IUpgradable, IDelayedEstablishment,
+        IProductionStorage, ISimpleStringStore {
     UUID getOwnerUuid();
 
     void setOwnerUuid(UUID ownerUuid);

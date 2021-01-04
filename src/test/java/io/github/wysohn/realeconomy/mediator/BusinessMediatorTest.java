@@ -11,15 +11,15 @@ import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TypeAsserterModule;
 import io.github.wysohn.rapidframework3.core.main.PluginMain;
-import io.github.wysohn.rapidframework3.data.SimpleChunkLocation;
 import io.github.wysohn.rapidframework3.data.SimpleLocation;
 import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.testmodules.*;
+import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.inject.module.BusinessConstantsModule;
+import io.github.wysohn.realeconomy.interfaces.business.IBusinessContextHandler;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
-import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.interfaces.business.types.mining.IBlockGenerator;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
@@ -51,7 +51,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
 
     private final List<AbstractModule> moduleList = new LinkedList<>();
     private IKeyValueStorage tierStorage;
-    private IClaimHandler visitStateProvider;
+    private IBusinessContextHandler visitStateProvider;
     private AssetListingManager assetListingManager;
     private ISerializer serializer;
     private PluginMain main;
@@ -59,18 +59,21 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
     @Before
     public void init() {
         tierStorage = mock(IKeyValueStorage.class);
-        visitStateProvider = mock(IClaimHandler.class);
+        visitStateProvider = mock(IBusinessContextHandler.class);
         assetListingManager = mock(AssetListingManager.class);
         serializer = mock(ISerializer.class);
         main = mock(PluginMain.class);
 
         moduleList.add(new PluginInfoModule("test", "test", "test"));
+        moduleList.add(new MockConfigModule(
+                Pair.of(ChunkClaimManager.KEY_ENABLE, true)
+        ));
         moduleList.add(new MockLoggerModule());
         moduleList.add(new MockPluginDirectoryModule());
         moduleList.add(new MockStorageFactoryModule(tierStorage));
         moduleList.add(new AbstractModule() {
             @Provides
-            IClaimHandler visitStateProvider() {
+            IBusinessContextHandler visitStateProvider() {
                 return visitStateProvider;
             }
 
@@ -177,7 +180,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         Object subTypeSection = mock(Object.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
-        SimpleChunkLocation chunk = new SimpleChunkLocation("world", 1, 2, 3);
+        SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
 
         managerPlayerLocation.enable();
 
@@ -187,7 +190,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
         when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
         when(player.getUuid()).thenReturn(uuid);
-        when(player.getScloc()).thenReturn(chunk);
+        when(player.getSloc()).thenReturn(location);
 
         mediator.enable();
 
@@ -237,23 +240,19 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
     }
 
     @Test
-    public void openNewBusinessInChunk() throws Exception {
-        ChunkClaimManager chunkClaimManager = mock(ChunkClaimManager.class);
-        moduleList.add(new AbstractModule() {
-            @Provides
-            ChunkClaimManager chunkClaimManager() {
-                return chunkClaimManager;
-            }
-        });
-
+    public void addMember() throws Exception {
         Injector injector = Guice.createInjector(moduleList);
         MiningBusinessManager mining = injector.getInstance(MiningBusinessManager.class);
+        ChunkClaimManager chunkClaimManager = injector.getInstance(ChunkClaimManager.class);
+        ManagerPlayerLocation managerPlayerLocation = injector.getInstance(ManagerPlayerLocation.class);
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
-        SimpleChunkLocation chunk = mock(SimpleChunkLocation.class);
+        SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
+
+        managerPlayerLocation.enable();
 
         when(tierStorage.getKeys(anyBoolean())).thenReturn(new HashSet<String>() {{
             add("mining");
@@ -261,12 +260,49 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
         when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
         when(player.getUuid()).thenReturn(uuid);
-        when(player.getScloc()).thenReturn(chunk);
+        when(player.getSloc()).thenReturn(location);
+
+        mediator.enable();
+
+        assertEquals(BusinessMediator.Result.OK, mediator.openNewBusinessLocation("mining", ITier.DEFAULT_SUB_TYPE, player));
+        assertTrue(mediator.isMember(mining.get(chunkClaimManager.queryBusiness(location))
+                .map(Reference::get).orElseThrow(RuntimeException::new), uuid));
+
+        UUID uuid2 = UUID.randomUUID();
+        assertTrue(mediator.addMember(mining.get(chunkClaimManager.queryBusiness(location))
+                .map(Reference::get).orElseThrow(RuntimeException::new), uuid2));
+        assertTrue(mediator.isMember(mining.get(chunkClaimManager.queryBusiness(location))
+                .map(Reference::get).orElseThrow(RuntimeException::new), uuid2));
+
+        assertTrue(mediator.removeMember(mining.get(chunkClaimManager.queryBusiness(location))
+                .map(Reference::get).orElseThrow(RuntimeException::new), uuid2));
+        assertFalse(mediator.isMember(mining.get(chunkClaimManager.queryBusiness(location))
+                .map(Reference::get).orElseThrow(RuntimeException::new), uuid2));
+    }
+
+    @Test
+    public void openNewBusinessInChunk() throws Exception {
+        Injector injector = Guice.createInjector(moduleList);
+        MiningBusinessManager mining = injector.getInstance(MiningBusinessManager.class);
+        ChunkClaimManager chunkClaimManager = injector.getInstance(ChunkClaimManager.class);
+        BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
+        Object tierSection = mock(Object.class);
+        Object subTypeSection = mock(Object.class);
+        BukkitPlayer player = mock(BukkitPlayer.class);
+        UUID uuid = UUID.randomUUID();
+        SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
+
+        when(tierStorage.getKeys(anyBoolean())).thenReturn(new HashSet<String>() {{
+            add("mining");
+        }});
+        when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
+        when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
+        when(player.getUuid()).thenReturn(uuid);
+        when(player.getSloc()).thenReturn(location);
 
         mediator.enable();
 
         BusinessMediator.Result result = mediator.openNewBusinessLocation("mining", ITier.DEFAULT_SUB_TYPE, player);
-        verify(chunkClaimManager).updateMapping(any(), any());
         assertEquals(BusinessMediator.Result.OK, result);
     }
 
@@ -281,14 +317,18 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         Map<String, IBusinessProvider> map = (Map<String, IBusinessProvider>) field2.get(null);
         map.clear();
 
-        Field field3 = BusinessMediator.class.getDeclaredField("VISIT_STATE_PROVIDERS");
+        Field field3 = BusinessMediator.class.getDeclaredField("BUSINESS_CONTEXT_HANDLERS");
         field3.setAccessible(true);
-        Set<IClaimHandler> set = (Set<IClaimHandler>) field3.get(null);
-        set.clear();
+        List<IBusinessContextHandler> list = (List<IBusinessContextHandler>) field3.get(null);
+        list.clear();
 
         Field field4 = TierRegistry.class.getDeclaredField("REGISTERED_TIERS");
         field4.setAccessible(true);
         Map<String, ITier> map2 = (Map<String, ITier>) field4.get(null);
         map2.clear();
+
+        Field field5 = ManagerPlayerLocation.class.getDeclaredField("TRACKER");
+        field5.setAccessible(true);
+        field5.set(null, null);
     }
 }

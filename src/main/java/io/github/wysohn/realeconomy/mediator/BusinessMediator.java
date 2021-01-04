@@ -5,12 +5,10 @@ import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.factory.IStorageFactory;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.data.SimpleLocation;
-import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
-import io.github.wysohn.rapidframework3.utils.OfferScheduler;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
+import io.github.wysohn.realeconomy.interfaces.business.IBusinessContextHandler;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
-import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierAdapter;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
 import io.github.wysohn.realeconomy.manager.business.types.AbstractBusiness;
@@ -26,7 +24,7 @@ public class BusinessMediator extends Mediator {
     public static final String KEY_LOC = "key_chunk";
 
     private static final Map<String, IBusinessProvider> BUSINESSES_PROVIDERS = new HashMap<>();
-    private static final Set<IClaimHandler> CLAIM_HANDLERS = new HashSet<>();
+    private static final List<IBusinessContextHandler> BUSINESS_CONTEXT_HANDLERS = new ArrayList<>();
     private static IKeyValueStorage tierConfigs;
     private static boolean enabled = false;
 
@@ -50,7 +48,7 @@ public class BusinessMediator extends Mediator {
     }
 
     /**
-     * Register the IVisitorStateProvider. Note that all the methods should be thread-safe, so that
+     * Register the IBusinessContextHandler. Note that all the methods should be thread-safe, so that
      * it can be used in the update thread along with the server thread.
      * <p>
      * Must register before the plugin enables.
@@ -58,14 +56,14 @@ public class BusinessMediator extends Mediator {
      * @param claimHandler claimHandler
      * @throws RuntimeException same claimHandler is registered again or plugin is already enabled.
      */
-    public static void registerClaimHandler(IClaimHandler claimHandler) {
+    public static void registerClaimHandler(IBusinessContextHandler claimHandler) {
         if (enabled)
             throw new RuntimeException("Must register before enabled.");
 
-        if (CLAIM_HANDLERS.contains(claimHandler))
+        if (BUSINESS_CONTEXT_HANDLERS.contains(claimHandler))
             throw new RuntimeException("Duplicated claimHandler " + claimHandler);
 
-        CLAIM_HANDLERS.add(claimHandler);
+        BUSINESS_CONTEXT_HANDLERS.add(claimHandler);
     }
 
     public static IKeyValueStorage getTierConfigs() {
@@ -76,27 +74,21 @@ public class BusinessMediator extends Mediator {
 
     private final long OFFER_WAITING_SECS = 180L;
     private final long INTERVAL = 1000L;
-    private final ITaskSupervisor task;
     private Timer updateTimer;
-    private OfferScheduler offerScheduler;
 
     @Inject
     public BusinessMediator(@PluginDirectory File pluginDir,
-                            IStorageFactory storageFactory,
-                            ITaskSupervisor task) {
-        this.task = task;
-
+                            IStorageFactory storageFactory) {
         tierConfigs = storageFactory.create(pluginDir, "tiers.yml");
     }
 
     @Override
     public void enable() throws Exception {
-        offerScheduler = new OfferScheduler(task, OFFER_WAITING_SECS * 1000L);
-
         tierConfigs.getKeys(false).forEach(name ->
                 TierRegistry.register(new TierAdapter(name, tierConfigs)));
 
         enabled = true;
+        BUSINESS_CONTEXT_HANDLERS.sort(Comparator.comparingInt(IBusinessContextHandler::priority));
 
         forEach(business -> {
             if (business.hasData(KEY_LOC)) {
@@ -180,9 +172,10 @@ public class BusinessMediator extends Mediator {
 
         boolean deleteBusiness = BUSINESSES_PROVIDERS.get(business.currentTier().name()).deleteBusiness(business);
         if (deleteBusiness) {
-            CLAIM_HANDLERS.forEach(provider -> {
+            BUSINESS_CONTEXT_HANDLERS.forEach(provider -> {
                 SimpleLocation location = provider.getLocationOfBusiness(business);
-                provider.removeMapping(location, business);
+                if (location != null)
+                    provider.removeMapping(location, business);
             });
         }
         return deleteBusiness;
@@ -190,7 +183,7 @@ public class BusinessMediator extends Mediator {
 
     public Set<UUID> getUsingBusiness(UUID memberUuid) {
         Set<UUID> visiting = new HashSet<>();
-        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
             Optional.of(claimHandler)
                     .map(provider -> provider.getUsingBusiness(memberUuid))
                     .ifPresent(visiting::addAll);
@@ -198,8 +191,35 @@ public class BusinessMediator extends Mediator {
         return visiting;
     }
 
+    public boolean addMember(IBusiness business, UUID memberUuid) {
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
+            if (claimHandler.addMember(business, memberUuid))
+                return true;
+        }
+        return false;
+    }
+
+    public boolean removeMember(IBusiness business, UUID memberUuid) {
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
+            if (claimHandler.removeMember(business, memberUuid))
+                return true;
+        }
+        return false;
+    }
+
     public boolean isMember(IBusiness business, UUID memberUuid) {
-        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+        if (Objects.equals(business.getOwnerUuid(), memberUuid))
+            return true;
+
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
+            if (claimHandler.isMember(business, memberUuid))
+                return true;
+        }
+        return false;
+    }
+
+    public boolean isInBusiness(IBusiness business, UUID memberUuid) {
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
             if (claimHandler.isInBusiness(business, memberUuid))
                 return true;
         }
@@ -207,7 +227,7 @@ public class BusinessMediator extends Mediator {
     }
 
     public UUID queryBusiness(SimpleLocation location) {
-        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
             UUID businessUuid = claimHandler.queryBusiness(location);
             if (businessUuid != null)
                 return businessUuid;
@@ -217,7 +237,7 @@ public class BusinessMediator extends Mediator {
     }
 
     public SimpleLocation getLocationOfBusiness(IBusiness business) {
-        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
             SimpleLocation location = claimHandler.getLocationOfBusiness(business);
             if (location != null)
                 return location;
@@ -227,10 +247,10 @@ public class BusinessMediator extends Mediator {
     }
 
     public boolean updateMapping(SimpleLocation location, IBusiness business) {
-        if (CLAIM_HANDLERS.size() < 1)
+        if (BUSINESS_CONTEXT_HANDLERS.size() < 1)
             throw new RuntimeException("No claim handlers found.");
 
-        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
             if (claimHandler.updateMapping(location, business))
                 return true;
         }
@@ -239,10 +259,10 @@ public class BusinessMediator extends Mediator {
     }
 
     public boolean removeMapping(SimpleLocation location, IBusiness business) {
-        if (CLAIM_HANDLERS.size() < 1)
+        if (BUSINESS_CONTEXT_HANDLERS.size() < 1)
             throw new RuntimeException("No claim handlers found.");
 
-        for (IClaimHandler claimHandler : CLAIM_HANDLERS) {
+        for (IBusinessContextHandler claimHandler : BUSINESS_CONTEXT_HANDLERS) {
             if (claimHandler.removeMapping(location, business))
                 return true;
         }
@@ -259,24 +279,6 @@ public class BusinessMediator extends Mediator {
         Optional.ofNullable(BUSINESSES_PROVIDERS.get(tierName))
                 .ifPresent(provider -> provider.keys().forEach(key ->
                         businessConsumer.accept(provider.getBusiness(key))));
-    }
-
-    public boolean inviteToBusiness(UUID targetUuid, InviteResultHandle handle) {
-        return offerScheduler.sendOffer(targetUuid, (left) -> {
-
-        }, () -> {
-
-        }, () -> {
-
-        });
-    }
-
-    public boolean acceptInvitation(UUID targetUuid) {
-        return offerScheduler.acceptOffer(targetUuid);
-    }
-
-    public boolean denyInvitation(UUID targetUuid) {
-        return offerScheduler.declineOffer(targetUuid);
     }
 
     /**
@@ -327,11 +329,11 @@ public class BusinessMediator extends Mediator {
     }
 
     public interface InviteResultHandle {
-        void handle(InviteResultHandle handle);
+        void handle(InviteResult handle);
     }
 
     public enum InviteResult {
-        ACCEPT, TIMEOUT, DENY
+        ACCEPT, TIMEOUT
     }
 
     public enum Result {

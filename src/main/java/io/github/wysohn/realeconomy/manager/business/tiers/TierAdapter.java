@@ -1,12 +1,20 @@
 package io.github.wysohn.realeconomy.manager.business.tiers;
 
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 
+import java.util.List;
 import java.util.Set;
 
 /**
  * "mining": # business type
+ * - "displayName"
+ * - - "default": "&6Mining Business"
+ * - - "ko": "&6광산업"
+ * - "description"
+ * - - "default": []
+ * - - "ko": []
  * - "default": # business sub type
  * - - "requirement" # configs
  * - - - "UUID":Double
@@ -27,6 +35,8 @@ public class TierAdapter implements ITier {
     public static final String OUTPUT = "output";
     public static final String TIME_TO_LIVE_MIN = "timeToLive.min";
     public static final String TIME_TO_LIVE_MAX = "timeToLive.man";
+    public static final String DISPLAY_NAME = "displayName";
+    public static final String DESCRIPTION = "description";
 
     private final String name;
     private final IKeyValueStorage keyValueStorage;
@@ -41,6 +51,40 @@ public class TierAdapter implements ITier {
 
     public String name() {
         return name;
+    }
+
+    @Override
+    public String displayName(ICommandSender sender) {
+        String defaultKey = DISPLAY_NAME + ".default";
+
+        if (!keyValueStorage.get(defaultKey).isPresent())
+            keyValueStorage.put(defaultKey, "&6" + name);
+
+        return keyValueStorage.get(DISPLAY_NAME + "." + sender.getLocale().getLanguage())
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .orElseGet(() -> keyValueStorage.get(defaultKey)
+                        .filter(String.class::isInstance)
+                        .map(String.class::cast)
+                        .orElseThrow(RuntimeException::new));
+    }
+
+    @Override
+    public String[] description(ICommandSender sender) {
+        String defaultKey = DESCRIPTION + ".default";
+        if (!keyValueStorage.get(defaultKey).isPresent()) {
+            return null;
+        } else {
+            return keyValueStorage.get(DESCRIPTION + "." + sender.getLocale().getLanguage())
+                    .filter(List.class::isInstance)
+                    .map(List.class::cast)
+                    .map(list -> ((List<String>) list).toArray(new String[0]))
+                    .orElseGet(() -> keyValueStorage.get(defaultKey)
+                            .filter(List.class::isInstance)
+                            .map(List.class::cast)
+                            .map(list -> ((List<String>) list).toArray(new String[0]))
+                            .orElse(null));
+        }
     }
 
     @Override

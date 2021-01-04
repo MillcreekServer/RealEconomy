@@ -45,6 +45,7 @@ public class User extends BukkitPlayer implements IBankUser {
     private final Map<UUID, BigDecimal> wallet = new HashMap<>();
     private final Set<Integer> buyOrderIdSet = new HashSet<>();
     private final Set<Integer> sellOrderIdSet = new HashSet<>();
+    private final Set<UUID> pendingJoins = new HashSet<>();
 
     private transient DataProvider<Pair<UUID, BigDecimal>> balanceProvider;
 

@@ -9,8 +9,8 @@ import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
+import io.github.wysohn.realeconomy.interfaces.business.IBusinessContextHandler;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
-import io.github.wysohn.realeconomy.interfaces.business.IClaimHandler;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierAdapter;
@@ -29,7 +29,7 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
         implements IBusinessProvider {
 
     private final AssetListingManager listingManager;
-    protected final IClaimHandler visitStateProvider;
+    protected final IBusinessContextHandler visitStateProvider;
 
     public AbstractBusinessManager(String pluginName,
                                    Logger logger,
@@ -41,7 +41,7 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
                                    Injector injector,
                                    Class<V> type,
                                    AssetListingManager listingManager,
-                                   IClaimHandler visitStateProvider) {
+                                   IBusinessContextHandler visitStateProvider) {
         super(pluginName, logger, config, new File(pluginDir, "business"), shutdownHandle, serializer, asserter, injector, type);
         this.listingManager = listingManager;
         this.visitStateProvider = visitStateProvider;
