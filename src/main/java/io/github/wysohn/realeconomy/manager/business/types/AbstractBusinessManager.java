@@ -141,9 +141,9 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
         private final AssetListingManager listingManager;
 
         private String name;
-        private final Map<UUID, Double> requirement = new HashMap<>();
-        private final Map<UUID, Double> input = new HashMap<>();
-        private final Map<UUID, Double> output = new HashMap<>();
+        private final Map<String, Double> requirement = new HashMap<>();
+        private final Map<String, Double> input = new HashMap<>();
+        private final Map<String, Double> output = new HashMap<>();
         private long timeToLiveMin = -1L;
         private long timeToLiveMax = -1L;
 
@@ -160,19 +160,19 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
 
         public DefaultConfigBuilder putRequirement(AssetSignature signature, double amount) {
             listingManager.newListing(signature);
-            requirement.put(listingManager.fromSignature(signature).getKey(), amount);
+            requirement.put(listingManager.fromSignature(signature).getKey().toString(), amount);
             return this;
         }
 
         public DefaultConfigBuilder putInput(AssetSignature signature, double amount) {
             listingManager.newListing(signature);
-            input.put(listingManager.fromSignature(signature).getKey(), amount);
+            input.put(listingManager.fromSignature(signature).getKey().toString(), amount);
             return this;
         }
 
         public DefaultConfigBuilder putOutput(AssetSignature signature, double amount) {
             listingManager.newListing(signature);
-            output.put(listingManager.fromSignature(signature).getKey(), amount);
+            output.put(listingManager.fromSignature(signature).getKey().toString(), amount);
             return this;
         }
 
