@@ -111,7 +111,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 CustomTypeAdapters.BANKING_TYPE,
                 CustomTypeAdapters.ASSET,
                 CustomTypeAdapters.ASSET_SIGNATURE,
-                CustomTypeAdapters.ORE_INFO
+                CustomTypeAdapters.ORE_INFO,
+                CustomTypeAdapters.I_TIER
         ));
         pluginMainBuilder.addModule(new TypeAsserterModule());
         pluginMainBuilder.addModule(new CapitalLimitModule());
@@ -750,13 +751,17 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                         switch (optAction.get()) {
                             case "open":
-                                ITier tier = args.get(1)
-                                        .map(String.class::cast)
+                                Optional<String> optTierName = args.get(1)
+                                        .map(String.class::cast);
+
+                                ITier tier = optTierName
                                         .map(TierRegistry::fromString)
                                         .orElse(null);
+
                                 if (tier == null) {
-                                    getMain().lang().sendMessage(user, RealEconomyLangs.Command_Business_TierNotFound);
-                                    return true;
+                                    getMain().lang().sendMessage(user, RealEconomyLangs.Command_Business_TierNotFound, ((sen, langman) ->
+                                            langman.addString(optTierName.orElse("None"))));
+                                    return false;
                                 }
 
                                 String subType = args.get(2)

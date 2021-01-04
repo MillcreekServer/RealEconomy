@@ -5,9 +5,11 @@ import io.github.wysohn.rapidframework3.interfaces.serialize.CustomAdapter;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
+import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
+import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
 import io.github.wysohn.realeconomy.manager.business.types.mining.OreInfo;
 import org.bukkit.Material;
 
@@ -148,6 +150,20 @@ public class CustomTypeAdapters {
             obj.addProperty(KEY_MATERIAL, oreInfo.material.name());
 
             return obj;
+        }
+    });
+
+    public static final Pair<Class<?>, CustomAdapter<?>> I_TIER = Pair.of(ITier.class, new CustomAdapter<ITier>() {
+        @Override
+        public ITier deserialize(JsonElement json,
+                                 Type typeOfT,
+                                 JsonDeserializationContext context) throws JsonParseException {
+            return TierRegistry.fromString(json.getAsString());
+        }
+
+        @Override
+        public JsonElement serialize(ITier src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.name());
         }
     });
 }
