@@ -153,6 +153,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
         when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
 
+        mediator.preload();
         mediator.enable();
 
         AbstractBusiness business = mediator.openNewBusiness("mining", UUID.randomUUID(), ITier.DEFAULT_SUB_TYPE);
@@ -192,6 +193,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         when(player.getUuid()).thenReturn(uuid);
         when(player.getSloc()).thenReturn(location);
 
+        mediator.preload();
         mediator.enable();
 
         Player p = mock(Player.class);
@@ -232,6 +234,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         when(player.getUuid()).thenReturn(uuid);
         when(player.getSloc()).thenReturn(location);
 
+        mediator.preload();
         mediator.enable();
 
         assertEquals(BusinessMediator.Result.OK, mediator.openNewBusinessLocation("mining", ITier.DEFAULT_SUB_TYPE, player));
@@ -262,6 +265,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         when(player.getUuid()).thenReturn(uuid);
         when(player.getSloc()).thenReturn(location);
 
+        mediator.preload();
         mediator.enable();
 
         assertEquals(BusinessMediator.Result.OK, mediator.openNewBusinessLocation("mining", ITier.DEFAULT_SUB_TYPE, player));
@@ -300,6 +304,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         when(player.getUuid()).thenReturn(uuid);
         when(player.getSloc()).thenReturn(location);
 
+        mediator.preload();
         mediator.enable();
 
         BusinessMediator.Result result = mediator.openNewBusinessLocation("mining", ITier.DEFAULT_SUB_TYPE, player);
