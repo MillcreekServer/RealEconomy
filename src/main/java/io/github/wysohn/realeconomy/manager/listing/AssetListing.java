@@ -1,4 +1,4 @@
-package io.github.wysohn.realeconomy.manager.asset.listing;
+package io.github.wysohn.realeconomy.manager.listing;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
@@ -29,7 +29,7 @@ public class AssetListing extends CachedElement<UUID> {
     }
 
     public Asset create(Map<String, Object> metaData) {
-        return signature.create(metaData);
+        return signature.asset(metaData);
     }
 
     @Override

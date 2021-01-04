@@ -29,10 +29,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 
 @Singleton
@@ -412,7 +409,7 @@ public class BankingMediator extends Mediator {
         }
 
         @Override
-        public int removeAsset(AssetSignature signature, int amount) {
+        public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
             return bank.removeAsset(signature, amount);
         }
 

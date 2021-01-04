@@ -10,17 +10,19 @@ import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
-import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
-import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
-import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import io.github.wysohn.realeconomy.manager.listing.AssetListing;
+import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
+import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -569,7 +571,9 @@ public class TradeMediatorTest {
         when(listing.getKey()).thenReturn(listingUuid);
         when(listing.getSignature()).thenReturn(signature);
         when(assetListingManager.get(eq(listingUuid))).thenReturn(Optional.of(new WeakReference<>(listing)));
-        when(ownerBank.removeAccountAsset(eq(seller), eq(signature), anyInt())).thenReturn(1);
+        when(ownerBank.removeAccountAsset(eq(seller), eq(signature), anyInt())).thenReturn(new LinkedList<Asset>() {{
+            add(new ItemStackSignature(new ItemStack(Material.DIAMOND)).asset(1.0));
+        }});
 
         doAnswer(invocation -> {
             Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
@@ -646,10 +650,12 @@ public class TradeMediatorTest {
         when(listing.getKey()).thenReturn(listingUuid);
         when(listing.getSignature()).thenReturn(signature);
         when(assetListingManager.get(eq(listingUuid))).thenReturn(Optional.of(new WeakReference<>(listing)));
-        when(ownerBank.removeAccountAsset(eq(seller), eq(signature), anyInt())).thenReturn(1);
+        when(ownerBank.removeAccountAsset(eq(seller), eq(signature), anyInt())).thenReturn(new LinkedList<Asset>() {{
+            add(new ItemStackSignature(new ItemStack(Material.DIAMOND)).asset(1.0));
+        }});
         when(ownerBank.withdrawAccount(any(), any(), any(), any())).thenReturn(true);
         when(ownerBank.depositAccount(any(), any(), any(), any())).thenReturn(true);
-        when(signature.create(anyMap())).thenReturn(asset);
+        when(signature.asset(anyMap())).thenReturn(asset);
 
         doAnswer(invocation -> {
             Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];

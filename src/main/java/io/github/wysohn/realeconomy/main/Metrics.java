@@ -14,6 +14,11 @@ import java.text.DecimalFormat;
 public class Metrics {
     public static final DecimalFormat df = new DecimalFormat("#,##0.00");
 
+    public static final double SECOND = 1.0;
+    public static final double MINUTE = 60 * SECOND;
+    public static final double HOUR = 60 * MINUTE;
+    public static final double DAY = 24 * HOUR;
+
     public static void createTable(IPluginResourceProvider resourceProvider,
                                    Connection connection,
                                    String filename) throws IOException, SQLException {

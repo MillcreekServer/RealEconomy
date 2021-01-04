@@ -1,4 +1,4 @@
-package io.github.wysohn.realeconomy.manager.asset.listing;
+package io.github.wysohn.realeconomy.manager.listing;
 
 import com.google.inject.Injector;
 import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;

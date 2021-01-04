@@ -7,6 +7,7 @@ import io.github.wysohn.rapidframework3.core.message.Message;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
+import io.github.wysohn.realeconomy.manager.listing.AssetListing;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -19,10 +20,10 @@ import java.util.UUID;
 /**
  * Unlike the original ItemStack, it does not keep track of the amount of items in stack.
  * Number of items must be tracked separately in the
- * {@link io.github.wysohn.realeconomy.manager.asset.listing.AssetListing}.
+ * {@link AssetListing}.
  * As stated in {@link AssetSignature}, it should not contain any mutable attributes.
  * <p>
- * When creating Asset, {@link PhysicalAssetSignature#KEY_AMOUNT} must be in meta info
+ * When creating Asset, {@link AssetSignature#KEY_NUMERIC_MEASURE} must be in meta info
  */
 public class ItemStackSignature extends PhysicalAssetSignature {
     private final ItemStack itemStack;
@@ -53,10 +54,10 @@ public class ItemStackSignature extends PhysicalAssetSignature {
     }
 
     @Override
-    public Asset create(Map<String, Object> metaData) {
+    public Asset asset(Map<String, Object> metaData) {
         Item item = new Item(UUID.randomUUID(), this);
         // fail early if amount is not set
-        item.setAmount((int) Objects.requireNonNull(metaData.get(KEY_AMOUNT)));
+        item.setNumericalMeasure((double) Objects.requireNonNull(metaData.get(KEY_NUMERIC_MEASURE)));
         return item;
     }
 

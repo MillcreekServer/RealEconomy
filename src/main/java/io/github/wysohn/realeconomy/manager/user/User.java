@@ -14,13 +14,13 @@ import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
-import io.github.wysohn.realeconomy.manager.asset.listing.AssetListing;
-import io.github.wysohn.realeconomy.manager.asset.listing.AssetListingManager;
-import io.github.wysohn.realeconomy.manager.asset.listing.OrderType;
-import io.github.wysohn.realeconomy.manager.asset.listing.TradeInfo;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
+import io.github.wysohn.realeconomy.manager.listing.AssetListing;
+import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
+import io.github.wysohn.realeconomy.manager.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 
 import javax.inject.Inject;
@@ -45,6 +45,7 @@ public class User extends BukkitPlayer implements IBankUser {
     private final Map<UUID, BigDecimal> wallet = new HashMap<>();
     private final Set<Integer> buyOrderIdSet = new HashSet<>();
     private final Set<Integer> sellOrderIdSet = new HashSet<>();
+    private final Set<UUID> pendingJoins = new HashSet<>();
 
     private transient DataProvider<Pair<UUID, BigDecimal>> balanceProvider;
 

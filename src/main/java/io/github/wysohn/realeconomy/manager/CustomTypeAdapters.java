@@ -8,6 +8,8 @@ import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
+import io.github.wysohn.realeconomy.manager.business.types.mining.OreInfo;
+import org.bukkit.Material;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -118,6 +120,33 @@ public class CustomTypeAdapters {
             JsonObject obj = new JsonObject();
             obj.addProperty(KEY_CLASS, className);
             obj.add(KEY_VALUE, serializedValue);
+            return obj;
+        }
+    });
+
+    public static final String KEY_BREAT_AT = "breakAt";
+    public static final String KEY_MATERIAL = "material";
+    public static final Pair<Class<?>, CustomAdapter<?>> ORE_INFO = Pair.of(OreInfo.class, new CustomAdapter<OreInfo>() {
+        @Override
+        public OreInfo deserialize(JsonElement jsonElement,
+                                   Type type,
+                                   JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+
+            JsonObject obj = (JsonObject) jsonElement;
+
+            long breakAt = obj.get(KEY_BREAT_AT).getAsLong();
+            Material material = Material.valueOf(obj.get(KEY_MATERIAL).getAsString());
+
+            return new OreInfo(material, breakAt);
+        }
+
+        @Override
+        public JsonElement serialize(OreInfo oreInfo, Type type, JsonSerializationContext jsonSerializationContext) {
+            JsonObject obj = new JsonObject();
+
+            obj.addProperty(KEY_BREAT_AT, oreInfo.breakAt);
+            obj.addProperty(KEY_MATERIAL, oreInfo.material.name());
+
             return obj;
         }
     });

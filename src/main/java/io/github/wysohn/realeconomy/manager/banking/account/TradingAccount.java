@@ -23,7 +23,7 @@ public class TradingAccount implements IAccount, IAssetHolder {
     }
 
     @Override
-    public int removeAsset(AssetSignature signature, int amount) {
+    public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
         return AssetUtil.removeAsset(ownedAssets, signature, amount);
     }
 

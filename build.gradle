@@ -13,7 +13,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '1.13.1'
+version = '1.14.0'
 group = 'io.github.wysohn'
 
 ext {
@@ -130,6 +130,12 @@ task writePluginYml {
             put("cancel", new HashMap<String, Object>() {
                 {
                     put("description", "shortcut command of /eco cancel")
+                }
+            })
+
+            put("business", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco business")
                 }
             })
         }
@@ -284,7 +290,7 @@ dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
     implementation 'org.spigotmc:spigot-api:1.16.+'
-    implementation "io.github.wysohn:rapidframework:3.14.3"
+    implementation "io.github.wysohn:rapidframework:3.15.0"
     implementation "com.github.MilkBowl:VaultAPI:1.7"
 
     testCompile 'junit:junit:4.+'
