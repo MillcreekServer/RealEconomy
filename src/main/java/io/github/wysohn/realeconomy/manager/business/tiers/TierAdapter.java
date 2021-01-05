@@ -57,8 +57,8 @@ public class TierAdapter implements ITier {
     public String displayName(ICommandSender sender) {
         String defaultKey = DISPLAY_NAME + ".default";
 
-        if (!keyValueStorage.get(defaultKey).isPresent())
-            keyValueStorage.put(defaultKey, "&6" + name);
+        if (!keyValueStorage.get(section, defaultKey).isPresent())
+            keyValueStorage.put(section, defaultKey, "&6" + name);
 
         return keyValueStorage.get(DISPLAY_NAME + "." + sender.getLocale().getLanguage())
                 .filter(String.class::isInstance)
