@@ -9,6 +9,7 @@ import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessContextHandler;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
+import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierAdapter;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
 import io.github.wysohn.realeconomy.manager.business.types.AbstractBusiness;
@@ -100,6 +101,10 @@ public class BusinessMediator extends Mediator {
 
     @Override
     public void load() throws Exception {
+        for (ITier value : TierRegistry.values()) {
+            value.reload();
+        }
+
         if (updateTimer != null)
             updateTimer.cancel();
 

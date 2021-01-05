@@ -88,6 +88,11 @@ public class TierAdapter implements ITier {
     }
 
     @Override
+    public void reload() throws Exception {
+        keyValueStorage.reload();
+    }
+
+    @Override
     public boolean verifySubType(String subType) {
         return keyValueStorage.get(section, subType).isPresent();
     }

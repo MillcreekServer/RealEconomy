@@ -112,4 +112,6 @@ public interface ITier {
      * @return the message; null to disable output
      */
     String[] description(ICommandSender sender);
+
+    void reload() throws Exception;
 }
