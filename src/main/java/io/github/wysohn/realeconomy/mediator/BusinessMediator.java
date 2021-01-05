@@ -151,6 +151,9 @@ public class BusinessMediator extends Mediator {
      * <p>
      * This only creates the business itself, so to make a business that is linked with the specific
      * location, use {@link #openNewBusinessLocation(String, String, BukkitPlayer)} instead.
+     * <p>
+     * Note that this does not invoke {@link AbstractBusiness#init()}, which loads business information
+     * from the config.
      *
      * @param tier      name of business tier set in the tier config
      * @param ownerUuid business owner uuid
@@ -308,6 +311,8 @@ public class BusinessMediator extends Mediator {
             return Result.NO_PROVIDER;
 
         try {
+            business.init();
+
             if (queryBusiness(location) != null)
                 return Result.DUP_LOCATION;
 
