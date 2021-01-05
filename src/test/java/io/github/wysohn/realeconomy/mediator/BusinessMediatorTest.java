@@ -30,7 +30,6 @@ import io.github.wysohn.realeconomy.manager.claim.ChunkClaimManager;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.PluginManager;
@@ -181,7 +180,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
-        ConfigurationSection requirementSection = mock(ConfigurationSection.class);
+        Map<String, Object> requirementSection = mock(Map.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
         SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
@@ -229,7 +228,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
-        ConfigurationSection requirementSection = mock(ConfigurationSection.class);
+        Map<String, Object> requirementSection = mock(Map.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
         SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
@@ -267,7 +266,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
-        ConfigurationSection requirementSection = mock(ConfigurationSection.class);
+        Map<String, Object> requirementSection = mock(Map.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
         SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
@@ -315,7 +314,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
-        ConfigurationSection requirementSection = mock(ConfigurationSection.class);
+        Map<String, Object> requirementSection = mock(Map.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
         SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
