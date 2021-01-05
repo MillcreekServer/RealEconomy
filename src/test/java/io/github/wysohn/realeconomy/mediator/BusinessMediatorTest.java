@@ -22,6 +22,7 @@ import io.github.wysohn.realeconomy.interfaces.business.IBusinessContextHandler;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessProvider;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 import io.github.wysohn.realeconomy.interfaces.business.types.mining.IBlockGenerator;
+import io.github.wysohn.realeconomy.manager.business.tiers.TierAdapter;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
 import io.github.wysohn.realeconomy.manager.business.types.AbstractBusiness;
 import io.github.wysohn.realeconomy.manager.business.types.mining.MiningBusinessManager;
@@ -29,6 +30,7 @@ import io.github.wysohn.realeconomy.manager.claim.ChunkClaimManager;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.PluginManager;
@@ -179,6 +181,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
+        ConfigurationSection requirementSection = mock(ConfigurationSection.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
         SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
@@ -190,6 +193,12 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         }});
         when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
         when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
+        when(tierStorage.isSection(eq(requirementSection))).thenReturn(true);
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.REQUIREMENT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.INPUT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.OUTPUT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.TIME_TO_LIVE_MIN))).thenReturn(Optional.empty());
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.TIME_TO_LIVE_MAX))).thenReturn(Optional.empty());
         when(player.getUuid()).thenReturn(uuid);
         when(player.getSloc()).thenReturn(location);
 
@@ -220,6 +229,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
+        ConfigurationSection requirementSection = mock(ConfigurationSection.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
         SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
@@ -231,6 +241,12 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         }});
         when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
         when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
+        when(tierStorage.isSection(eq(requirementSection))).thenReturn(true);
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.REQUIREMENT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.INPUT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.OUTPUT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.TIME_TO_LIVE_MIN))).thenReturn(Optional.empty());
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.TIME_TO_LIVE_MAX))).thenReturn(Optional.empty());
         when(player.getUuid()).thenReturn(uuid);
         when(player.getSloc()).thenReturn(location);
 
@@ -251,6 +267,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
+        ConfigurationSection requirementSection = mock(ConfigurationSection.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
         SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
@@ -262,6 +279,12 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         }});
         when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
         when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
+        when(tierStorage.isSection(eq(requirementSection))).thenReturn(true);
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.REQUIREMENT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.INPUT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.OUTPUT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.TIME_TO_LIVE_MIN))).thenReturn(Optional.empty());
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.TIME_TO_LIVE_MAX))).thenReturn(Optional.empty());
         when(player.getUuid()).thenReturn(uuid);
         when(player.getSloc()).thenReturn(location);
 
@@ -292,6 +315,7 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         BusinessMediator mediator = injector.getInstance(BusinessMediator.class);
         Object tierSection = mock(Object.class);
         Object subTypeSection = mock(Object.class);
+        ConfigurationSection requirementSection = mock(ConfigurationSection.class);
         BukkitPlayer player = mock(BukkitPlayer.class);
         UUID uuid = UUID.randomUUID();
         SimpleLocation location = new SimpleLocation("world", 1, 2, 3);
@@ -301,6 +325,12 @@ public class BusinessMediatorTest extends AbstractBukkitManagerTest {
         }});
         when(tierStorage.get(eq("mining"))).thenReturn(Optional.of(tierSection));
         when(tierStorage.get(eq(tierSection), eq(ITier.DEFAULT_SUB_TYPE))).thenReturn(Optional.of(subTypeSection));
+        when(tierStorage.isSection(eq(requirementSection))).thenReturn(true);
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.REQUIREMENT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.INPUT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.OUTPUT))).thenReturn(Optional.of(requirementSection));
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.TIME_TO_LIVE_MIN))).thenReturn(Optional.empty());
+        when(tierStorage.get(eq(subTypeSection), eq(TierAdapter.TIME_TO_LIVE_MAX))).thenReturn(Optional.empty());
         when(player.getUuid()).thenReturn(uuid);
         when(player.getSloc()).thenReturn(location);
 
