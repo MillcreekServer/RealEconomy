@@ -2,10 +2,12 @@ package io.github.wysohn.realeconomy.manager.business.types;
 
 import com.google.inject.Inject;
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
-import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
+import io.github.wysohn.rapidframework3.utils.StringUtil;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
@@ -17,6 +19,7 @@ import io.github.wysohn.realeconomy.manager.asset.signature.DurationSignature;
 import io.github.wysohn.realeconomy.manager.banking.AssetUtil;
 import io.github.wysohn.realeconomy.manager.business.upgrades.UpgradeRegistry;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
+import org.bukkit.ChatColor;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -241,7 +244,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     }
 
     @Override
-    public Map<ILang, Object> properties() {
+    public Map<Object, Object> properties(ManagerLanguage lang, ICommandSender sender) {
         /*
         tier: mining
         subType: default
@@ -254,32 +257,46 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
         outputs: --
           stone 20.0/s
          */
-        Map<ILang, Object> map = new HashMap<>();
-        map.put(RealEconomyLangs.Business_Tier, tier.name()); //TODO later let properties() to accept ICommandSender
+        Map<Object, Object> map = new LinkedHashMap<>();
+        map.put(RealEconomyLangs.Business_Tier, tier.displayName(sender));
         synchronized (currentProgress) {
             if (!established) {
-                map.put(RealEconomyLangs.Business_Progress, "&8--");
-                requirements.forEach((sign, require) -> {
+                Map<Object, Object> progressMap = new LinkedHashMap<>();
+                map.put(RealEconomyLangs.Business_Progress, progressMap);
+
+                int i = 0;
+                for (Map.Entry<AssetSignature, Double> entry : requirements.entrySet()) {
+                    AssetSignature sign = entry.getKey();
+                    double require = entry.getValue();
+
                     double current = currentProgress.getOrDefault(sign, 0.0);
                     double percentage = require <= 0.0 ? 0.0 : current / require;
-                    map.put(RealEconomyLangs.Business_Pad, String.format("&7%-10s &8[&b%.2f &8/ &3%.2f&8] &8(&e%.2f&8)",
+                    progressMap.put(StringUtil.repeats(String.valueOf(ChatColor.WHITE), i++), String.format("&7%-10s &8[&b%.2f &8/ &3%.2f&8] &8(&e%.2f%%&8)",
                             sign, current, require, percentage));
-                });
+                }
             }
         }
 
         if (established) {
-            map.put(RealEconomyLangs.Business_Input, "--");
-            inputs.forEach((sign, inputVal) -> {
-                map.put(RealEconomyLangs.Business_Pad, String.format("&7%-10s &c%.2f&8/&6s",
+            int i = 0;
+            Map<Object, Object> inputMap = new LinkedHashMap<>();
+            map.put(RealEconomyLangs.Business_Input, inputMap);
+            for (Map.Entry<AssetSignature, Double> entry : inputs.entrySet()) {
+                AssetSignature sign = entry.getKey();
+                double inputVal = entry.getValue();
+                inputMap.put(StringUtil.repeats(String.valueOf(ChatColor.WHITE), i++), String.format("&7%-10s &c%.2f&8/&6s",
                         sign, inputVal));
-            });
+            }
 
-            map.put(RealEconomyLangs.Business_Output, "--");
-            outputs.forEach((sign, outputVal) -> {
-                map.put(RealEconomyLangs.Business_Pad, String.format("&7%-10s &a%.2f&8/&6s",
+            i = 0;
+            Map<Object, Object> outputMap = new LinkedHashMap<>();
+            map.put(RealEconomyLangs.Business_Output, outputMap);
+            for (Map.Entry<AssetSignature, Double> entry : outputs.entrySet()) {
+                AssetSignature sign = entry.getKey();
+                double outputVal = entry.getValue();
+                outputMap.put(StringUtil.repeats(String.valueOf(ChatColor.WHITE), i++), String.format("&7%-10s &a%.2f&8/&6s",
                         sign, outputVal));
-            });
+            }
         }
 
         return map;

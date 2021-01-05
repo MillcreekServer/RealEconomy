@@ -18,8 +18,6 @@ public enum RealEconomyLangs implements ILang {
 
     MiningBusiness_LabourSources("LabourSources"),
 
-    Business_Pad("  "),
-
     GUI_PreviousPage("&dPrevious Page"),
     GUI_Home_Title("&dFirst Page"),
     GUI_Home_Lore("", "&7Current Page&8: &6${integer}"),
