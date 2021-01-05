@@ -1,8 +1,9 @@
 package io.github.wysohn.realeconomy.manager.business.types.mining;
 
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.data.SimpleLocation;
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
-import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.realeconomy.interfaces.business.IBusinessContextHandler;
 import io.github.wysohn.realeconomy.interfaces.business.types.mining.IBlockGenerator;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
@@ -50,15 +51,13 @@ public class MiningBusiness extends AbstractBusiness {
     }
 
     @Override
-    public Map<ILang, Object> properties() {
-        Map<ILang, Object> map = super.properties();
+    public Map<Object, Object> properties(ManagerLanguage lang, ICommandSender sender) {
+        Map<Object, Object> map = super.properties(lang, sender);
 
         if (isEstablished()) {
-            map.put(RealEconomyLangs.MiningBusiness_LabourSources, "--");
-            SPECIAL_BLOCKS.forEach((material, amount) -> {
-                map.put(RealEconomyLangs.Business_Pad, String.format("&6%-10s &8- &f%.2flp",
-                        material, amount));
-            });
+            Map<Object, Object> labourPoints = new LinkedHashMap<>();
+            map.put(RealEconomyLangs.MiningBusiness_LabourSources, labourPoints);
+            SPECIAL_BLOCKS.forEach((material, amount) -> labourPoints.put(material, String.format("&8- &f%.2flp", amount)));
         }
 
         return map;

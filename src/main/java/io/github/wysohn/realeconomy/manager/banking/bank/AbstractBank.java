@@ -1,9 +1,10 @@
 package io.github.wysohn.realeconomy.manager.banking.bank;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
-import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
@@ -329,8 +330,8 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
     }
 
     @Override
-    public Map<ILang, Object> properties() {
-        Map<ILang, Object> properties = new LinkedHashMap<>();
+    public Map<Object, Object> properties(ManagerLanguage lang, ICommandSender sender) {
+        Map<Object, Object> properties = new LinkedHashMap<>();
         Optional.ofNullable(getBankOwner())
                 .ifPresent(owner -> properties.put(RealEconomyLangs.Bank_Owner, owner));
         Optional.ofNullable(getBaseCurrency())

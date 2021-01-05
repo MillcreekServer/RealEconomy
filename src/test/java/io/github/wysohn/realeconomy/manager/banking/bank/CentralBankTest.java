@@ -6,7 +6,6 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.ProvidesIntoSet;
 import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
-import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
@@ -14,6 +13,7 @@ import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import io.github.wysohn.realeconomy.manager.user.User;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -159,7 +159,7 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         addFakeObserver(bank);
         Guice.createInjector(moduleList).injectMembers(bank);
 
-        IBankOwner owner = mock(IBankOwner.class);
+        User owner = mock(User.class);
         UUID ownerUuid = UUID.randomUUID();
         when(owner.getUuid()).thenReturn(ownerUuid);
 
@@ -171,7 +171,7 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         bank.setBankOwner(owner);
         bank.setBaseCurrency(currency);
 
-        Map<ILang, Object> properties = bank.properties();
+        Map<Object, Object> properties = bank.properties(null, owner);
         assertTrue(properties.containsKey(RealEconomyLangs.Bank_Owner));
         assertTrue(properties.containsKey(RealEconomyLangs.Bank_BaseCurrency));
         assertTrue(properties.containsKey(RealEconomyLangs.Bank_NumAccounts));

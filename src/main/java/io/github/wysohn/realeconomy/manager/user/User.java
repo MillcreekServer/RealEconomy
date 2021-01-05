@@ -10,6 +10,7 @@ import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankOwner;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
@@ -28,7 +29,7 @@ import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class User extends BukkitPlayer implements IBankUser {
+public class User extends BukkitPlayer implements IBankUser, IBankOwner {
     @Inject
     private ManagerLanguage lang;
     @Inject

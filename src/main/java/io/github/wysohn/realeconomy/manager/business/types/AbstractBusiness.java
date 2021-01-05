@@ -7,7 +7,6 @@ import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.Pair;
-import io.github.wysohn.rapidframework3.utils.StringUtil;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.business.IBusiness;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
@@ -19,7 +18,6 @@ import io.github.wysohn.realeconomy.manager.asset.signature.DurationSignature;
 import io.github.wysohn.realeconomy.manager.banking.AssetUtil;
 import io.github.wysohn.realeconomy.manager.business.upgrades.UpgradeRegistry;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
-import org.bukkit.ChatColor;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -263,40 +261,23 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
             if (!established) {
                 Map<Object, Object> progressMap = new LinkedHashMap<>();
                 map.put(RealEconomyLangs.Business_Progress, progressMap);
-
-                int i = 0;
-                for (Map.Entry<AssetSignature, Double> entry : requirements.entrySet()) {
-                    AssetSignature sign = entry.getKey();
-                    double require = entry.getValue();
-
+                requirements.forEach((sign, require) -> {
                     double current = currentProgress.getOrDefault(sign, 0.0);
                     double percentage = require <= 0.0 ? 0.0 : current / require;
-                    progressMap.put(StringUtil.repeats(String.valueOf(ChatColor.WHITE), i++), String.format("&7%-10s &8[&b%.2f &8/ &3%.2f&8] &8(&e%.2f%%&8)",
-                            sign, current, require, percentage));
-                }
+                    progressMap.put(sign, String.format("&8[&b%.2f &8/ &3%.2f&8] &8(&e%.2f%%&8)",
+                            current, require, percentage));
+                });
             }
         }
 
         if (established) {
-            int i = 0;
             Map<Object, Object> inputMap = new LinkedHashMap<>();
             map.put(RealEconomyLangs.Business_Input, inputMap);
-            for (Map.Entry<AssetSignature, Double> entry : inputs.entrySet()) {
-                AssetSignature sign = entry.getKey();
-                double inputVal = entry.getValue();
-                inputMap.put(StringUtil.repeats(String.valueOf(ChatColor.WHITE), i++), String.format("&7%-10s &c%.2f&8/&6s",
-                        sign, inputVal));
-            }
+            inputs.forEach((sign, inputVal) -> inputMap.put(sign, String.format("&c%.2f&8/&6s", inputVal)));
 
-            i = 0;
             Map<Object, Object> outputMap = new LinkedHashMap<>();
             map.put(RealEconomyLangs.Business_Output, outputMap);
-            for (Map.Entry<AssetSignature, Double> entry : outputs.entrySet()) {
-                AssetSignature sign = entry.getKey();
-                double outputVal = entry.getValue();
-                outputMap.put(StringUtil.repeats(String.valueOf(ChatColor.WHITE), i++), String.format("&7%-10s &a%.2f&8/&6s",
-                        sign, outputVal));
-            }
+            outputs.forEach((sign, outputVal) -> outputMap.put(sign, String.format("&a%.2f&8/&6s", outputVal)));
         }
 
         return map;

@@ -1,8 +1,9 @@
 package io.github.wysohn.realeconomy.manager.banking.bank;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
+import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
-import io.github.wysohn.rapidframework3.interfaces.language.ILang;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.main.Metrics;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
@@ -113,8 +114,8 @@ public class CentralBank extends AbstractBank {
     }
 
     @Override
-    public Map<ILang, Object> properties() {
-        Map<ILang, Object> properties = super.properties();
+    public Map<Object, Object> properties(ManagerLanguage lang, ICommandSender sender) {
+        Map<Object, Object> properties = super.properties(lang, sender);
         properties.put(RealEconomyLangs.Bank_Liquidity, Metrics.df.format(liquidity) + " " + getBaseCurrency());
         properties.put(RealEconomyLangs.Bank_Papers, numPapers.toBigInteger().toString());
         properties.put(RealEconomyLangs.Bank_PaperUnlimited, limitlessPapers ? "&aO" : "&cX");
