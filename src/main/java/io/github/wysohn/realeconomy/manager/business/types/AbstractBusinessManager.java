@@ -70,6 +70,8 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
 
     @Override
     public void enable() throws Exception {
+        super.enable();
+
         if (!BusinessMediator.getTierConfigs().get(getTierName()).isPresent()) {
             DefaultConfigBuilder builder = new DefaultConfigBuilder(BusinessMediator.getTierConfigs(), listingManager);
             addDefaultConfig(builder);
