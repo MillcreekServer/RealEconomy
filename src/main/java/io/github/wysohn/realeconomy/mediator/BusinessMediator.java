@@ -333,7 +333,7 @@ public class BusinessMediator extends Mediator {
         public void run() {
             BUSINESSES_PROVIDERS.forEach((tier, provider) ->
                     provider.keys().forEach(key -> Optional.ofNullable(provider.getBusiness(key))
-                            .ifPresent(IBusiness::init)));
+                            .ifPresent(IBusiness::update)));
         }
     }
 
