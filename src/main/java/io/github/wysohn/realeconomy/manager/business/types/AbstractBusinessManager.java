@@ -193,9 +193,12 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
             if (tierConfigs.get(name + "." + ITier.DEFAULT_SUB_TYPE).isPresent())
                 return;
 
-            tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.REQUIREMENT, requirement);
-            tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.INPUT, input);
-            tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.OUTPUT, output);
+            requirement.forEach((uuidStr, amount) ->
+                    tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.REQUIREMENT + "." + uuidStr, amount));
+            input.forEach((uuidStr, amount) ->
+                    tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.INPUT + "." + uuidStr, amount));
+            output.forEach((uuidStr, amount) ->
+                    tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.OUTPUT + "." + uuidStr, amount));
             tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.TIME_TO_LIVE_MIN, timeToLiveMin);
             tierConfigs.put(name + "." + ITier.DEFAULT_SUB_TYPE + "." + TierAdapter.TIME_TO_LIVE_MAX, timeToLiveMax);
         }

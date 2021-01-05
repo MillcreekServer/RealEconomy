@@ -51,10 +51,7 @@ import io.github.wysohn.realeconomy.manager.user.UserManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import io.github.wysohn.realeconomy.mediator.BusinessMediator;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.Server;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -856,7 +853,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Business_Open_Ok);
                                 break;
                             default:
-                                sender.sendMessageRaw("&cUnknown problem.");
+                                sender.sendMessageRaw(ChatColor.RED + "Unknown problem.");
                                 break;
                         }
 
