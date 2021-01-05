@@ -5,7 +5,6 @@ import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.realeconomy.interfaces.business.tiers.ITier;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -89,11 +88,6 @@ public class TierAdapter implements ITier {
     }
 
     @Override
-    public void reload() throws Exception {
-        keyValueStorage.reload();
-    }
-
-    @Override
     public boolean verifySubType(String subType) {
         return keyValueStorage.get(section, subType).isPresent();
     }
@@ -107,30 +101,27 @@ public class TierAdapter implements ITier {
     public TierInfoMap requirement(String subType) {
         Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));
-        Map<String, Object> requirementSection = keyValueStorage.get(subSection, REQUIREMENT)
-                .map(Map.class::cast)
-                .orElseThrow(() -> new RuntimeException(REQUIREMENT + " section is missing in " + subSection));
-        return new TierInfoMap(requirementSection);
+        Object requirementSection = keyValueStorage.get(subSection, REQUIREMENT).orElseThrow(() ->
+                new RuntimeException(REQUIREMENT + " section is missing in " + subSection));
+        return new TierInfoMap(keyValueStorage, requirementSection);
     }
 
     @Override
     public TierInfoMap inputs(String subType) {
         Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));
-        Map<String, Object> inputSection = keyValueStorage.get(subSection, INPUT)
-                .map(Map.class::cast)
-                .orElseThrow(() -> new RuntimeException(INPUT + " section is missing in " + subSection));
-        return new TierInfoMap(inputSection);
+        Object inputSection = keyValueStorage.get(subSection, INPUT).orElseThrow(() ->
+                new RuntimeException(INPUT + " section is missing in " + subSection));
+        return new TierInfoMap(keyValueStorage, inputSection);
     }
 
     @Override
     public TierInfoMap outputs(String subType) {
         Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));
-        Map<String, Object> outputSection = keyValueStorage.get(subSection, OUTPUT)
-                .map(Map.class::cast)
-                .orElseThrow(() -> new RuntimeException(OUTPUT + " section is missing in " + subSection));
-        return new TierInfoMap(outputSection);
+        Object outputSection = keyValueStorage.get(subSection, OUTPUT).orElseThrow(() ->
+                new RuntimeException(OUTPUT + " section is missing in " + subSection));
+        return new TierInfoMap(keyValueStorage, outputSection);
     }
 
     @Override
