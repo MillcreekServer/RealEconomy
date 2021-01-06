@@ -84,10 +84,13 @@ public class BusinessMediator extends Mediator {
     }
 
     @Override
-    public void enable() throws Exception {
+    public void preload() throws Exception {
         tierConfigs.getKeys(false).forEach(name ->
                 TierRegistry.register(new TierAdapter(name, tierConfigs)));
+    }
 
+    @Override
+    public void enable() throws Exception {
         enabled = true;
         BUSINESS_CONTEXT_HANDLERS.sort(Comparator.comparingInt(IBusinessContextHandler::priority));
 

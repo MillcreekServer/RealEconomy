@@ -960,7 +960,9 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                     private void sendTierDetails(User user, ITier tier, boolean useHover) {
                         if (useHover) {
-                            MessageBuilder builder = MessageBuilder.forMessage(tier.displayName(user));
+                            MessageBuilder builder = MessageBuilder.forMessage("&d[")
+                                    .append(tier.displayName(user))
+                                    .append("&d]");
                             Optional.ofNullable(tier.description(user))
                                     .ifPresent(arr -> {
                                         StringBuilder desc = new StringBuilder();
