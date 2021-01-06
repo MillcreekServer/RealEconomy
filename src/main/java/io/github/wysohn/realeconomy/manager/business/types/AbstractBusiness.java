@@ -366,18 +366,24 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     }
 
     private void transferAssets(Map<AssetSignature, Double> required, Map<AssetSignature, Double> destination) {
+        boolean update = false;
         // remove from asset store and fill progress
-        required.forEach((sign, requiredAmount) -> {
+        for (Map.Entry<AssetSignature, Double> entry : required.entrySet()) {
+            AssetSignature sign = entry.getKey();
+            Double requiredAmount = entry.getValue();
             double current = destination.getOrDefault(sign, 0.0);
-            AssetUtil.removeAsset(ownedAssets,
-                    sign,
-                    requiredAmount - current).forEach(removed -> {
+            for (Asset removed : AssetUtil.removeAsset(ownedAssets, sign, requiredAmount - current)) {
                 double updated = destination.getOrDefault(sign, 0.0) + removed.getNumericalMeasure();
                 destination.put(sign, updated);
-            });
-        });
 
-        notifyObservers();
+                if (current == updated) {
+                    update = true;
+                }
+            }
+        }
+
+        if (update)
+            notifyObservers();
     }
 
     private boolean handleDuration(Map<AssetSignature, Double> required, Map<AssetSignature, Double> destination) {
@@ -392,27 +398,33 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     }
 
     private void produceOutput() {
-        // adjust amount in production storage
-        inputs.forEach((sign, required) -> {
-            if (required <= 0.0)
-                return;
-
-            double current = productionStorage.getOrDefault(sign, 0.0);
-            productionStorage.put(sign, current - required);
-        });
+        boolean update = false;
 
         // produce outputs
-        outputs.forEach((sign, amount) -> {
+        for (Map.Entry<AssetSignature, Double> entry : outputs.entrySet()) {
+            AssetSignature sign = entry.getKey();
+            Double amount = entry.getValue();
             if (amount <= 0.0)
-                return;
+                continue;
+
+            double required = inputs.getOrDefault(sign, 0.0);
+            if (required <= 0.0)
+                continue;
+
+            // adjust amount in production storage
+            double current = productionStorage.getOrDefault(sign, 0.0);
+            productionStorage.put(sign, current - required);
 
             Asset asset = sign.asset(new HashMap<String, Object>() {{
                 put(AssetSignature.KEY_NUMERIC_MEASURE, amount);
             }});
             AssetUtil.addAsset(ownedAssets, asset);
-        });
 
-        notifyObservers();
+            update = true;
+        }
+
+        if (update)
+            notifyObservers();
     }
 
     @Override
