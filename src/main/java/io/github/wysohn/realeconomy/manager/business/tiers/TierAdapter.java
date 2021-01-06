@@ -40,12 +40,16 @@ public class TierAdapter implements ITier {
 
     private final String name;
     private final IKeyValueStorage keyValueStorage;
-    private final Object section;
 
     public TierAdapter(String name, IKeyValueStorage keyValueStorage) {
         this.name = name;
         this.keyValueStorage = keyValueStorage;
-        this.section = keyValueStorage.get(name).orElseThrow(() ->
+
+        getSection();
+    }
+
+    private Object getSection() {
+        return keyValueStorage.get(name).orElseThrow(() ->
                 new RuntimeException("config section for " + name + " does not exist in " + keyValueStorage));
     }
 
@@ -57,8 +61,8 @@ public class TierAdapter implements ITier {
     public String displayName(ICommandSender sender) {
         String defaultKey = DISPLAY_NAME + ".default";
 
-        if (!keyValueStorage.get(section, defaultKey).isPresent())
-            keyValueStorage.put(section, defaultKey, "&6" + name);
+        if (!keyValueStorage.get(getSection(), defaultKey).isPresent())
+            keyValueStorage.put(getSection(), defaultKey, "&6" + name);
 
         return keyValueStorage.get(DISPLAY_NAME + "." + sender.getLocale().getLanguage())
                 .filter(String.class::isInstance)
@@ -94,17 +98,17 @@ public class TierAdapter implements ITier {
 
     @Override
     public boolean verifySubType(String subType) {
-        return keyValueStorage.get(section, subType).isPresent();
+        return keyValueStorage.get(getSection(), subType).isPresent();
     }
 
     @Override
     public Set<String> listSubTypes() {
-        return keyValueStorage.getKeys(section, false);
+        return keyValueStorage.getKeys(getSection(), false);
     }
 
     @Override
     public TierInfoMap requirement(String subType) {
-        Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
+        Object subSection = keyValueStorage.get(getSection(), subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));
         Object requirementSection = keyValueStorage.get(subSection, REQUIREMENT).orElseThrow(() ->
                 new RuntimeException(REQUIREMENT + " section is missing in " + subSection));
@@ -113,7 +117,7 @@ public class TierAdapter implements ITier {
 
     @Override
     public TierInfoMap inputs(String subType) {
-        Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
+        Object subSection = keyValueStorage.get(getSection(), subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));
         Object inputSection = keyValueStorage.get(subSection, INPUT).orElseThrow(() ->
                 new RuntimeException(INPUT + " section is missing in " + subSection));
@@ -122,7 +126,7 @@ public class TierAdapter implements ITier {
 
     @Override
     public TierInfoMap outputs(String subType) {
-        Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
+        Object subSection = keyValueStorage.get(getSection(), subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));
         Object outputSection = keyValueStorage.get(subSection, OUTPUT).orElseThrow(() ->
                 new RuntimeException(OUTPUT + " section is missing in " + subSection));
@@ -131,7 +135,7 @@ public class TierAdapter implements ITier {
 
     @Override
     public long timeToLiveMin(String subType) {
-        Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
+        Object subSection = keyValueStorage.get(getSection(), subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));
 
         return keyValueStorage.get(subSection, TIME_TO_LIVE_MIN)
@@ -143,7 +147,7 @@ public class TierAdapter implements ITier {
 
     @Override
     public long timeToLiveMax(String subType) {
-        Object subSection = keyValueStorage.get(section, subType).orElseThrow(() ->
+        Object subSection = keyValueStorage.get(getSection(), subType).orElseThrow(() ->
                 new RuntimeException(subType + " section is missing."));
 
         return keyValueStorage.get(subSection, TIME_TO_LIVE_MAX)
