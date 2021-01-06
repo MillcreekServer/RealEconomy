@@ -400,20 +400,25 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     private void produceOutput() {
         boolean update = false;
 
+        // adjust amount in production storage
+        for (Map.Entry<AssetSignature, Double> e : inputs.entrySet()) {
+            AssetSignature key = e.getKey();
+            Double required = e.getValue();
+            if (required <= 0.0)
+                continue;
+
+            double current = productionStorage.getOrDefault(key, 0.0);
+            productionStorage.put(key, current - required);
+
+            update = true;
+        }
+
         // produce outputs
         for (Map.Entry<AssetSignature, Double> entry : outputs.entrySet()) {
             AssetSignature sign = entry.getKey();
             Double amount = entry.getValue();
             if (amount <= 0.0)
                 continue;
-
-            double required = inputs.getOrDefault(sign, 0.0);
-            if (required <= 0.0)
-                continue;
-
-            // adjust amount in production storage
-            double current = productionStorage.getOrDefault(sign, 0.0);
-            productionStorage.put(sign, current - required);
 
             Asset asset = sign.asset(new HashMap<String, Object>() {{
                 put(AssetSignature.KEY_NUMERIC_MEASURE, amount);
