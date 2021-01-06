@@ -972,8 +972,13 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     });
                             getMain().lang().sendRawMessage(user, builder.build());
                         } else {
-                            user.sendMessageRaw(tier.displayName(user));
-                            Optional.ofNullable(tier.description(user)).ifPresent(user::sendMessageRaw);
+                            getMain().lang().sendRawMessage(user, MessageBuilder.forMessage(tier.displayName(user))
+                                    .build());
+                            Optional.ofNullable(tier.description(user)).ifPresent(arr -> {
+                                for (String s : arr) {
+                                    getMain().lang().sendRawMessage(user, MessageBuilder.forMessage(s).build());
+                                }
+                            });
                         }
                     }
                 }));
