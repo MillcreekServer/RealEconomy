@@ -67,7 +67,7 @@ public class TierAdapter implements ITier {
         return keyValueStorage.get(DISPLAY_NAME + "." + sender.getLocale().getLanguage())
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
-                .orElseGet(() -> keyValueStorage.get(defaultKey)
+                .orElseGet(() -> keyValueStorage.get(getSection(), defaultKey)
                         .filter(String.class::isInstance)
                         .map(String.class::cast)
                         .orElseThrow(RuntimeException::new));
@@ -76,14 +76,14 @@ public class TierAdapter implements ITier {
     @Override
     public String[] description(ICommandSender sender) {
         String defaultKey = DESCRIPTION + ".default";
-        if (!keyValueStorage.get(defaultKey).isPresent()) {
+        if (!keyValueStorage.get(getSection(), defaultKey).isPresent()) {
             return null;
         } else {
             return keyValueStorage.get(DESCRIPTION + "." + sender.getLocale().getLanguage())
                     .filter(List.class::isInstance)
                     .map(List.class::cast)
                     .map(list -> ((List<String>) list).toArray(new String[0]))
-                    .orElseGet(() -> keyValueStorage.get(defaultKey)
+                    .orElseGet(() -> keyValueStorage.get(getSection(), defaultKey)
                             .filter(List.class::isInstance)
                             .map(List.class::cast)
                             .map(list -> ((List<String>) list).toArray(new String[0]))
