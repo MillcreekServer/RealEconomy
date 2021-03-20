@@ -101,11 +101,13 @@ public class MiningBusiness extends AbstractBusiness {
             double labourPoints = SPECIAL_BLOCKS.getOrDefault(block.getType(), 0.1);
 
             // queue ore regen and delete the block manually
-            regenQueue.put(new SimpleLocation(location.getWorld().getName(),
-                    location.getBlockX(),
-                    location.getBlockY(),
-                    location.getBlockZ()), new OreInfo(block.getType(), System.currentTimeMillis()));
-            event.getBlock().setType(Material.AIR);
+            if (SPECIAL_BLOCKS.containsKey(block.getType())) {
+                regenQueue.put(new SimpleLocation(location.getWorld().getName(),
+                        location.getBlockX(),
+                        location.getBlockY(),
+                        location.getBlockZ()), new OreInfo(block.getType(), System.currentTimeMillis()));
+                event.getBlock().setType(Material.AIR);
+            }
 
             // increase labour points
             addAsset(new LabourSignature().asset(labourPoints));
