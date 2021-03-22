@@ -16,7 +16,7 @@ import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
 import io.github.wysohn.rapidframework3.testmodules.MockSerializerModule;
 import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
 import io.github.wysohn.rapidframework3.utils.Pair;
-import io.github.wysohn.realeconomy.inject.module.OrderPlacementHandlerModule;
+import io.github.wysohn.realeconomy.inject.module.OrderQueryModule;
 import io.github.wysohn.realeconomy.inject.module.OrderSQLModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
@@ -55,7 +55,7 @@ public class AssetListingManagerTest {
         moduleList.add(new PluginInfoModule("test", "test", "test"));
         moduleList.add(new TypeAsserterModule());
         moduleList.add(new OrderSQLModule());
-        moduleList.add(new OrderPlacementHandlerModule());
+        moduleList.add(new OrderQueryModule());
         moduleList.add(new MockLoggerModule());
         moduleList.add(new MockConfigModule(Pair.of(CurrencyManager.KEY_MAX_LEN, 3)));
         moduleList.add(new MockSerializerModule(mockSerializer));
@@ -232,7 +232,9 @@ public class AssetListingManagerTest {
         }
 
         @Override
-        public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
+        public void handleTransactionResult(TradeInfo info,
+                                            OrderType type,
+                                            TradeMediator.TradeResult result) {
 
         }
 

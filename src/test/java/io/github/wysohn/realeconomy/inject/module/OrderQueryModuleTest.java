@@ -12,7 +12,7 @@ import io.github.wysohn.rapidframework3.testmodules.MockConfigModule;
 import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
-import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderQueryModule;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.listing.OrderInfo;
@@ -35,12 +35,12 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.*;
 
-public class OrderPlacementHandlerModuleTest {
+public class OrderQueryModuleTest {
     List<Module> moduleList = new LinkedList<>();
 
     @Before
     public void init() {
-        moduleList.add(new OrderPlacementHandlerModule());
+        moduleList.add(new OrderQueryModule());
         moduleList.add(new OrderSQLModule());
         moduleList.add(new MockConfigModule(Pair.of("database.type", "sqlite")));
         moduleList.add(new MockShutdownModule(() -> {
@@ -74,8 +74,8 @@ public class OrderPlacementHandlerModuleTest {
             }
         });
         new File(folder, "orders.db").delete();
-        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
-                .getInstance(IOrderPlacementHandler.class);
+        IOrderQueryModule orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderQueryModule.class);
 
         UUID issuerUuid = UUID.randomUUID();
         IOrderIssuer orderIssuer = new OrderIssuer(issuerUuid);
@@ -136,8 +136,8 @@ public class OrderPlacementHandlerModuleTest {
             }
         });
         new File(folder, "orders.db").delete();
-        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
-                .getInstance(IOrderPlacementHandler.class);
+        IOrderQueryModule orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderQueryModule.class);
 
         UUID issuerUuid = UUID.randomUUID();
         IOrderIssuer orderIssuer = new OrderIssuer(issuerUuid);
@@ -198,8 +198,8 @@ public class OrderPlacementHandlerModuleTest {
             }
         });
         new File(folder, "orders.db").delete();
-        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
-                .getInstance(IOrderPlacementHandler.class);
+        IOrderQueryModule orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderQueryModule.class);
 
         UUID issuerUuid = UUID.randomUUID();
         IOrderIssuer orderIssuer = new OrderIssuer(issuerUuid);
@@ -246,8 +246,8 @@ public class OrderPlacementHandlerModuleTest {
             }
         });
         new File(folder, "orders.db").delete();
-        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
-                .getInstance(IOrderPlacementHandler.class);
+        IOrderQueryModule orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderQueryModule.class);
 
         UUID issuerUuid = UUID.randomUUID();
         IOrderIssuer orderIssuer = new OrderIssuer(issuerUuid);
@@ -310,8 +310,8 @@ public class OrderPlacementHandlerModuleTest {
             }
         });
         new File(folder, "orders.db").delete();
-        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
-                .getInstance(IOrderPlacementHandler.class);
+        IOrderQueryModule orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderQueryModule.class);
 
         UUID listingUuid = UUID.randomUUID();
         IOrderIssuer orderIssuer = new OrderIssuer(UUID.randomUUID());
@@ -404,8 +404,8 @@ public class OrderPlacementHandlerModuleTest {
             }
         });
         new File(folder, "orders.db").delete();
-        IOrderPlacementHandler orderPlacementHandler = Guice.createInjector(moduleList)
-                .getInstance(IOrderPlacementHandler.class);
+        IOrderQueryModule orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderQueryModule.class);
 
         UUID listingUuid1 = UUID.randomUUID();
         UUID listingUuid2 = UUID.randomUUID();
@@ -582,7 +582,9 @@ public class OrderPlacementHandlerModuleTest {
         }
 
         @Override
-        public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
+        public void handleTransactionResult(TradeInfo info,
+                                            OrderType type,
+                                            TradeMediator.TradeResult result) {
 
         }
 

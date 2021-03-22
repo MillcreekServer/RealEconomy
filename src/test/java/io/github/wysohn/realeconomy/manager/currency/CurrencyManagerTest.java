@@ -11,7 +11,7 @@ import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.testmodules.*;
 import io.github.wysohn.rapidframework3.utils.Pair;
-import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderQueryModule;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import org.junit.Before;
@@ -56,8 +56,8 @@ public class CurrencyManagerTest extends AbstractBukkitManagerTest {
             }
 
             @Provides
-            IOrderPlacementHandler orderPlacementHandler() {
-                return mock(IOrderPlacementHandler.class);
+            IOrderQueryModule orderPlacementHandler() {
+                return mock(IOrderQueryModule.class);
             }
 
             @Provides

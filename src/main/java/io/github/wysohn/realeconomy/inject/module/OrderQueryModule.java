@@ -13,11 +13,12 @@ import io.github.wysohn.rapidframework3.utils.sql.SQLSession;
 import io.github.wysohn.rapidframework3.utils.trie.StringListTrie;
 import io.github.wysohn.realeconomy.inject.annotation.OrderSQL;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
-import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderQueryModule;
 import io.github.wysohn.realeconomy.main.Metrics;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.listing.PricePoint;
 import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
 
 import java.io.IOException;
@@ -28,13 +29,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class OrderPlacementHandlerModule extends AbstractModule {
+public class OrderQueryModule extends AbstractModule {
     @Provides
     @Singleton
-    IOrderPlacementHandler orderPlacementHandle(@OrderSQL SQLSession orderSql,
-                                                IPluginResourceProvider resourceProvider)
+    IOrderQueryModule orderPlacementHandle(@OrderSQL SQLSession orderSql,
+                                           IPluginResourceProvider resourceProvider)
             throws IOException {
-        OrderPlacementHandler orderPlacementHandler = new OrderPlacementHandler(orderSql);
+        OrderQueryModuleImpl orderPlacementHandler = new OrderQueryModuleImpl(orderSql);
         orderPlacementHandler.INSERT_BUY = Metrics.resourceToString(resourceProvider, "insert_buy_order.sql");
         orderPlacementHandler.INSERT_SELL = Metrics.resourceToString(resourceProvider, "insert_sell_order.sql");
         orderPlacementHandler.INSERT_CATEGORY = Metrics.resourceToString(resourceProvider, "insert_category.sql");
@@ -54,6 +55,12 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 = Metrics.resourceToString(resourceProvider, "select_sell_orders.sql");
         orderPlacementHandler.SELECT_SELL_ORDERS_ALL
                 = Metrics.resourceToString(resourceProvider, "select_sell_orders_all.sql");
+        orderPlacementHandler.SELECT_PRICE_TREND
+                = Metrics.resourceToString(resourceProvider, "select_price_trend.sql");
+        orderPlacementHandler.SELECT_PRICE_TREND_HIGHEST
+                = Metrics.resourceToString(resourceProvider, "select_price_trend_highest.sql");
+        orderPlacementHandler.SELECT_PRICE_TREND_LOWEST
+                = Metrics.resourceToString(resourceProvider, "select_price_trend_lowest.sql");
 
         List<Pair<String, Integer>> list = orderSql.query(orderPlacementHandler.SELECT_CATEGORIES, pstmt -> {
         }, rs -> {
@@ -77,7 +84,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         return orderPlacementHandler;
     }
 
-    private static class OrderPlacementHandler implements IOrderPlacementHandler {
+    private static class OrderQueryModuleImpl implements IOrderQueryModule {
         private final Map<String, Integer> categoryIdMap = new HashMap<>();
         private final StringListTrie categoryTrie = new StringListTrie();
 
@@ -100,8 +107,11 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         private String SELECT_MATCH_ORDERS;
         private String SELECT_SELL_ORDERS;
         private String SELECT_SELL_ORDERS_ALL;
+        private String SELECT_PRICE_TREND;
+        private String SELECT_PRICE_TREND_HIGHEST;
+        private String SELECT_PRICE_TREND_LOWEST;
 
-        public OrderPlacementHandler(SQLSession ordersSession) {
+        public OrderQueryModuleImpl(SQLSession ordersSession) {
             this.ordersSession = ordersSession;
         }
 
@@ -181,7 +191,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                 }
 
                 return null;
-            }).stream().findFirst().orElse(null);
+            }).stream().filter(Objects::nonNull).findFirst().orElse(null);
         }
 
         @Override
@@ -269,6 +279,54 @@ public class OrderPlacementHandlerModule extends AbstractModule {
         }
 
         @Override
+        public PricePoint getHighestPoint(int daysPeriod, UUID currencyUuid, UUID listingUuid) {
+            String sql = SELECT_PRICE_TREND_HIGHEST;
+
+            List<PricePoint> points = ordersSession.query(sql, pstmt -> {
+                try {
+                    pstmt.setInt(1, daysPeriod);
+                    pstmt.setString(2, currencyUuid.toString());
+                    pstmt.setString(3, listingUuid.toString());
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, resultSet -> {
+                try {
+                    return PricePoint.read(resultSet);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    return null;
+                }
+            });
+
+            return points.stream().filter(Objects::nonNull).findFirst().orElse(null);
+        }
+
+        @Override
+        public PricePoint getLowestPoint(int daysPeriod, UUID currencyUuid, UUID listingUuid) {
+            String sql = SELECT_PRICE_TREND_LOWEST;
+
+            List<PricePoint> points = ordersSession.query(sql, pstmt -> {
+                try {
+                    pstmt.setInt(1, daysPeriod);
+                    pstmt.setString(2, currencyUuid.toString());
+                    pstmt.setString(3, listingUuid.toString());
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, resultSet -> {
+                try {
+                    return PricePoint.read(resultSet);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    return null;
+                }
+            });
+
+            return points.stream().filter(Objects::nonNull).findFirst().orElse(null);
+        }
+
+        @Override
         public void peekMatchingOrders(Consumer<TradeInfo> consumer) {
             String sql = SELECT_MATCH_ORDERS;
 
@@ -283,6 +341,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
             });
 
             consumer.accept(infos.stream()
+                    .filter(Objects::nonNull)
                     .findFirst()
                     .orElse(null));
         }
@@ -379,7 +438,7 @@ public class OrderPlacementHandlerModule extends AbstractModule {
                     }
                 });
 
-                return out.stream().findFirst().orElse(0);
+                return out.stream().filter(Objects::nonNull).findFirst().orElse(0);
             }
 
             @Override

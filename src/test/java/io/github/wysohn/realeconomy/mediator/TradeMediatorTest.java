@@ -7,6 +7,8 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.ProvidesIntoSet;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
+import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
+import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
@@ -27,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.ref.WeakReference;
+import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -42,17 +45,17 @@ public class TradeMediatorTest {
     private ManagerConfig config;
 
     @Before
-    public void init() {
+    public void init() throws Exception{
         config = mock(ManagerConfig.class);
 
-        FileConfiguration subConfig = new YamlConfiguration();
-        subConfig.set(Material.APPLE.name(), "food");
-        subConfig.set(Material.DIAMOND.name(), "ore");
+        FileConfiguration materialsSec = new YamlConfiguration();
+        materialsSec.set(Material.APPLE.name(), "food");
+        materialsSec.set(Material.DIAMOND.name(), "ore");
 
-        when(config.get(eq(TradeMediator.MATERIALS))).thenReturn(Optional.of(subConfig));
-        when(config.get(eq(subConfig), anyString())).then(invocation -> {
+        when(config.get(eq(TradeMediator.MATERIALS))).thenReturn(Optional.of(materialsSec));
+        when(config.get(eq(materialsSec), anyString())).then(invocation -> {
             String key = (String) invocation.getArguments()[1];
-            return Optional.ofNullable(subConfig.get(key));
+            return Optional.ofNullable(materialsSec.get(key));
         });
         when(config.get(eq(TradeMediator.DENY_LIST))).thenReturn(Optional.empty());
 
@@ -61,6 +64,18 @@ public class TradeMediatorTest {
             @Provides
             ManagerConfig config() {
                 return config;
+            }
+
+            @Provides
+            @MaxCapital
+            BigDecimal max() {
+                return BigDecimal.valueOf(Double.MAX_VALUE);
+            }
+
+            @Provides
+            @MinCapital
+            BigDecimal min() {
+                return BigDecimal.valueOf(-Double.MAX_VALUE);
             }
         });
     }

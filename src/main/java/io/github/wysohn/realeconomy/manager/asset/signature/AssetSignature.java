@@ -19,12 +19,26 @@ public abstract class AssetSignature {
 
     public abstract AssetSignature clone();
 
+    /**
+     * Create a new Asset based on the signature. Uses {@link #KEY_NUMERIC_MEASURE} as the
+     * key
+     *
+     * @param numericMeasure Arbitrary numeric value. For item, this is integer, but it can be other
+     *                       measurement depending on the signature.
+     * @return the newly created asset
+     */
     public Asset asset(Double numericMeasure) {
         return asset(new HashMap<String, Object>() {{
             put(KEY_NUMERIC_MEASURE, numericMeasure);
         }});
     }
 
+    /**
+     * Create a new Asset based on the signature. In here, you can freely define the metaData.
+     *
+     * @param metaData the metaData; the usage of it differ depending on the signature
+     * @return the newly created asset
+     */
     public abstract Asset asset(Map<String, Object> metaData);
 
     public abstract Message[] toMessage(ManagerLanguage lang, ICommandSender sender);

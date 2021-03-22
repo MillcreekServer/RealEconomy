@@ -8,8 +8,6 @@ import io.github.wysohn.rapidframework3.interfaces.IPluginObject;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
 import io.github.wysohn.rapidframework3.utils.Validation;
-import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
-import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
 import io.github.wysohn.realeconomy.interfaces.banking.IAssetHolder;
@@ -45,8 +43,6 @@ public class BankingMediator extends Mediator {
     }
 
     private final ManagerConfig config;
-    private final BigDecimal maxCapital;
-    private final BigDecimal minCapital;
     private final CurrencyManager currencyManager;
     private final CentralBankingManager centralBankingManager;
 
@@ -55,13 +51,9 @@ public class BankingMediator extends Mediator {
     @Inject
     public BankingMediator(
             ManagerConfig config,
-            @MaxCapital BigDecimal maxCapital,
-            @MinCapital BigDecimal minCapital,
             CurrencyManager currencyManager,
             CentralBankingManager centralBankingManager) {
         this.config = config;
-        this.maxCapital = maxCapital;
-        this.minCapital = minCapital;
         this.currencyManager = currencyManager;
         this.centralBankingManager = centralBankingManager;
     }

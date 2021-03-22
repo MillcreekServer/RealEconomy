@@ -17,6 +17,7 @@ import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import io.github.wysohn.realeconomy.manager.listing.*;
+import io.github.wysohn.realeconomy.manager.simulation.MarketSimulationManager;
 import org.bukkit.Material;
 
 import javax.inject.Inject;
@@ -38,6 +39,7 @@ public class TradeMediator extends Mediator {
     public static final String MATERIALS = "materials";
     public static final String MATERIAL_CATEGORY_DEFAULT = "item";
     public static final String DENY_LIST = "denyItemsList";
+    public static final double PRICE_CHANGE_PCT = 0.01;
 
     private final ExecutorService tradeExecutor = Executors.newSingleThreadExecutor();
 
@@ -47,6 +49,7 @@ public class TradeMediator extends Mediator {
     private final ManagerConfig config;
     private final CurrencyManager currencyManager;
     private final AssetListingManager assetListingManager;
+    private final MarketSimulationManager marketSimulationManager;
     private final Set<IBankUserProvider> bankUserProviders;
 
     TradeBroker tradeBroker;
@@ -56,17 +59,21 @@ public class TradeMediator extends Mediator {
                          ManagerConfig config,
                          CurrencyManager currencyManager,
                          AssetListingManager assetListingManager,
+                         MarketSimulationManager marketSimulationManager,
                          Set<IBankUserProvider> bankUserProviders) {
         this.logger = logger;
         this.config = config;
         this.currencyManager = currencyManager;
         this.assetListingManager = assetListingManager;
+        this.marketSimulationManager = marketSimulationManager;
         this.bankUserProviders = bankUserProviders;
     }
 
     @Override
     public void enable() throws Exception {
-
+        // make sure that all agents have their accounts open
+        marketSimulationManager.getAgents().forEach(agent ->
+                BankingMediator.getServerBank().putAccount(agent, BankingTypeRegistry.TRADING));
     }
 
     @Override
@@ -122,13 +129,14 @@ public class TradeMediator extends Mediator {
         logger.info("Done");
 
         tradeBroker.interrupt();
+
     }
 
-    public DataProvider<OrderInfo> getPrice() {
-        return getPrice(null);
+    public DataProvider<OrderInfo> getPrices() {
+        return getPrices(null);
     }
 
-    public DataProvider<OrderInfo> getPrice(String category) {
+    public DataProvider<OrderInfo> getPrices(String category) {
         return assetListingManager.getListedOrderProvider(category);
     }
 

@@ -14,7 +14,7 @@ import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.rapidframework3.utils.trie.StringListTrie;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
-import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderQueryModule;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 
@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  */
 @Singleton
 public class AssetListingManager extends AbstractManagerElementCaching<UUID, AssetListing> {
-    private final IOrderPlacementHandler orderPlacementHandler;
+    private final IOrderQueryModule orderQueryModule;
     private final Map<AssetSignature, UUID> signatureUUIDMap = new HashMap<>();
     private final ITaskSupervisor taskSupervisor;
 
@@ -55,10 +55,10 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                                ISerializer serializer,
                                ITypeAsserter asserter,
                                Injector injector,
-                               IOrderPlacementHandler orderPlacementHandler,
+                               IOrderQueryModule orderQueryModule,
                                ITaskSupervisor taskSupervisor) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, AssetListing.class);
-        this.orderPlacementHandler = orderPlacementHandler;
+        this.orderQueryModule = orderQueryModule;
         this.taskSupervisor = taskSupervisor;
     }
 
@@ -82,9 +82,9 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         super.enable();
         forEach(listing -> {
             signatureUUIDMap.put(listing.getSignature(), listing.getKey());
-            orderPlacementHandler.setListingName(listing.getKey(), listing.getSignature().toString());
+            orderQueryModule.setListingName(listing.getKey(), listing.getSignature().toString());
             try {
-                orderPlacementHandler.commitOrders();
+                orderQueryModule.commitOrders();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -124,9 +124,9 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
 
                     // process blocking operation asynchronously
                     taskSupervisor.async(() -> {
-                        orderPlacementHandler.setListingName(listing.getKey(), listing.getSignature().toString());
+                        orderQueryModule.setListingName(listing.getKey(), listing.getSignature().toString());
                         try {
-                            orderPlacementHandler.commitOrders();
+                            orderQueryModule.commitOrders();
                         } catch (SQLException ex) {
                             ex.printStackTrace();
                         }
@@ -134,6 +134,10 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 });
 
         return true;
+    }
+
+    public UUID signatureToUuid(AssetSignature sign){
+        return signatureUUIDMap.get(sign);
     }
 
     /**
@@ -184,7 +188,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
             throw new RuntimeException("Invalid signature.");
         AssetListing listing = fromSignature(signature);
 
-        orderPlacementHandler.addOrder(listing.getKey(),
+        orderQueryModule.addOrder(listing.getKey(),
                 signature.category(),
                 type,
                 issuer,
@@ -197,7 +201,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         Validation.validate(orderId, val -> val > 0, "orderId must be larger than 0.");
         Validation.assertNotNull(type);
 
-        return orderPlacementHandler.getInfo(orderId, type);
+        return orderQueryModule.getInfo(orderId, type);
     }
 
     public void editOrder(int orderId, OrderType type, int newAmount) throws SQLException {
@@ -205,7 +209,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         Validation.assertNotNull(type);
         Validation.validate(newAmount, val -> val > 0, "amount must be larger than 0. Maybe delete instead?");
 
-        orderPlacementHandler.editOrder(orderId,
+        orderQueryModule.editOrder(orderId,
                 type,
                 newAmount);
     }
@@ -228,7 +232,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         Validation.validate(orderId, val -> val > 0, "orderId must be larger than 0.");
         Validation.assertNotNull(type);
 
-        orderPlacementHandler.cancelOrder(orderId,
+        orderQueryModule.cancelOrder(orderId,
                 type,
                 callback);
     }
@@ -251,7 +255,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         Validation.assertNotNull(info);
         Validation.validate(amount, val -> val > 0, "amount must be larger than 0.");
 
-        orderPlacementHandler.logOrder(info.getListingUuid(),
+        orderQueryModule.logOrder(info.getListingUuid(),
                 info.getCategoryId(),
                 info.getSeller(),
                 info.getBuyer(),
@@ -261,11 +265,25 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
     }
 
     public void commitOrders() throws SQLException {
-        orderPlacementHandler.commitOrders();
+        orderQueryModule.commitOrders();
     }
 
     public void rollbackOrders() throws SQLException {
-        orderPlacementHandler.rollbackOrders();
+        orderQueryModule.rollbackOrders();
+    }
+
+    public PricePoint getHighestPrice(AssetSignature sign, Currency currency){
+        newListing(sign);
+        UUID uuid = signatureUUIDMap.get(sign);
+
+        return orderQueryModule.getHighestPoint(7, currency.getKey(), uuid);
+    }
+
+    public PricePoint getLowestPrice(AssetSignature sign, Currency currency){
+        newListing(sign);
+        UUID uuid = signatureUUIDMap.get(sign);
+
+        return orderQueryModule.getLowestPoint(7, currency.getKey(), uuid);
     }
 
     /**
@@ -277,11 +295,11 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
      * @param consumer
      */
     public void peekMatchingOrder(Consumer<TradeInfo> consumer) {
-        orderPlacementHandler.peekMatchingOrders(consumer);
+        orderQueryModule.peekMatchingOrders(consumer);
     }
 
     public StringListTrie getCategoryTrie() {
-        return orderPlacementHandler.categoryList();
+        return orderQueryModule.categoryList();
     }
 
     /**
@@ -293,6 +311,6 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
      *                          by {@link #getCategoryTrie()}
      */
     public DataProvider<OrderInfo> getListedOrderProvider(String category) {
-        return orderPlacementHandler.getListedOrderProvider(category);
+        return orderQueryModule.getListedOrderProvider(category);
     }
 }

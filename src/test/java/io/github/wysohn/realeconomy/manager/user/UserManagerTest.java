@@ -1,6 +1,5 @@
 package io.github.wysohn.realeconomy.manager.user;
 
-import com.google.inject.Module;
 import com.google.inject.*;
 import io.github.wysohn.rapidframework3.core.inject.module.PluginInfoModule;
 import io.github.wysohn.rapidframework3.core.inject.module.TaskSupervisorModule;
@@ -16,7 +15,7 @@ import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckBalance;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyCheckCurrency;
 import io.github.wysohn.realeconomy.inject.module.NamespacedKeyModule;
 import io.github.wysohn.realeconomy.interfaces.currency.ICurrencyOwnerProvider;
-import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderQueryModule;
 import io.github.wysohn.realeconomy.main.RealEconomy;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -135,8 +134,8 @@ public class UserManagerTest {
             }
 
             @Provides
-            IOrderPlacementHandler orderPlacementHandler() {
-                return mock(IOrderPlacementHandler.class);
+            IOrderQueryModule orderPlacementHandler() {
+                return mock(IOrderQueryModule.class);
             }
         });
     }

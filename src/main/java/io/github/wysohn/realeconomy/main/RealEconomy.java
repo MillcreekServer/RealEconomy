@@ -46,6 +46,7 @@ import io.github.wysohn.realeconomy.manager.listing.AssetListing;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.listing.OrderInfo;
 import io.github.wysohn.realeconomy.manager.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.simulation.MarketSimulationManager;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.manager.user.UserManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
@@ -87,6 +88,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 UserManager.class,
                 ManagerPlayerLocation.class,
                 ChunkClaimManager.class,
+                MarketSimulationManager.class,
 
                 MiningBusinessManager.class
         ));
@@ -117,7 +119,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
         pluginMainBuilder.addModule(new CapitalLimitModule());
         pluginMainBuilder.addModule(new OrderSQLModule());
         pluginMainBuilder.addModule(new NamespacedKeyModule());
-        pluginMainBuilder.addModule(new OrderPlacementHandlerModule());
+        pluginMainBuilder.addModule(new OrderQueryModule());
         pluginMainBuilder.addModule(new BlockGeneratorModule());
         pluginMainBuilder.addModule(new BusinessConstantsModule());
         pluginMainBuilder.addModule(new VisitStateProviderModule());
@@ -394,7 +396,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             IBankingType type) {
                         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
                                 // wallet -> bank account
-                                handleResult2(sender, bankingMediator.send(sender, sender, type, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
+                                handleResult(sender, bankingMediator.send(sender, sender, type, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
                     }
 
                     private void withdraw(User sender,
@@ -403,33 +405,10 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                           IBankingType type) {
                         // bank account -> wallet
                         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
-                                handleResult2(sender, bankingMediator.send(sender, type, sender, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
+                                handleResult(sender, bankingMediator.send(sender, type, sender, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
                     }
 
-//                    private void handleResult(ICommandSender sender, BankingMediator.Result result) {
-//                        switch (result) {
-//                            case NO_CURRENCY_SET:
-//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoCurrencySet);
-//                                break;
-//                            case NO_ACCOUNT:
-//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoAccount);
-//                                break;
-//                            case FAIL_WITHDRAW:
-//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_WithdrawRefused);
-//                                break;
-//                            case FAIL_DEPOSIT:
-//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_DepositRefused);
-//                                break;
-//                            case OK:
-//                                getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Success);
-//                                break;
-//                            default:
-//                                sender.sendMessageRaw("&cUndefined result: " + result);
-//                                break;
-//                        }
-//                    }
-
-                    private void handleResult2(ICommandSender sender, TransactionUtil.Result result) {
+                    private void handleResult(ICommandSender sender, TransactionUtil.Result result) {
                         switch (result) {
                             case NO_OWNER:
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoCurrencyOwner);
@@ -527,7 +506,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                             .orElse(null);
 
                     getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator -> {
-                        DataProvider<OrderInfo> dataProvider = tradeMediator.getPrice(category);
+                        DataProvider<OrderInfo> dataProvider = tradeMediator.getPrices(category);
                         //TODO use GUI
 
                         new Pagination<>(getMain().lang(),

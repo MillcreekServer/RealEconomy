@@ -13,7 +13,7 @@ import io.github.wysohn.rapidframework3.interfaces.plugin.ITaskSupervisor;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
 import io.github.wysohn.rapidframework3.utils.Validation;
-import io.github.wysohn.realeconomy.interfaces.trade.IOrderPlacementHandler;
+import io.github.wysohn.realeconomy.interfaces.trade.IOrderQueryModule;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 
 import javax.inject.Inject;
@@ -31,7 +31,7 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
     private final Map<String, UUID> codeMap = new HashMap<>();
 
     private final ManagerConfig config;
-    private final IOrderPlacementHandler orderPlacementHandler;
+    private final IOrderQueryModule orderPlacementHandler;
     private final ITaskSupervisor task;
 
     private DataProvider<Currency> currenciesProvider;
@@ -46,7 +46,7 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
             ISerializer serializer,
             ITypeAsserter asserter,
             Injector injector,
-            IOrderPlacementHandler orderPlacementHandler,
+            IOrderQueryModule orderPlacementHandler,
             ITaskSupervisor task) {
         super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, Currency.class);
         this.config = config;

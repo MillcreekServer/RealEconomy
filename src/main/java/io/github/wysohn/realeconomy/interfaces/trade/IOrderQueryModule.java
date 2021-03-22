@@ -4,10 +4,7 @@ import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.trie.StringListTrie;
 import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
-import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
-import io.github.wysohn.realeconomy.manager.listing.OrderInfo;
-import io.github.wysohn.realeconomy.manager.listing.OrderType;
-import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
+import io.github.wysohn.realeconomy.manager.listing.*;
 
 import java.sql.SQLException;
 import java.util.UUID;
@@ -18,7 +15,7 @@ import java.util.function.Consumer;
  * <p>
  * Methods must be implemented in a thread-safe way, yet they are expected to be blocking operation.
  */
-public interface IOrderPlacementHandler {
+public interface IOrderQueryModule {
     /**
      * Add order for sell or purchase.
      * <p>
@@ -163,6 +160,24 @@ public interface IOrderPlacementHandler {
      * @param shorter      short currency code
      */
     void setCurrencyName(UUID currencyUuid, String full, String shorter);
+
+    /**
+     * Get highest price point in given period
+     * @param daysPeriod number of past days to query
+     * @param currencyUuid uuid of currency
+     * @param listingUuid uuid of listing
+     * @return the price point; null if not found
+     */
+    PricePoint getHighestPoint(int daysPeriod, UUID currencyUuid, UUID listingUuid);
+
+    /**
+     * Get lowest price point in given period
+     * @param daysPeriod number of past days to query
+     * @param currencyUuid uuid of currency
+     * @param listingUuid uuid of listing
+     * @return the price point; null if not found
+     */
+    PricePoint getLowestPoint(int daysPeriod, UUID currencyUuid, UUID listingUuid);
 
     /**
      * Get DataProvider for the currently listed selling orders.

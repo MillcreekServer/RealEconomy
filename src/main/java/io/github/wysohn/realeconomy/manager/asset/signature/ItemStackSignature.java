@@ -33,6 +33,11 @@ public class ItemStackSignature extends PhysicalAssetSignature {
         this.itemStack.setAmount(1);
     }
 
+    public ItemStackSignature(Material material) {
+        this.itemStack = new ItemStack(Objects.requireNonNull(material));
+        this.itemStack.setAmount(1);
+    }
+
     @Override
     public String category() {
         return TradeMediator.MATERIAL_CATEGORY_MAP.get(itemStack.getType());
