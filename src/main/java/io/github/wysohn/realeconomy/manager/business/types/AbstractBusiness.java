@@ -115,6 +115,11 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     }
 
     @Override
+    public double countAsset(AssetSignature signature) {
+        return AssetUtil.countAsset(ownedAssets, signature);
+    }
+
+    @Override
     public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
         Collection<Asset> assets = AssetUtil.removeAsset(ownedAssets, signature, amount);
         if (assets.size() > 0)

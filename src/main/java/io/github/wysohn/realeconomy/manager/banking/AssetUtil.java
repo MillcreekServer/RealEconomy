@@ -26,6 +26,23 @@ public class AssetUtil {
     }
 
     /**
+     * Count total amount of assets it has. O(n)
+     * @param ownedAssets
+     * @param sign asset signature
+     * @return total amount of asset
+     */
+    public static double countAsset(List<Asset> ownedAssets, AssetSignature sign){
+        double count = 0;
+        for (Asset ownedAsset : ownedAssets) {
+            if(!Objects.equals(sign, ownedAsset.getSignature()))
+                continue;
+
+            count += ownedAsset.getNumericalMeasure();
+        }
+        return count;
+    }
+
+    /**
      * Remove the target asset from the list.
      *
      * @param ownedAssets target list

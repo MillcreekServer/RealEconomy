@@ -23,6 +23,11 @@ public class TradingAccount implements IAccount, IAssetHolder {
     }
 
     @Override
+    public double countAsset(AssetSignature signature) {
+        return AssetUtil.countAsset(ownedAssets, signature);
+    }
+
+    @Override
     public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
         return AssetUtil.removeAsset(ownedAssets, signature, amount);
     }

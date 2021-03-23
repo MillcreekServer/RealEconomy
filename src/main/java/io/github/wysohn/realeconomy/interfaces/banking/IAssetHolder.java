@@ -23,6 +23,17 @@ public interface IAssetHolder extends IEntitySnapshot {
     void addAsset(Asset asset);
 
     /**
+     * Count the amount of assets it has. Amount can mean different thing
+     * depending on the type of the AssetSignature. If it's an ItemSignature,
+     * it will be total amount of the item, but if it's some form of currency,
+     * it may return the total amount of currency.
+     *
+     * @param signature asset signature
+     * @return total amount
+     */
+    double countAsset(AssetSignature signature);
+
+    /**
      * Remove the asset from this holder.
      *
      * @param signature

@@ -73,4 +73,22 @@ public class AssetUtilTest {
         AssetUtil.removeAsset(ownedAssets, new ElectricitySignature(), 1088.443 - 392.44 + 10000.0 - 3000.0);
         assertEquals(0, AssetUtil.assetDataProvider(ownedAssets).size());
     }
+
+    @Test
+    public void countAsset() {
+        List<Asset> ownedAssets = new ArrayList<>();
+
+        ItemStackSignature itemStackSignature = new ItemStackSignature(new ItemStack(Material.DIAMOND));
+        ElectricitySignature electricitySignature = new ElectricitySignature();
+
+        AssetUtil.addAsset(ownedAssets, itemStackSignature.asset(33.0));
+        AssetUtil.addAsset(ownedAssets, electricitySignature.asset(1088.443));
+        AssetUtil.addAsset(ownedAssets, itemStackSignature.asset(55.0));
+        AssetUtil.addAsset(ownedAssets, itemStackSignature.asset(88.0));
+        AssetUtil.addAsset(ownedAssets, electricitySignature.asset(2058.43));
+        assertEquals(5, AssetUtil.assetDataProvider(ownedAssets).size());
+
+        assertEquals(33.0+55.0+88.0, AssetUtil.countAsset(ownedAssets, itemStackSignature), 0.00001);
+        assertEquals(1088.443+2058.43, AssetUtil.countAsset(ownedAssets, electricitySignature), 0.00001);
+    }
 }

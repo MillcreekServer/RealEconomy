@@ -401,6 +401,11 @@ public class BankingMediator extends Mediator {
         }
 
         @Override
+        public double countAsset(AssetSignature signature) {
+            return bank.countAsset(signature);
+        }
+
+        @Override
         public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
             return bank.removeAsset(signature, amount);
         }

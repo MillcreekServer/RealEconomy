@@ -5,6 +5,7 @@ import com.google.inject.Singleton;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
+import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.listing.OrderType;
@@ -50,7 +51,7 @@ public class SimulationMediator extends Mediator {
     public void load() throws Exception {
         if(marketSimulator != null)
             marketSimulator.interrupt();
-        marketSimulator = new MarketSimulator();
+        marketSimulator = new MarketSimulator(assetListingManager, logger, marketSimulationManager, tradeMediator, BankingMediator.getServerBank());
         marketSimulator.start();
     }
 
@@ -67,19 +68,32 @@ public class SimulationMediator extends Mediator {
         marketSimulator.join();
     }
 
-    public class MarketSimulator extends Thread {
-        public MarketSimulator() {
+    public static class MarketSimulator extends Thread {
+        private final CentralBank centralBank;
+        private final AssetListingManager assetListingManager;
+        private final Logger logger;
+        private final MarketSimulationManager marketSimulationManager;
+        private final TradeMediator tradeMediator;
+
+        public MarketSimulator(AssetListingManager assetListingManager,
+                               Logger logger,
+                               MarketSimulationManager marketSimulationManager,
+                               TradeMediator tradeMediator,
+                               CentralBank centralBank) {
+            this.centralBank = centralBank;
+            this.assetListingManager = assetListingManager;
+            this.logger = logger;
+            this.marketSimulationManager = marketSimulationManager;
+            this.tradeMediator = tradeMediator;
+
             setPriority(NORM_PRIORITY - 1);
             setName("RealEconomy - MarketSimulator");
         }
 
         @Override
         public void run() {
-            while (!interrupted()) {
-                agentBid();
-                agentWithdraw();
-                agentProduce();
-                agentAsk();
+            while (centralBank != null && !interrupted()) {
+                iterate();
 
                 try {
                     Thread.sleep(60 * 60 * 1000L); // hourly
@@ -90,11 +104,18 @@ public class SimulationMediator extends Mediator {
             }
         }
 
+        public void iterate(){
+            agentBid();
+            agentWithdraw();
+            agentProduce();
+            agentAsk();
+        }
+
         /**
          * Crate bids to purchase assets required to produce outcome
          */
         private void agentBid() {
-            Currency currency = BankingMediator.getServerBank().getBaseCurrency();
+            Currency currency = centralBank.getBaseCurrency();
 
             for (Agent agent : marketSimulationManager.getAgents()) {
                 // cancel previous bids first to not make duplicated orders
@@ -146,7 +167,7 @@ public class SimulationMediator extends Mediator {
          * Take needed resources from bank account
          */
         private void agentWithdraw() {
-            Currency currency = BankingMediator.getServerBank().getBaseCurrency();
+            Currency currency = centralBank.getBaseCurrency();
 
             for (Agent agent : marketSimulationManager.getAgents()) {
                 agent.neededResources().forEach(pair -> {
@@ -165,14 +186,14 @@ public class SimulationMediator extends Mediator {
          * Produce them and add it to the bank account of the agent.
          */
         private void agentProduce() {
-            Currency currency = BankingMediator.getServerBank().getBaseCurrency();
+            Currency currency = centralBank.getBaseCurrency();
 
             for (Agent agent : marketSimulationManager.getAgents()) {
                 agent.produce().forEach(pair -> {
                     AssetSignature sign = pair.key;
                     double amount = pair.value;
 
-                    currency.ownerBank().addAccountAsset(agent, sign.asset(amount));
+                    centralBank.addAccountAsset(agent, sign.asset(amount));
                 });
             }
         }
@@ -181,7 +202,7 @@ public class SimulationMediator extends Mediator {
          * Since agent now have the outcomes, try selling it to the market
          */
         private void agentAsk() {
-            Currency currency = BankingMediator.getServerBank().getBaseCurrency();
+            Currency currency = centralBank.getBaseCurrency();
 
             for (Agent agent : marketSimulationManager.getAgents()) {
                 // cancel previous asks first to not make duplicated orders
@@ -190,6 +211,12 @@ public class SimulationMediator extends Mediator {
 
                 BigDecimal unitCost = agent.getFixedUnitCost();
                 agent.getProductionTypes().forEach(sign -> {
+                    int currentStock = (int) Math.ceil(centralBank.countAccountAsset(agent, sign));
+
+                    // we don't have enough stock
+                    if(currentStock < 1)
+                        return;
+
                     // get current highest market price
                     BigDecimal highestPricing = Optional.of(assetListingManager)
                             .map(manager -> manager.getHighestPrice(sign, currency))
@@ -219,7 +246,7 @@ public class SimulationMediator extends Mediator {
                                 agent,
                                 unitCost.doubleValue(),
                                 currency,
-                                64);
+                                currentStock);
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
