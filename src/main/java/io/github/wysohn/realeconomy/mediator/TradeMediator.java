@@ -80,7 +80,11 @@ public class TradeMediator extends Mediator {
     public void load() throws Exception {
         if (tradeBroker != null)
             tradeBroker.interrupt();
-        tradeBroker = new TradeBroker();
+        tradeBroker = new TradeBroker(assetListingManager,
+                bankUserProviders,
+                currencyManager,
+                logger,
+                tradeBroker);
         tradeBroker.start();
 
         if (config.get(MATERIALS).isPresent()) {
@@ -279,8 +283,20 @@ public class TradeMediator extends Mediator {
         });
     }
 
-    class TradeBroker extends Thread {
-        public TradeBroker() {
+    //TODO now this is a static class, make a separate test instead
+    // of doing it all in one test
+    static class TradeBroker extends Thread {
+        private final AssetListingManager assetListingManager;
+        private final Set<IBankUserProvider> bankUserProviders;
+        private final CurrencyManager currencyManager;
+        private final Logger logger;
+
+        public TradeBroker(AssetListingManager assetListingManager, Set<IBankUserProvider> bankUserProviders, CurrencyManager currencyManager, Logger logger, TradeBroker tradeBroker) {
+            this.assetListingManager = assetListingManager;
+            this.bankUserProviders = bankUserProviders;
+            this.currencyManager = currencyManager;
+            this.logger = logger;
+
             setPriority(NORM_PRIORITY - 1);
             setName("RealEconomy - TradeBroker");
         }
@@ -475,7 +491,7 @@ public class TradeMediator extends Mediator {
 
                 // since this is an un-handled case, stop the broker
                 if (result == null) {
-                    tradeBroker.interrupt();
+                    interrupt();
                 }
 
                 buyer.handleTransactionResult(tradeInfo, OrderType.BUY, result);

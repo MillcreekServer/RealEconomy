@@ -68,7 +68,7 @@ public class SimulationMediator extends Mediator {
         marketSimulator.join();
     }
 
-    public static class MarketSimulator extends Thread {
+    static class MarketSimulator extends Thread {
         private final CentralBank centralBank;
         private final AssetListingManager assetListingManager;
         private final Logger logger;
