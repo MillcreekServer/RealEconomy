@@ -46,7 +46,7 @@ public class MarketSimulationManager extends Manager {
     private void addAgentConfig(String agentName,
                                 List<Pair<AssetSignature, Double>> needed,
                                 List<Pair<AssetSignature, Double>> production) {
-        config.put(SIMULATOR + "." + agentName + "." + AGENT_UUID, UUID.randomUUID());
+        config.put(SIMULATOR + "." + agentName + "." + AGENT_UUID, UUID.randomUUID().toString());
 
         needed.forEach(pair -> {
             AssetSignature sign = pair.key;
