@@ -230,7 +230,7 @@ public class SimulationMediatorTest {
                 .countAsset(BREAD), 0.00001);
 
         // transfer from bank account -> agent
-        // 400 wheat 200 cocoa
+        // 200 wheat 100 cocoa
         // generate 100 cookies
         simulator.iterate();
         assertEquals(200.0 - 200.0, accountMap.computeIfAbsent(agent1, (key -> new TradingAccount()))
@@ -243,6 +243,21 @@ public class SimulationMediatorTest {
         assertEquals(300.0 - 300.0, accountMap.computeIfAbsent(agent2, (key -> new TradingAccount()))
                 .countAsset(WHEAT), 0.00001);
         assertEquals(100.0 + 100.0, accountMap.computeIfAbsent(agent2, (key -> new TradingAccount()))
+                .countAsset(BREAD), 0.00001);
+
+        // no more resources
+        simulator.iterate();
+
+        assertEquals(0.0, accountMap.computeIfAbsent(agent1, (key -> new TradingAccount()))
+                .countAsset(WHEAT), 0.00001);
+        assertEquals(0.0, accountMap.computeIfAbsent(agent1, (key -> new TradingAccount()))
+                .countAsset(COCOA), 0.00001);
+        assertEquals(1600.0, accountMap.computeIfAbsent(agent1, (key -> new TradingAccount()))
+                .countAsset(COOKIE), 0.00001);
+
+        assertEquals(0.0, accountMap.computeIfAbsent(agent2, (key -> new TradingAccount()))
+                .countAsset(WHEAT), 0.00001);
+        assertEquals(200.0, accountMap.computeIfAbsent(agent2, (key -> new TradingAccount()))
                 .countAsset(BREAD), 0.00001);
     }
 }
