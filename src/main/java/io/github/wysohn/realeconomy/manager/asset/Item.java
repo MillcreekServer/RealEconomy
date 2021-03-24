@@ -2,8 +2,10 @@ package io.github.wysohn.realeconomy.manager.asset;
 
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class Item extends PhysicalAsset {
@@ -17,8 +19,12 @@ public class Item extends PhysicalAsset {
 
     @Override
     public ItemStack getIcon() {
-        if(getSignature() instanceof ItemStackSignature){
-            return ((ItemStackSignature) getSignature()).getItemStack().clone();
+        if(getSignature() instanceof ItemStackSignature) {
+            return Optional.ofNullable(getSignature())
+                    .map(ItemStackSignature.class::cast)
+                    .map(ItemStackSignature::getItemStack)
+                    .map(ItemStack::clone)
+                    .orElse(new ItemStack(Material.BARRIER));
         } else { // well this is not likely possible, but who knows
             return super.getIcon();
         }
