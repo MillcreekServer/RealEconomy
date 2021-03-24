@@ -155,7 +155,8 @@ public class MarketSimulationManager extends Manager {
                             });
                         });
 
-                        agentList.put(uuid, new Agent(uuid,
+                        agentList.put(uuid, new Agent(logger,
+                                uuid,
                                 agentName,
                                 resourcedNeeded,
                                 production

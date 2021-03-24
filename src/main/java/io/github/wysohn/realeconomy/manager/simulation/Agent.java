@@ -14,8 +14,10 @@ import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class Agent implements IBankUser {
+    private final Logger logger;
     private final UUID uuid;
     private final String name;
     private final Map<AssetSignature, Double> resourcesNeeded = new HashMap<>();
@@ -26,10 +28,12 @@ public class Agent implements IBankUser {
     private final Map<AssetSignature, Double> assets = new HashMap<>();
     private final Map<AssetSignature, BigDecimal> currentPricing = new HashMap<>();
 
-    public Agent(UUID uuid,
+    public Agent(Logger logger,
+                 UUID uuid,
                  String name,
                  List<Pair<AssetSignature, Double>> resourcesNeeded,
                  List<Pair<AssetSignature, Double>> production) {
+        this.logger = logger;
         this.uuid = uuid;
         this.name = name;
         resourcesNeeded.forEach(pair -> this.resourcesNeeded.put(pair.key, pair.value));
@@ -92,9 +96,18 @@ public class Agent implements IBankUser {
         }
     }
 
+    private String simplifyTradeInfo(TradeInfo info){
+        return String.format("{ask=%d@%f [%s], bid=%d@%f [%s]}",
+                info.getStock(), info.getAsk(), info.getSeller().toString(),
+                info.getAmount(), info.getBid(), info.getBuyer().toString());
+    }
+
     @Override
     public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
-
+        logger.fine("Agent: "+toString());
+        logger.fine("Info: "+simplifyTradeInfo(info));
+        logger.fine("Type: "+type);
+        logger.fine("Result: "+result);
     }
 
     @Override
@@ -227,6 +240,20 @@ public class Agent implements IBankUser {
 
     public void updateCurrentPricing(AssetSignature sign, BigDecimal price){
         currentPricing.put(sign, price);
+    }
+
+    @Override
+    public String toString() {
+        return "Agent{" +
+                "uuid=" + uuid +
+                ", name='" + name + '\'' +
+                ", resourcesNeeded=" + resourcesNeeded +
+                ", production=" + production +
+                ", buyOrderIdSet=" + buyOrderIdSet +
+                ", sellOrderIdSet=" + sellOrderIdSet +
+                ", assets=" + assets +
+                ", currentPricing=" + currentPricing +
+                '}';
     }
 
     @Override

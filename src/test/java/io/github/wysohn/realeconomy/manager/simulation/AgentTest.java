@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -34,7 +35,8 @@ public class AgentTest {
         ItemFactory itemFactory = mock(ItemFactory.class);
         when(server.getItemFactory()).thenReturn(itemFactory);
 
-        agent = new Agent(UUID.randomUUID(),
+        agent = new Agent(mock(Logger.class),
+                UUID.randomUUID(),
                 "some agent",
                 new LinkedList<Pair<AssetSignature, Double>>(){{
                     add(Pair.of(new ItemStackSignature(Material.WHEAT), 200.0));

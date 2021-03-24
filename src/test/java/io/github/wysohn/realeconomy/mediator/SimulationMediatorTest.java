@@ -2,9 +2,11 @@ package io.github.wysohn.realeconomy.mediator;
 
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
+import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.banking.account.TradingAccount;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -41,6 +43,7 @@ public class SimulationMediatorTest {
     private MarketSimulationManager marketSimulationManager;
     private Logger logger;
     private TradeMediator tradeMediator;
+    private BankingMediator bankingMediator;
     private CentralBank centralBank;
     private Currency currency;
     private Agent agent1;
@@ -60,6 +63,7 @@ public class SimulationMediatorTest {
         marketSimulationManager = mock(MarketSimulationManager.class);
         logger = mock(Logger.class);
         tradeMediator = mock(TradeMediator.class);
+        bankingMediator = mock(BankingMediator.class);
 
         centralBank = mock(CentralBank.class);
         currency = mock(Currency.class);
@@ -68,7 +72,8 @@ public class SimulationMediatorTest {
         when(currency.ownerBank()).thenReturn(centralBank);
 
         Map<UUID, Agent> agentMap = new HashMap<>();
-        agent1 = new Agent(UUID.randomUUID(),
+        agent1 = new Agent(logger,
+                UUID.randomUUID(),
                 "Pastry_1",
                 new LinkedList<Pair<AssetSignature, Double>>(){{
                     add(Pair.of(WHEAT, 200.0));
@@ -77,7 +82,8 @@ public class SimulationMediatorTest {
                 new LinkedList<Pair<AssetSignature, Double>>(){{
                     add(Pair.of(COOKIE, 800.0));
                 }});
-        agent2 = new Agent(UUID.randomUUID(),
+        agent2 = new Agent(logger,
+                UUID.randomUUID(),
                 "Pastry_2",
                 new LinkedList<Pair<AssetSignature, Double>>(){{
                     add(Pair.of(WHEAT, 300.0));
@@ -93,13 +99,24 @@ public class SimulationMediatorTest {
 
     @Test
     public void testSimulatorBid() throws Exception{
+        when(bankingMediator.send(any(IBankUser.class),
+                any(IBankingType.class),
+                any(),
+                any(),
+                any())).thenReturn(TransactionUtil.Result.OK);
+        when(bankingMediator.send(any(),
+                any(IBankUser.class),
+                any(IBankingType.class),
+                any(),
+                any())).thenReturn(TransactionUtil.Result.OK);
+
         SimulationMediator.MarketSimulator simulator = new SimulationMediator.MarketSimulator(
                 assetListingManager,
                 logger,
                 marketSimulationManager,
                 tradeMediator,
-                centralBank
-        );
+                centralBank,
+                bankingMediator);
 
         simulator.iterate();
 
@@ -168,8 +185,8 @@ public class SimulationMediatorTest {
                 logger,
                 marketSimulationManager,
                 tradeMediator,
-                centralBank
-        );
+                centralBank,
+                bankingMediator);
         Map<IBankUser, TradingAccount> accountMap = new HashMap<>();
 
         when(centralBank.removeAccountAsset(any(), any(), anyInt()))
