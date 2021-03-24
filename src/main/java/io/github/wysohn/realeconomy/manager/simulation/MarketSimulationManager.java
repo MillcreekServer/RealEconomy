@@ -114,7 +114,8 @@ public class MarketSimulationManager extends Manager {
                         List<Pair<AssetSignature, Double>> production = new LinkedList<>();
 
                         UUID uuid = config.get(agentSection, AGENT_UUID)
-                                .map(UUID.class::cast)
+                                .map(String.class::cast)
+                                .map(UUID::fromString)
                                 .orElseThrow(RuntimeException::new);
 
                         config.get(agentSection, RESOURCES_NEEDED).ifPresent(resourcesSection -> {
