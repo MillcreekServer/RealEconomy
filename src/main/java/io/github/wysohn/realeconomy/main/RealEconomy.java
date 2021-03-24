@@ -51,6 +51,7 @@ import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.manager.user.UserManager;
 import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import io.github.wysohn.realeconomy.mediator.BusinessMediator;
+import io.github.wysohn.realeconomy.mediator.SimulationMediator;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -95,7 +96,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
         pluginMainBuilder.addModule(new MediatorModule(
                 BankingMediator.class,
                 TradeMediator.class,
-                BusinessMediator.class
+                BusinessMediator.class,
+                SimulationMediator.class
         ));
         pluginMainBuilder.addModule(new ExternalAPIModule(
                 Pair.of("SmartInvs", SmartInvAPI.class),
