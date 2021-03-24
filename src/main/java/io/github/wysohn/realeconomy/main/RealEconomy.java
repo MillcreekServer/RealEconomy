@@ -375,6 +375,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         getMain().lang().sendMessage(sender, DefaultLangs.General_Header, (sen, man) ->
                                 man.addString(bank.getStringKey()));
                         getMain().lang().sendProperty(sender, bank);
+                        getMain().lang().sendRawMessage(sender, MessageBuilder.empty());
+                        getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Info_Guide);
                         getMain().lang().sendMessage(sender, DefaultLangs.General_Line);
                     }
 

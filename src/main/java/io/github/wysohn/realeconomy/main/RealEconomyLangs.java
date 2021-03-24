@@ -100,6 +100,8 @@ public enum RealEconomyLangs implements ILang {
             " &8- &7List assets stored in the acccount."),
     Command_Bank_Balance("&dYour Account Balance &8: &6${string} ${string}"),
     Command_Bank_Assets_InvalidType("&cThat account cannot store assets."),
+    Command_Bank_Info_Guide("&6To check your own account, specify the account type.",
+            "&d/bank info <type>"),
 
     Command_Bank_Open_Success("&aNew account has opened!"),
     Command_Bank_Open_AlreadyExist("&7You already have the account in this bank."),
