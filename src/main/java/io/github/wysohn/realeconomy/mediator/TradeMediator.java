@@ -425,9 +425,7 @@ public class TradeMediator extends Mediator {
                         }
 
                         // give asset to the buyer account
-                        finalBank.addAccountAsset(buyer, signature.asset(new HashMap<String, Object>() {{
-                            put(AssetSignature.KEY_NUMERIC_MEASURE, amountsRemoved);
-                        }}));
+                        finalBank.addAccountAsset(buyer, signature.asset((double) amountsRemoved));
 
                         // adjust the removed amount
                         try {

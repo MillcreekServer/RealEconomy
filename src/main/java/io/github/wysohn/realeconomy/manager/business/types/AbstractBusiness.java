@@ -425,9 +425,7 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
             if (amount <= 0.0)
                 continue;
 
-            Asset asset = sign.asset(new HashMap<String, Object>() {{
-                put(AssetSignature.KEY_NUMERIC_MEASURE, amount);
-            }});
+            Asset asset = sign.asset(amount);
             AssetUtil.addAsset(ownedAssets, asset);
 
             update = true;

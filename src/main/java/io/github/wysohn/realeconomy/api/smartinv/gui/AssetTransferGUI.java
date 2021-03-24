@@ -20,7 +20,6 @@ import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.PhysicalAsset;
-import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.ChatColor;
@@ -37,7 +36,6 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.lang.reflect.Modifier;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -198,9 +196,7 @@ public class AssetTransferGUI implements InventoryProvider {
             } else {
                 // cursor -> asset store
                 ItemStackSignature signature = new ItemStackSignature(cursor);
-                Asset asset = signature.asset(new HashMap<String, Object>() {{
-                    put(AssetSignature.KEY_NUMERIC_MEASURE, cursor.getAmount());
-                }});
+                Asset asset = signature.asset((double) cursor.getAmount());
                 assetStore.addAsset(asset);
             }
 

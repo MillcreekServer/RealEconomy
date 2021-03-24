@@ -635,9 +635,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         itemStack.getAmount(),
                                         () -> {
                                             user.getSender().getInventory().setItemInMainHand(null);
-                                            bank.addAccountAsset(user, signature.asset(new HashMap<String, Object>() {{
-                                                put(AssetSignature.KEY_NUMERIC_MEASURE, itemStack.getAmount());
-                                            }}));
+                                            bank.addAccountAsset(user, signature.asset((double) itemStack.getAmount()));
                                         })){
 
                                     // process one tick later since order listing have sone delays
