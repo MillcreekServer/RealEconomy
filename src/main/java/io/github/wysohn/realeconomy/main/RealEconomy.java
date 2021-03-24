@@ -520,12 +520,15 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             .addInteger(info.getOrderId()));
 
                             Message[] message = MessageBuilder.forMessage("[").build();
-                            message = Message.concat(message, getSignature(info.getListingUuid()).toMessage(getMain().lang(), sender));
+                            message = Message.concat(message, Optional.of(info.getListingUuid())
+                                    .map(this::getSignature)
+                                    .map(signature -> signature.toMessage(getMain().lang(), sender))
+                                    .orElse(MessageBuilder.forMessage("?").build()));
                             message = Message.concat(message, MessageBuilder.forMessage("]").build());
-                            message = Message.concat(message, MessageBuilder.forMessage("\u26c1"+info.getAmount()).build());
+                            message = Message.concat(message, MessageBuilder.forMessage("\u26c1" + info.getAmount()).build());
                             message = Message.concat(message, MessageBuilder.forMessage(other)
-                                    .withHoverShowText("/realeconomy buy "+info.getOrderId()+" ")
-                                    .withClickSuggestCommand("/realeconomy buy "+info.getOrderId()+" ")
+                                    .withHoverShowText("/realeconomy buy " + info.getOrderId() + " ")
+                                    .withClickSuggestCommand("/realeconomy buy " + info.getOrderId() + " ")
                                     .build());
                             return message;
                         });
@@ -1015,9 +1018,10 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     .addInteger(orderInfo.getAmount())))
                             .append(" &f[")
                             .build(),
-                    Optional.ofNullable(getSignature(orderInfo.getListingUuid()))
+                    Optional.of(orderInfo.getListingUuid())
+                            .map(this::getSignature)
                             .map(signature -> signature.toMessage(getMain().lang(), sender))
-                            .orElse(MessageBuilder.empty()),
+                            .orElse(MessageBuilder.forMessage("?").build()),
                     MessageBuilder.forMessage("]").build(),
                     MessageBuilder.forMessage(" ").append("&c[\u2718]")
                             .withHoverShowText("/eco cancel " + orderPair.value.name() + " " + orderInfo.getOrderId())
