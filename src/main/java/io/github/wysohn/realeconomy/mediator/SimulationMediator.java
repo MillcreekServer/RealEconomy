@@ -54,7 +54,11 @@ public class SimulationMediator extends Mediator {
 
     @Override
     public void load() throws Exception {
-        if(marketSimulator != null)
+        // make sure that all agents have their accounts open for trade
+        marketSimulationManager.getAgents().forEach(agent ->
+                bankingMediator.openAccount(agent, BankingTypeRegistry.TRADING));
+
+        if (marketSimulator != null)
             marketSimulator.interrupt();
         marketSimulator = new MarketSimulator(assetListingManager,
                 logger, marketSimulationManager,
