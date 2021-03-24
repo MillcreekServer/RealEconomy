@@ -197,6 +197,7 @@ public class SimulationMediator extends Mediator {
                                 midPoint.doubleValue(),
                                 currency,
                                 (int) Math.ceil(amount));
+                        assetListingManager.commitOrders();
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
@@ -288,6 +289,7 @@ public class SimulationMediator extends Mediator {
                                 unitCost.doubleValue(),
                                 currency,
                                 currentStock);
+                        assetListingManager.commitOrders();
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
