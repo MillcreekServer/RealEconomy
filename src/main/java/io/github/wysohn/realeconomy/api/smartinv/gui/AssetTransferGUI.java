@@ -24,15 +24,12 @@ import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 
 import java.lang.reflect.Modifier;
 import java.util.Collections;
@@ -50,7 +47,6 @@ public class AssetTransferGUI implements InventoryProvider {
 
     private final ManagerLanguage lang;
     private final TradeMediator tradeMediator;
-    private final NamespacedKey keySerialized;
     private final Function<Player, ICommandSender> commandSenderFn;
     private final IAssetHolder assetStore;
     private final IFinancialEntity targetToSendAsset;
@@ -76,7 +72,6 @@ public class AssetTransferGUI implements InventoryProvider {
      *
      * @param lang
      * @param tradeMediator
-     * @param keySerialized
      * @param commandSenderFn
      * @param assetStore        the storage to take assets from
      * @param targetToSendAsset target financial entity to send asset for
@@ -87,14 +82,12 @@ public class AssetTransferGUI implements InventoryProvider {
      */
     public AssetTransferGUI(ManagerLanguage lang,
                             TradeMediator tradeMediator,
-                            NamespacedKey keySerialized,
                             Function<Player, ICommandSender> commandSenderFn,
                             IAssetHolder assetStore,
                             IFinancialEntity targetToSendAsset,
                             Predicate<Player> playerPredicate) {
         this.lang = lang;
         this.tradeMediator = tradeMediator;
-        this.keySerialized = keySerialized;
         this.commandSenderFn = commandSenderFn;
         this.assetStore = assetStore;
         this.targetToSendAsset = targetToSendAsset;
@@ -145,8 +138,7 @@ public class AssetTransferGUI implements InventoryProvider {
             inventoryContents.setEditable(SlotPos.of(i / 9, i % 9), true);
 
             if (i < assets.size()) {
-                inventoryContents.set(i, ClickableItem.from(assetToItem(keySerialized,
-                        lang,
+                inventoryContents.set(i, ClickableItem.from(assetToItem(lang,
                         sender,
                         assets.get(i)), this::clickedSlot));
             } else {
@@ -187,8 +179,7 @@ public class AssetTransferGUI implements InventoryProvider {
                     return true;
 
                 // inventory slot (asset) -> cursor
-                Asset asset = itemToAsset(keySerialized, slot);
-                if (!transferAsset(assetStore, targetToSendAsset, asset))
+                if (!transferAsset(assetStore, targetToSendAsset, event.getSlot()))
                     return false;
 
                 // clear the slot
@@ -214,18 +205,16 @@ public class AssetTransferGUI implements InventoryProvider {
         }).run();
     }
 
-    private boolean transferAsset(IAssetHolder from, IFinancialEntity to, Asset asset) {
+    private boolean transferAsset(IAssetHolder from, IFinancialEntity to, int slotIndex) {
+        int absoluteIndex = ITEMS_PER_PAGE * page + slotIndex;
+
         // remove asset from sender
-        int assetAmount = assetAmount(asset);
-        if (from.removeAsset(asset.getSignature(), assetAmount).stream()
-                .map(Asset::getNumericalMeasure)
-                .reduce(Double::sum)
-                .map(val -> Double.compare(val, assetAmount) != 0)
-                .orElse(false))
+        Asset removed = from.removeAsset(absoluteIndex);
+        if (removed == null)
             return false;
 
         // give it to receiver
-        to.realizeAsset(asset);
+        to.realizeAsset(removed);
 
         return true;
     }
@@ -261,8 +250,7 @@ public class AssetTransferGUI implements InventoryProvider {
         return itemStack;
     }
 
-    static ItemStack assetToItem(NamespacedKey serKey,
-                                 ManagerLanguage lang,
+    static ItemStack assetToItem(ManagerLanguage lang,
                                  ICommandSender sender,
                                  Asset asset) {
         String serialized = GSON.toJson(asset, Asset.class);
@@ -273,18 +261,9 @@ public class AssetTransferGUI implements InventoryProvider {
                 .map(dl -> lang.parseFirst(sender, dl.lang, dl.parser))
                 .map(raw -> ChatColor.translateAlternateColorCodes('&', raw))
                 .collect(Collectors.toList()));
-        PersistentDataContainer persistent = meta.getPersistentDataContainer();
-        persistent.set(serKey, PersistentDataType.STRING, serialized);
         itemStack.setItemMeta(meta);
 
         return itemStack;
-    }
-
-    static Asset itemToAsset(NamespacedKey serKey, ItemStack itemStack) {
-        ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
-        PersistentDataContainer persistent = meta.getPersistentDataContainer();
-        String serialized = persistent.get(serKey, PersistentDataType.STRING);
-        return GSON.fromJson(serialized, Asset.class);
     }
 
     static int assetAmount(Asset asset) {

@@ -50,7 +50,7 @@ public class ItemStackSignature extends PhysicalAssetSignature {
      * @return
      */
     public ItemStack getItemStack() {
-        return itemStack;
+        return itemStack == null ? new ItemStack(Material.AIR) : itemStack;
     }
 
     @Override

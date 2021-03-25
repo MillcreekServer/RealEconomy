@@ -128,6 +128,14 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     }
 
     @Override
+    public Asset removeAsset(int index) {
+        Asset removeAsset = AssetUtil.removeAsset(ownedAssets, index);
+        if (removeAsset != null)
+            notifyObservers();
+        return removeAsset;
+    }
+
+    @Override
     public DataProvider<Asset> assetDataProvider() {
         return AssetUtil.assetDataProvider(ownedAssets);
     }

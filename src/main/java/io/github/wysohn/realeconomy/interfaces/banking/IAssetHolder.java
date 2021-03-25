@@ -44,5 +44,13 @@ public interface IAssetHolder extends IEntitySnapshot {
      */
     Collection<Asset> removeAsset(AssetSignature signature, double amount);
 
+    /**
+     * Remove an asset at the specified index of this holder's asset container.
+     *
+     * @param index index
+     * @return the Asset removed; null if nothing was removed
+     */
+    Asset removeAsset(int index);
+
     DataProvider<Asset> assetDataProvider();
 }

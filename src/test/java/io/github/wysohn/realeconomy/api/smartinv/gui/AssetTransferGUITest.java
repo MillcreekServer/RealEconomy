@@ -46,8 +46,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
@@ -80,7 +78,6 @@ public class AssetTransferGUITest {
 
         assetTransferGUI = new AssetTransferGUI(language,
                 tradeMediator,
-                namespacedKey,
                 function,
                 assetHolder,
                 financialEntity,
@@ -248,7 +245,7 @@ public class AssetTransferGUITest {
 
         InventoryClickEvent clickEvent = mock(InventoryClickEvent.class);
         InventoryAction action = InventoryAction.PLACE_ALL;
-        ItemStack cursor = AssetTransferGUI.assetToItem(namespacedKey, language, user, asset);
+        ItemStack cursor = AssetTransferGUI.assetToItem(language, user, asset);
         when(data.getEvent()).thenReturn(clickEvent);
         when(clickEvent.getAction()).thenReturn(action);
         when(clickEvent.getCursor()).thenReturn(cursor);
@@ -292,7 +289,7 @@ public class AssetTransferGUITest {
 
         InventoryClickEvent clickEvent = mock(InventoryClickEvent.class);
         InventoryAction action = InventoryAction.PLACE_ALL;
-        ItemStack slot = AssetTransferGUI.assetToItem(namespacedKey, language, user, asset);
+        ItemStack slot = AssetTransferGUI.assetToItem(language, user, asset);
         when(data.getEvent()).thenReturn(clickEvent);
         when(clickEvent.getAction()).thenReturn(action);
         when(clickEvent.getCurrentItem()).thenReturn(slot);
@@ -303,35 +300,6 @@ public class AssetTransferGUITest {
         Method method = AssetTransferGUI.class.getDeclaredMethod("clickedSlot", ItemClickData.class);
         method.setAccessible(true);
         method.invoke(assetTransferGUI, data);
-    }
-
-    @Test
-    public void testSerialize() throws Exception {
-        TestMeta meta = new TestMeta();
-        ItemFactory itemFactory = mock(ItemFactory.class);
-        meta.container = new TempContainer();
-
-        when(server.getItemFactory()).thenReturn(itemFactory);
-        when(server.getUnsafe().getMaterial(anyString(), anyInt())).then(invocation ->
-                Material.valueOf((String) invocation.getArguments()[0]));
-        when(itemFactory.getItemMeta(any())).thenReturn(meta);
-        when(itemFactory.equals(any(), any())).thenReturn(true);
-
-        User user = mock(User.class);
-        UUID uuid = UUID.randomUUID();
-
-        when(user.getUuid()).thenReturn(uuid);
-
-        Item asset = new Item(UUID.randomUUID(), new ItemStackSignature(new ItemStack(Material.DIAMOND)));
-        asset.setAmount(8853);
-
-        ItemStack itemStack = AssetTransferGUI.assetToItem(namespacedKey, language, user, asset);
-        Asset restored = AssetTransferGUI.itemToAsset(namespacedKey, itemStack);
-
-        assertEquals(8853, AssetTransferGUI.assetAmount(restored));
-        assertTrue(restored instanceof Item);
-        assertEquals(new ItemStack(Material.DIAMOND),
-                ((ItemStackSignature) restored.getSignature()).getItemStack());
     }
 
     private class TempContainer implements PersistentDataContainer {

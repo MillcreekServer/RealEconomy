@@ -63,7 +63,7 @@ public class SmartInvAPI extends ExternalAPI {
 
         SmartInventory.builder()
                 .id("Assets")
-                .provider(new AssetTransferGUI(lang, tradeMediator, serializedKey, player -> Optional.of(player)
+                .provider(new AssetTransferGUI(lang, tradeMediator, player -> Optional.of(player)
                         .map(BukkitWrapper::sender)
                         .orElse(null),
                         storageWrapper,

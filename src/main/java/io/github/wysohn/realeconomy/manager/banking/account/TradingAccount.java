@@ -33,6 +33,11 @@ public class TradingAccount implements IAccount, IAssetHolder {
     }
 
     @Override
+    public Asset removeAsset(int index) {
+        return AssetUtil.removeAsset(ownedAssets, index);
+    }
+
+    @Override
     public DataProvider<Asset> assetDataProvider() {
         return AssetUtil.assetDataProvider(ownedAssets);
     }

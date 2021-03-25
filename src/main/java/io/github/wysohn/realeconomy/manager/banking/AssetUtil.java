@@ -88,6 +88,22 @@ public class AssetUtil {
     }
 
     /**
+     * Remove an asset at the specified index. If the specified index is
+     * out of bound, it will treat it as of trying to accessing the slot
+     * that is empty (in other words, it will return null if index is out of bound).
+     *
+     * @param ownedAssets the assets list
+     * @param index       target index
+     * @return the Asset removed at the specified index; null if nothing was removed.
+     */
+    public static Asset removeAsset(List<Asset> ownedAssets, int index) {
+        if (index < 0 || index >= ownedAssets.size())
+            return null;
+
+        return ownedAssets.get(index);
+    }
+
+    /**
      * Create a new DataProvider for the target Asset list.
      * This internally utilizes cache, so by using the same instance, it will
      * query the list only once per second. In other words, it has less overhead,

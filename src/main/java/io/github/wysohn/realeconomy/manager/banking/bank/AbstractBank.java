@@ -245,6 +245,25 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         return removed;
     }
 
+    public Asset removeAccountAsset(IBankUser user, int index) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
+        Validation.assertNotNull(user);
+        if (!accounts.containsKey(user.getUuid()))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        Map<IBankingType, IAccount> accountMap = accounts.get(user.getUuid());
+        if (!accountMap.containsKey(BankingTypeRegistry.TRADING))
+            throw new RuntimeException("Account of " + user + " does not exist.");
+
+        TradingAccount account = (TradingAccount) accountMap.get(BankingTypeRegistry.TRADING);
+        Asset removed = account.removeAsset(index);
+        if (removed != null)
+            notifyObservers();
+        return removed;
+    }
+
     public DataProvider<Asset> accountAssetProvider(IBankUser user) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
@@ -342,7 +361,21 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
-        return AssetUtil.removeAsset(ownedAssets, signature, amount);
+        Collection<Asset> assets = AssetUtil.removeAsset(ownedAssets, signature, amount);
+        if (assets.size() > 0)
+            notifyObservers();
+        return assets;
+    }
+
+    @Override
+    public Asset removeAsset(int index) {
+        if (!operating)
+            throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
+
+        Asset removeAsset = AssetUtil.removeAsset(ownedAssets, index);
+        if (removeAsset != null)
+            notifyObservers();
+        return removeAsset;
     }
 
     @Override

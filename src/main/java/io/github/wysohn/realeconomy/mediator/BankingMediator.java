@@ -411,6 +411,11 @@ public class BankingMediator extends Mediator {
         }
 
         @Override
+        public Asset removeAsset(int index) {
+            return bank.removeAccountAsset(user, index);
+        }
+
+        @Override
         public DataProvider<Asset> assetDataProvider() {
             return bank.accountAssetProvider(user);
         }
