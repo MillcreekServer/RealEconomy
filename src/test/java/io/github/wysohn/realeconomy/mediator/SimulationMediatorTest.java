@@ -189,11 +189,11 @@ public class SimulationMediatorTest {
                 bankingMediator);
         Map<IBankUser, TradingAccount> accountMap = new HashMap<>();
 
-        when(centralBank.removeAccountAsset(any(), any(), anyInt()))
+        when(centralBank.removeAccountAsset(any(), any(), anyDouble()))
                 .then(invocation -> {
                     IBankUser agent = (IBankUser) invocation.getArguments()[0];
                     AssetSignature sign = (AssetSignature) invocation.getArguments()[1];
-                    int amount = (int) invocation.getArguments()[2];
+                    double amount = (double) invocation.getArguments()[2];
 
                     return accountMap.computeIfAbsent(agent, (key -> new TradingAccount()))
                             .removeAsset(sign, amount);
