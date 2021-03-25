@@ -80,7 +80,7 @@ public class AssetTransferGUI implements InventoryProvider {
      * @param commandSenderFn
      * @param assetStore        the storage to take assets from
      * @param targetToSendAsset target financial entity to send asset for
-     * @param playerPredicate   use this if you want to close the GUI without the user exclusively
+     * @param playerPredicate   use this if you want to close the GUI without the user explicitly
      *                          closing it by pressing esc key. For example, the user may no longer
      *                          allowed to interact with the content of the 'assetStore' while
      *                          the GUI is open.

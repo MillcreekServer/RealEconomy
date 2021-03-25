@@ -226,7 +226,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         return account.countAsset(signature);
     }
 
-    public Collection<Asset> removeAccountAsset(IBankUser user, AssetSignature signature, int amount) {
+    public Collection<Asset> removeAccountAsset(IBankUser user, AssetSignature signature, double amount) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 

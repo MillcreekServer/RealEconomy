@@ -397,22 +397,22 @@ public class BankingMediator extends Mediator {
 
         @Override
         public void addAsset(Asset asset) {
-            bank.addAsset(asset);
+            bank.addAccountAsset(user, asset);
         }
 
         @Override
         public double countAsset(AssetSignature signature) {
-            return bank.countAsset(signature);
+            return bank.countAccountAsset(user, signature);
         }
 
         @Override
         public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
-            return bank.removeAsset(signature, amount);
+            return bank.removeAccountAsset(user, signature, amount);
         }
 
         @Override
         public DataProvider<Asset> assetDataProvider() {
-            return bank.assetDataProvider();
+            return bank.accountAssetProvider(user);
         }
 
         @Override
