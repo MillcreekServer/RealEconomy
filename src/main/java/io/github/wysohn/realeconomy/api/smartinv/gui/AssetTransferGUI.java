@@ -180,6 +180,9 @@ public class AssetTransferGUI implements InventoryProvider {
                 // inventory slot (asset) -> cursor
                 if (!transferAsset(assetStore, targetToSendAsset, event.getSlot()))
                     return false;
+
+                // clear the slot
+                event.setCurrentItem(null);
             } else {
                 // cursor -> asset store
                 ItemStackSignature signature = new ItemStackSignature(cursor);
