@@ -19,7 +19,6 @@ import io.github.wysohn.realeconomy.interfaces.banking.IAssetHolder;
 import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.CustomTypeAdapters;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
-import io.github.wysohn.realeconomy.manager.asset.PhysicalAsset;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.ChatColor;
@@ -181,9 +180,6 @@ public class AssetTransferGUI implements InventoryProvider {
                 // inventory slot (asset) -> cursor
                 if (!transferAsset(assetStore, targetToSendAsset, event.getSlot()))
                     return false;
-
-                // clear the slot
-                event.setCurrentItem(null);
             } else {
                 // cursor -> asset store
                 ItemStackSignature signature = new ItemStackSignature(cursor);
@@ -256,6 +252,9 @@ public class AssetTransferGUI implements InventoryProvider {
         String serialized = GSON.toJson(asset, Asset.class);
 
         ItemStack itemStack = asset.getIcon();
+        if (itemStack == null || itemStack.getType() == Material.AIR)
+            itemStack = new ItemStack(Material.PAPER);
+
         ItemMeta meta = Objects.requireNonNull(itemStack.getItemMeta());
         meta.setLore(asset.lore().stream()
                 .map(dl -> lang.parseFirst(sender, dl.lang, dl.parser))
@@ -264,14 +263,6 @@ public class AssetTransferGUI implements InventoryProvider {
         itemStack.setItemMeta(meta);
 
         return itemStack;
-    }
-
-    static int assetAmount(Asset asset) {
-        if (asset instanceof PhysicalAsset) {
-            return ((PhysicalAsset) asset).getAmount();
-        } else {
-            return 1;
-        }
     }
 
     private static final Gson GSON = new GsonBuilder()

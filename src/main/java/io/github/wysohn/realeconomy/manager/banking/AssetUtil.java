@@ -100,7 +100,7 @@ public class AssetUtil {
         if (index < 0 || index >= ownedAssets.size())
             return null;
 
-        return ownedAssets.get(index);
+        return ownedAssets.remove(index);
     }
 
     /**
