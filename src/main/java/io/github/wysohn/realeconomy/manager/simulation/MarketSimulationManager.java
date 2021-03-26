@@ -62,7 +62,11 @@ public class MarketSimulationManager extends Manager {
             production:
               <UUID>: 2
          */
+
         if (!config.get(SIMULATOR).isPresent()) {
+//            new AgentConfigBuilder()
+//                    .addConfig(config, assetListingManager);
+
             new AgentConfigBuilder("Pastry_1")
                     .addNeededResource(Material.WHEAT, 300)
                     .addOutput(Material.BREAD, 100)
@@ -71,6 +75,75 @@ public class MarketSimulationManager extends Manager {
                     .addNeededResource(Material.WHEAT, 200)
                     .addNeededResource(Material.COCOA_BEANS, 100)
                     .addOutput(Material.COOKIE, 800)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Pastry_3")
+                    .addNeededResource(Material.PUMPKIN, 100)
+                    .addNeededResource(Material.SUGAR, 100)
+                    .addNeededResource(Material.EGG, 100)
+                    .addOutput(Material.PUMPKIN_PIE, 100)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Pastry_4")
+                    .addNeededResource(Material.SUGAR, 200)
+                    .addNeededResource(Material.EGG, 100)
+                    .addNeededResource(Material.WHEAT, 300)
+                    .addNeededResource(Material.IRON_INGOT, 9) // represents 3 buckets
+                    .addOutput(Material.CAKE, 100)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Pastry_5")
+                    .addNeededResource(Material.GOLD_NUGGET, 800)
+                    .addNeededResource(Material.CARROT, 100)
+                    .addOutput(Material.GOLDEN_CARROT, 100)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Pastry_6")
+                    .addNeededResource(Material.GOLD_NUGGET, 800)
+                    .addNeededResource(Material.MELON_SLICE, 100)
+                    .addOutput(Material.GLISTERING_MELON_SLICE, 100)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Pastry_7")
+                    .addNeededResource(Material.POTATO, 100)
+                    .addOutput(Material.BAKED_POTATO, 100)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Pastry_8")
+                    .addNeededResource(Material.BEETROOT, 600)
+                    .addNeededResource(Material.BOWL, 100) // this is made of easy to get material
+                    .addOutput(Material.BEETROOT_SOUP, 100)
+                    .addConfig(config, assetListingManager);
+
+            new AgentConfigBuilder("Farmer_1")
+                    .addNeededResource(Material.WHEAT_SEEDS, 100)
+                    .addOutput(Material.WHEAT, 100)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Farmer_1_2")
+                    .addNeededResource(Material.WHEAT_SEEDS, 100)
+                    .addOutput(Material.WHEAT_SEEDS, 150)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Farmer_2")
+                    .addNeededResource(Material.CARROT, 100)
+                    .addOutput(Material.CARROT, 150)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Farmer_3")
+                    .addNeededResource(Material.POTATO, 100)
+                    .addOutput(Material.POTATO, 150)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Farmer_4")
+                    .addNeededResource(Material.BEETROOT_SEEDS, 100)
+                    .addOutput(Material.BEETROOT, 100)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Farmer_4_2")
+                    .addNeededResource(Material.BEETROOT_SEEDS, 100)
+                    .addOutput(Material.BEETROOT_SEEDS, 150)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Farmer_5")
+                    .addNeededResource(Material.SWEET_BERRIES, 100)
+                    .addOutput(Material.SWEET_BERRIES, 125)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Farmer_6")
+                    .addNeededResource(Material.MELON_SEEDS, 100)
+                    .addOutput(Material.MELON_SLICE, 500)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Farmer_7")
+                    .addNeededResource(Material.PUMPKIN_SEEDS, 100)
+                    .addOutput(Material.PUMPKIN, 500)
                     .addConfig(config, assetListingManager);
         }
         config.get(SIMULATOR)
