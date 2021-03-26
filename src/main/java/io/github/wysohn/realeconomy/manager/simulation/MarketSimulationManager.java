@@ -43,32 +43,6 @@ public class MarketSimulationManager extends Manager {
         dependsOn(AssetListingManager.class);
     }
 
-    private void addAgentConfig(String agentName,
-                                List<Pair<AssetSignature, Double>> needed,
-                                List<Pair<AssetSignature, Double>> production) {
-        config.put(SIMULATOR + "." + agentName + "." + AGENT_UUID, UUID.randomUUID().toString());
-
-        needed.forEach(pair -> {
-            AssetSignature sign = pair.key;
-            double amount = pair.value;
-
-            assetListingManager.newListing(sign);
-            UUID uuid = assetListingManager.signatureToUuid(sign);
-            config.put(SIMULATOR + "." + agentName + "." + RESOURCES_NEEDED
-                    + "." + uuid, amount);
-        });
-
-        production.forEach(pair -> {
-            AssetSignature sign = pair.key;
-            double amount = pair.value;
-
-            assetListingManager.newListing(sign);
-            UUID uuid = assetListingManager.signatureToUuid(sign);
-            config.put(SIMULATOR + "." + agentName + "." + PRODUCTION
-                    + "." + uuid, amount);
-        });
-    }
-
     @Override
     public void enable() throws Exception {
 
@@ -89,21 +63,15 @@ public class MarketSimulationManager extends Manager {
               <UUID>: 2
          */
         if (!config.get(SIMULATOR).isPresent()) {
-            addAgentConfig("Pastry_1",
-                    new LinkedList<Pair<AssetSignature, Double>>() {{
-                        add(Pair.of(new ItemStackSignature(Material.WHEAT), 300.0));
-                    }},
-                    new LinkedList<Pair<AssetSignature, Double>>() {{
-                        add(Pair.of(new ItemStackSignature(Material.BREAD), 100.0));
-                    }});
-            addAgentConfig("Pastry_2",
-                    new LinkedList<Pair<AssetSignature, Double>>() {{
-                        add(Pair.of(new ItemStackSignature(Material.WHEAT), 200.0));
-                        add(Pair.of(new ItemStackSignature(Material.COCOA_BEANS), 100.0));
-                    }},
-                    new LinkedList<Pair<AssetSignature, Double>>() {{
-                        add(Pair.of(new ItemStackSignature(Material.COOKIE), 800.0));
-                    }});
+            new AgentConfigBuilder("Pastry_1")
+                    .addNeededResource(Material.WHEAT, 300)
+                    .addOutput(Material.BREAD, 100)
+                    .addConfig(config, assetListingManager);
+            new AgentConfigBuilder("Pastry_2")
+                    .addNeededResource(Material.WHEAT, 200)
+                    .addNeededResource(Material.COCOA_BEANS, 100)
+                    .addOutput(Material.COOKIE, 800)
+                    .addConfig(config, assetListingManager);
         }
         config.get(SIMULATOR)
                 .filter(config::isSection)
@@ -177,7 +145,7 @@ public class MarketSimulationManager extends Manager {
      * Get read-only collection of Agents.
      * @return
      */
-    public Collection<Agent> getAgents(){
+    public Collection<Agent> getAgents() {
         return Collections.unmodifiableCollection(agentList.values());
     }
 
@@ -185,5 +153,71 @@ public class MarketSimulationManager extends Manager {
         return provider;
     }
 
+    private static class AgentConfigBuilder {
+        private final String agentName;
+        private final UUID uuid;
+        private final List<Pair<AssetSignature, Double>> needed = new LinkedList<>();
+        private final List<Pair<AssetSignature, Double>> production = new LinkedList<>();
 
+        private AgentConfigBuilder(String agentName) {
+            this.agentName = agentName;
+            this.uuid = UUID.randomUUID();
+        }
+
+        public static AgentConfigBuilder of(String agentName) {
+            return new AgentConfigBuilder(agentName);
+        }
+
+        public AgentConfigBuilder addNeededResource(AssetSignature signature, double amount) {
+            needed.add(Pair.of(signature, amount));
+            return this;
+        }
+
+        public AgentConfigBuilder addNeededResource(Material material, int amount) {
+            return addNeededResource(new ItemStackSignature(material), amount);
+        }
+
+        public AgentConfigBuilder addOutput(AssetSignature signature, double amount) {
+            production.add(Pair.of(signature, amount));
+            return this;
+        }
+
+        public AgentConfigBuilder addOutput(Material material, int amount) {
+            return addOutput(new ItemStackSignature(material), amount);
+        }
+
+        private void addAgentConfig(
+                ManagerConfig config,
+                AssetListingManager assetListingManager,
+                String agentName,
+                List<Pair<AssetSignature, Double>> needed,
+                List<Pair<AssetSignature, Double>> production) {
+            config.put(SIMULATOR + "." + agentName + "." + AGENT_UUID, uuid.toString());
+
+            needed.forEach(pair -> {
+                AssetSignature sign = pair.key;
+                double amount = pair.value;
+
+                assetListingManager.newListing(sign);
+                UUID uuid = assetListingManager.signatureToUuid(sign);
+                config.put(SIMULATOR + "." + agentName + "." + RESOURCES_NEEDED
+                        + "." + uuid, amount);
+            });
+
+            production.forEach(pair -> {
+                AssetSignature sign = pair.key;
+                double amount = pair.value;
+
+                assetListingManager.newListing(sign);
+                UUID uuid = assetListingManager.signatureToUuid(sign);
+                config.put(SIMULATOR + "." + agentName + "." + PRODUCTION
+                        + "." + uuid, amount);
+            });
+        }
+
+        public void addConfig(ManagerConfig config,
+                              AssetListingManager assetListingManager) {
+            addAgentConfig(config, assetListingManager, agentName, needed, production);
+        }
+    }
 }
