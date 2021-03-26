@@ -420,9 +420,13 @@ public class OrderQueryModule extends AbstractModule {
 
             @Override
             public Integer get() {
-                List<Integer> out = ordersSession.query("SELECT COUNT(" + OrderSQLModule.ORDER_ID + ") as " + COLUMN_COUNT +
+                List<Integer> out = ordersSession.query("SELECT COUNT(" + OrderSQLModule.LISTING_UUID + ") as " + COLUMN_COUNT +
+                        " FROM (" +
+                        " SELECT " + OrderSQLModule.LISTING_UUID +
                         " FROM sell_orders" +
-                        (queryAll ? "" : " WHERE " + OrderSQLModule.CATEGORY_ID + " = ?;"), pstmt -> {
+                        (queryAll ? "" : " WHERE " + OrderSQLModule.CATEGORY_ID + " = ?;") +
+                        " GROUP BY " + OrderSQLModule.LISTING_UUID +
+                        ") tbl", pstmt -> {
                     try {
                         if (!queryAll)
                             pstmt.setInt(1, categoryId);

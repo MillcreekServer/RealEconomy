@@ -16,6 +16,7 @@ import java.sql.SQLException;
 public class OrderSQLModule extends AbstractModule {
     public static final String ORDER_ID = "order_id";
     public static final String CATEGORY_ID = "category_id";
+    public static final String LISTING_UUID = "listing_uuid";
 
     @Provides
     @Singleton
@@ -65,7 +66,7 @@ public class OrderSQLModule extends AbstractModule {
                 .createTable("buy_orders", tableInitializer -> tableInitializer.ifNotExist()
                         .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
-                        .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
+                        .field(LISTING_UUID, "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field(CATEGORY_ID, "integer")
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
@@ -76,7 +77,7 @@ public class OrderSQLModule extends AbstractModule {
                 .createTable("sell_orders", tableInitializer -> tableInitializer.ifNotExist()
                         .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
-                        .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
+                        .field(LISTING_UUID, "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field(CATEGORY_ID, "integer")
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("issuer", "char(36)", SQLSession.Attribute.NOT_NULL)
@@ -91,7 +92,7 @@ public class OrderSQLModule extends AbstractModule {
                 .createTable("trade_logs", tableInitializer -> tableInitializer.ifNotExist()
                         .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
-                        .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
+                        .field(LISTING_UUID, "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("category_id", "integer", SQLSession.Attribute.NOT_NULL)
                         .field("timestamp", "datetime", SQLSession.Attribute.NOT_NULL)
                         .field("seller", "char(36)", SQLSession.Attribute.NOT_NULL)
@@ -102,7 +103,7 @@ public class OrderSQLModule extends AbstractModule {
                 .createTable("listing_names", tableInitializer -> tableInitializer.ifNotExist()
                         .field("id", "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
-                        .field("listing_uuid", "char(36)", SQLSession.Attribute.NOT_NULL, SQLSession.Attribute.UNIQUE)
+                        .field(LISTING_UUID, "char(36)", SQLSession.Attribute.NOT_NULL, SQLSession.Attribute.UNIQUE)
                         .field("name", "text", SQLSession.Attribute.NOT_NULL))
                 .createTable("currency_names", tableInitializer -> tableInitializer.ifNotExist()
                         .field("id", "integer",
