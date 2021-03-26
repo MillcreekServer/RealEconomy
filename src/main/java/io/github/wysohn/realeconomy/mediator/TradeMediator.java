@@ -371,6 +371,17 @@ public class TradeMediator extends Mediator {
                     return;
                 }
 
+                // if something went wrong, there might be the order that's not owned by the buyer/seller
+                // delete them here if that's the case
+                if (!buyer.hasOrderId(OrderType.BUY, tradeInfo.getBuyId())) {
+                    cancel(tradeInfo.getBuyId(), OrderType.BUY);
+                    return;
+                }
+                if (!seller.hasOrderId(OrderType.SELL, tradeInfo.getSellId())) {
+                    cancel(tradeInfo.getSellId(), OrderType.SELL);
+                    return;
+                }
+
                 IMemento buyerState = buyer.saveState();
                 IMemento sellerState = seller.saveState();
                 IMemento bankState = bank.saveState();
