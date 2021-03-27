@@ -61,6 +61,14 @@ public class OrderQueryModule extends AbstractModule {
                 = Metrics.resourceToString(resourceProvider, "select_price_trend_highest.sql");
         orderPlacementHandler.SELECT_PRICE_TREND_LOWEST
                 = Metrics.resourceToString(resourceProvider, "select_price_trend_lowest.sql");
+        orderPlacementHandler.SELECT_PRICE_TREND_LAST
+                = Metrics.resourceToString(resourceProvider, "select_price_trend_last.sql");
+        orderPlacementHandler.SELECT_PRICE_TREND_AVG
+                = Metrics.resourceToString(resourceProvider, "select_price_trend_avg.sql");
+        orderPlacementHandler.SELECT_BUY_ORDER_HIGHEST
+                = Metrics.resourceToString(resourceProvider, "select_buy_order_highest.sql");
+        orderPlacementHandler.SELECT_SELL_ORDER_LOWEST
+                = Metrics.resourceToString(resourceProvider, "select_sell_order_lowest.sql");
 
         List<Pair<String, Integer>> list = orderSql.query(orderPlacementHandler.SELECT_CATEGORIES, pstmt -> {
         }, rs -> {
@@ -110,6 +118,10 @@ public class OrderQueryModule extends AbstractModule {
         private String SELECT_PRICE_TREND;
         private String SELECT_PRICE_TREND_HIGHEST;
         private String SELECT_PRICE_TREND_LOWEST;
+        private String SELECT_PRICE_TREND_LAST;
+        private String SELECT_PRICE_TREND_AVG;
+        private String SELECT_BUY_ORDER_HIGHEST;
+        private String SELECT_SELL_ORDER_LOWEST;
 
         public OrderQueryModuleImpl(SQLSession ordersSession) {
             this.ordersSession = ordersSession;
@@ -276,6 +288,101 @@ public class OrderQueryModule extends AbstractModule {
         @Override
         public void rollbackOrders() throws SQLException {
             ordersSession.rollback();
+        }
+
+        @Override
+        public PricePoint getLastTradingPrice(int daysPeriod, UUID currencyUuid, UUID listingUuid) {
+            String sql = SELECT_PRICE_TREND_LAST;
+
+            List<PricePoint> points = ordersSession.query(sql, pstmt -> {
+                try {
+                    pstmt.setString(1, currencyUuid.toString());
+                    pstmt.setString(2, listingUuid.toString());
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, resultSet -> {
+                try {
+                    return PricePoint.read(resultSet);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    return null;
+                }
+            });
+
+            return points.stream().findFirst().orElse(null);
+        }
+
+        @Override
+        public double getLastTradingAverage(int daysPeriod, UUID currencyUuid, UUID listingUuid) {
+            String sql = SELECT_PRICE_TREND_AVG;
+
+            List<Double> average = ordersSession.query(sql, pstmt -> {
+                try {
+                    pstmt.setInt(1, daysPeriod);
+                    pstmt.setString(2, currencyUuid.toString());
+                    pstmt.setString(3, listingUuid.toString());
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, resultSet -> {
+                try {
+                    return resultSet.getDouble("average");
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    return null;
+                }
+            });
+
+            return average.stream().findFirst()
+                    .filter(val -> val > 0.0)
+                    .orElse(-1.0);
+        }
+
+        @Override
+        public OrderInfo getLowestAsk(UUID currencyUuid, UUID listingUuid) {
+            String sql = SELECT_SELL_ORDER_LOWEST;
+
+            List<OrderInfo> orderInfos = ordersSession.query(sql, pstmt -> {
+                try {
+                    pstmt.setString(1, currencyUuid.toString());
+                    pstmt.setString(2, listingUuid.toString());
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, resultSet -> {
+                try {
+                    return OrderInfo.read(resultSet);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    return null;
+                }
+            });
+
+            return orderInfos.stream().findFirst().orElse(null);
+        }
+
+        @Override
+        public OrderInfo getHighestBid(UUID currencyUuid, UUID listingUuid) {
+            String sql = SELECT_BUY_ORDER_HIGHEST;
+
+            List<OrderInfo> orderInfos = ordersSession.query(sql, pstmt -> {
+                try {
+                    pstmt.setString(1, currencyUuid.toString());
+                    pstmt.setString(2, listingUuid.toString());
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }, resultSet -> {
+                try {
+                    return OrderInfo.read(resultSet);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    return null;
+                }
+            });
+
+            return orderInfos.stream().findFirst().orElse(null);
         }
 
         @Override

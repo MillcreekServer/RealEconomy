@@ -144,6 +144,30 @@ public class TradeMediator extends Mediator {
         return assetListingManager.getListedOrderProvider(category);
     }
 
+    public PricePoint getLastPrice(AssetSignature sign, Currency currency) {
+        return assetListingManager.getLastPrice(sign, currency);
+    }
+
+    public double getAveragePrice(AssetSignature sign, Currency currency) {
+        return assetListingManager.getAveragePrice(sign, currency);
+    }
+
+    public OrderInfo getLowestAsk(AssetSignature sign, Currency currency) {
+        return assetListingManager.getLowestAsk(sign, currency);
+    }
+
+    public OrderInfo getHighestBid(AssetSignature sign, Currency currency) {
+        return assetListingManager.getHighestBid(sign, currency);
+    }
+
+    public PricePoint getLowestPrice(AssetSignature sign, Currency currency) {
+        return assetListingManager.getLowestPrice(sign, currency);
+    }
+
+    public PricePoint getHighestPrice(AssetSignature sign, Currency currency) {
+        return assetListingManager.getHighestPrice(sign, currency);
+    }
+
     public boolean isDeniedType(Material material) {
         return itemDenySet.contains(material);
     }
@@ -245,8 +269,12 @@ public class TradeMediator extends Mediator {
                         .map(Reference::get)
                         .orElse(null);
 
-                if (assetListing == null)
+                // obsolete item exist in the order list
+                // cancel it since it's not a valid order
+                if (assetListing == null) {
+                    cancelOrder(issuer, orderId, OrderType.BUY);
                     return;
+                }
 
                 assetListingManager.addOrder(assetListing.getSignature(),
                         OrderType.BUY,

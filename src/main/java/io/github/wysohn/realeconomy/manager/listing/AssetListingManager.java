@@ -272,14 +272,42 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         orderQueryModule.rollbackOrders();
     }
 
-    public PricePoint getHighestPrice(AssetSignature sign, Currency currency){
+    public PricePoint getLastPrice(AssetSignature sign, Currency currency) {
+        newListing(sign);
+        UUID uuid = signatureUUIDMap.get(sign);
+
+        return orderQueryModule.getLastTradingPrice(7, currency.getKey(), uuid);
+    }
+
+    public double getAveragePrice(AssetSignature sign, Currency currency) {
+        newListing(sign);
+        UUID uuid = signatureUUIDMap.get(sign);
+
+        return orderQueryModule.getLastTradingAverage(7, currency.getKey(), uuid);
+    }
+
+    public OrderInfo getLowestAsk(AssetSignature sign, Currency currency) {
+        newListing(sign);
+        UUID uuid = signatureUUIDMap.get(sign);
+
+        return orderQueryModule.getLowestAsk(uuid, currency.getKey());
+    }
+
+    public OrderInfo getHighestBid(AssetSignature sign, Currency currency) {
+        newListing(sign);
+        UUID uuid = signatureUUIDMap.get(sign);
+
+        return orderQueryModule.getHighestBid(uuid, currency.getKey());
+    }
+
+    public PricePoint getHighestPrice(AssetSignature sign, Currency currency) {
         newListing(sign);
         UUID uuid = signatureUUIDMap.get(sign);
 
         return orderQueryModule.getHighestPoint(7, currency.getKey(), uuid);
     }
 
-    public PricePoint getLowestPrice(AssetSignature sign, Currency currency){
+    public PricePoint getLowestPrice(AssetSignature sign, Currency currency) {
         newListing(sign);
         UUID uuid = signatureUUIDMap.get(sign);
 

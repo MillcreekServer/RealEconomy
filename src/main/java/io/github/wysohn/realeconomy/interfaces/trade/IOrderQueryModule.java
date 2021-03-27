@@ -162,10 +162,52 @@ public interface IOrderQueryModule {
     void setCurrencyName(UUID currencyUuid, String full, String shorter);
 
     /**
-     * Get highest price point in given period
-     * @param daysPeriod number of past days to query
+     * Get the price point of the last successful trade within the given period.
+     *
+     * @param daysPeriod   number of past days to query
      * @param currencyUuid uuid of currency
-     * @param listingUuid uuid of listing
+     * @param listingUuid  uuid of listing
+     * @return the price point; null if not found
+     */
+    PricePoint getLastTradingPrice(int daysPeriod, UUID currencyUuid, UUID listingUuid);
+
+    /**
+     * Get the average price trend within the given period.
+     *
+     * @param daysPeriod   number of past days to query
+     * @param currencyUuid uuid of currency
+     * @param listingUuid  uuid of listing
+     * @return the average price; less than 0.0 if not applicable
+     */
+    double getLastTradingAverage(int daysPeriod, UUID currencyUuid, UUID listingUuid);
+
+    /**
+     * Get lowest ask for the given signature. Users are probably interested
+     * in what is the cheapest offer prior to decide at what price to bid on.
+     *
+     * @param currencyUuid uuid of currency
+     * @param listingUuid  uuid of listing
+     * @return the lowest ask order; null if found none
+     */
+    OrderInfo getLowestAsk(UUID currencyUuid, UUID listingUuid);
+
+    /**
+     * Get highest bid for the given signature. Users are probably interested
+     * in what is the highest price it can offer to decide at what price to sell
+     * the asset for.
+     *
+     * @param currencyUuid uuid of currency
+     * @param listingUuid  uuid of listing
+     * @return the highest bid order; null if found none
+     */
+    OrderInfo getHighestBid(UUID currencyUuid, UUID listingUuid);
+
+    /**
+     * Get highest price point in given period
+     *
+     * @param daysPeriod   number of past days to query
+     * @param currencyUuid uuid of currency
+     * @param listingUuid  uuid of listing
      * @return the price point; null if not found
      */
     PricePoint getHighestPoint(int daysPeriod, UUID currencyUuid, UUID listingUuid);
