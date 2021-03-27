@@ -11,6 +11,7 @@ import io.github.wysohn.rapidframework3.core.command.TabCompleters;
 import io.github.wysohn.rapidframework3.core.exceptions.InvalidArgumentException;
 import io.github.wysohn.rapidframework3.core.inject.module.*;
 import io.github.wysohn.rapidframework3.core.language.DefaultLangs;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.core.main.PluginMainBuilder;
 import io.github.wysohn.rapidframework3.core.message.Message;
 import io.github.wysohn.rapidframework3.core.message.MessageBuilder;
@@ -42,10 +43,7 @@ import io.github.wysohn.realeconomy.manager.business.types.mining.MiningBusiness
 import io.github.wysohn.realeconomy.manager.claim.ChunkClaimManager;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
-import io.github.wysohn.realeconomy.manager.listing.AssetListing;
-import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
-import io.github.wysohn.realeconomy.manager.listing.OrderInfo;
-import io.github.wysohn.realeconomy.manager.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.listing.*;
 import io.github.wysohn.realeconomy.manager.simulation.MarketSimulationManager;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.manager.user.UserManager;
@@ -650,6 +648,75 @@ public class RealEconomy extends AbstractBukkitPlugin {
                             }));
 
                     return true;
+                }));
+        list.add(new SubCommand.Builder("price")
+                .withDescription(RealEconomyLangs.Command_Price_Desc)
+                .addUsage(RealEconomyLangs.Command_Price_Usage, (sen, man) ->
+                        man.addInteger(7)) //TODO later may change
+                .action(new CommandAction() {
+                    @Override
+                    public boolean execute(ICommandSender sender, SubCommand.Arguments args) {
+                        AbstractBank bank = getMain().getMediator(BankingMediator.class)
+                                .flatMap(bankingMediator -> getUser(sender).map(bankingMediator::getUsingBank))
+                                .orElse(null);
+
+                        if (bank == null) {
+                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NotInABank);
+                            return true;
+                        }
+
+                        getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
+                                getUser(sender).ifPresent(user -> {
+                                    ItemStack itemStack = user.getSender().getInventory().getItemInMainHand();
+                                    if (itemStack.getType() == Material.AIR) {
+                                        getMain().lang().sendMessage(sender, DefaultLangs.General_NothingOnYourHand);
+                                        return;
+                                    }
+
+                                    AssetSignature signature = new ItemStackSignature(itemStack);
+                                    sendItemInfo(tradeMediator, sender, signature, bank.getBaseCurrency());
+                                }));
+
+                        return true;
+                    }
+
+                    private void sendItemInfo(TradeMediator mediator,
+                                              ICommandSender sender,
+                                              AssetSignature signature,
+                                              Currency currency) {
+                        getMain().getManager(ManagerLanguage.class).ifPresent(lang -> {
+                            getMain().task().async(() -> {
+                                OrderInfo lowestAsk = mediator.getLowestAsk(signature, currency);
+                                OrderInfo highestBid = mediator.getHighestBid(signature, currency);
+                                PricePoint lastPrice = mediator.getLastPrice(signature, currency);
+                                double avgPrice = mediator.getAveragePrice(signature, currency);
+
+                                getMain().task().sync(() -> {
+                                    lang.sendMessage(sender, DefaultLangs.General_Line);
+
+                                    lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_Header, (sen, man) ->
+                                            man.addInteger(7)); //TODO later may change
+                                    lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_Seller, (sen, man) ->
+                                            man.addInteger(lowestAsk.getAmount())
+                                                    .addDouble(lowestAsk.getPrice())
+                                                    .addString(currency.toString()));
+                                    lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_Buyer, (sen, man) ->
+                                            man.addInteger(highestBid.getAmount())
+                                                    .addDouble(highestBid.getPrice())
+                                                    .addString(currency.toString()));
+                                    lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_LastPrice, (sen, man) ->
+                                            man.addDouble(Optional.ofNullable(lastPrice)
+                                                    .map(PricePoint::getPrice)
+                                                    .map(BigDecimal::doubleValue)
+                                                    .orElse(-1.0)));
+                                    lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_Average, (sen, man) ->
+                                            man.addDouble(avgPrice));
+
+                                    lang.sendMessage(sender, DefaultLangs.General_Line);
+                                });
+                            });
+                        });
+                    }
                 }));
         list.add(new SubCommand.Builder("orders", -1)
                 .withDescription(RealEconomyLangs.Command_Orders_Desc)
