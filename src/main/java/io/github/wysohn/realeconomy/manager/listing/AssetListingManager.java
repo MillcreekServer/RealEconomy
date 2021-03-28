@@ -290,14 +290,14 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         newListing(sign);
         UUID uuid = signatureUUIDMap.get(sign);
 
-        return orderQueryModule.getLowestAsk(uuid, currency.getKey());
+        return orderQueryModule.getLowestAsk(currency.getKey(), uuid);
     }
 
     public OrderInfo getHighestBid(AssetSignature sign, Currency currency) {
         newListing(sign);
         UUID uuid = signatureUUIDMap.get(sign);
 
-        return orderQueryModule.getHighestBid(uuid, currency.getKey());
+        return orderQueryModule.getHighestBid(currency.getKey(), uuid);
     }
 
     public PricePoint getHighestPrice(AssetSignature sign, Currency currency) {
