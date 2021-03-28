@@ -125,10 +125,14 @@ public class User extends BukkitPlayer implements IBankUser, IBankOwner {
         boolean bool = false;
         switch (type) {
             case BUY:
-                bool = buyOrderIdSet.add(orderId);
+                synchronized (buyOrderIdSet) {
+                    bool = buyOrderIdSet.add(orderId);
+                }
                 break;
             case SELL:
-                bool = sellOrderIdSet.add(orderId);
+                synchronized (sellOrderIdSet) {
+                    bool = sellOrderIdSet.add(orderId);
+                }
                 break;
             default:
                 throw new RuntimeException("Unknown order type " + type);
@@ -141,9 +145,13 @@ public class User extends BukkitPlayer implements IBankUser, IBankOwner {
     public boolean hasOrderId(OrderType type, int orderId) {
         switch (type) {
             case BUY:
-                return buyOrderIdSet.contains(orderId);
+                synchronized (buyOrderIdSet) {
+                    return buyOrderIdSet.contains(orderId);
+                }
             case SELL:
-                return sellOrderIdSet.contains(orderId);
+                synchronized (sellOrderIdSet) {
+                    return sellOrderIdSet.contains(orderId);
+                }
             default:
                 throw new RuntimeException("Unknown order type " + type);
         }
@@ -154,10 +162,14 @@ public class User extends BukkitPlayer implements IBankUser, IBankOwner {
         boolean bool = false;
         switch (type) {
             case BUY:
-                bool = buyOrderIdSet.remove(orderId);
+                synchronized (buyOrderIdSet) {
+                    bool = buyOrderIdSet.remove(orderId);
+                }
                 break;
             case SELL:
-                bool = sellOrderIdSet.remove(orderId);
+                synchronized (sellOrderIdSet) {
+                    bool = sellOrderIdSet.remove(orderId);
+                }
                 break;
             default:
                 throw new RuntimeException("Unknown order type " + type);
@@ -170,9 +182,13 @@ public class User extends BukkitPlayer implements IBankUser, IBankOwner {
     public Collection<Integer> getOrderIds(OrderType type) {
         switch (type) {
             case BUY:
-                return new HashSet<>(buyOrderIdSet);
+                synchronized (buyOrderIdSet) {
+                    return new HashSet<>(buyOrderIdSet);
+                }
             case SELL:
-                return new HashSet<>(sellOrderIdSet);
+                synchronized (sellOrderIdSet) {
+                    return new HashSet<>(sellOrderIdSet);
+                }
             default:
                 throw new RuntimeException("Unknown order type " + type);
         }
@@ -265,11 +281,15 @@ public class User extends BukkitPlayer implements IBankUser, IBankOwner {
             notifyObservers();
         }
 
-        buyOrderIdSet.clear();
-        buyOrderIdSet.addAll(mem.buyOrderIdSet);
+        synchronized (buyOrderIdSet) {
+            buyOrderIdSet.clear();
+            buyOrderIdSet.addAll(mem.buyOrderIdSet);
+        }
 
-        sellOrderIdSet.clear();
-        sellOrderIdSet.addAll(mem.sellOrderIdSet);
+        synchronized (sellOrderIdSet) {
+            sellOrderIdSet.clear();
+            sellOrderIdSet.addAll(mem.sellOrderIdSet);
+        }
     }
 
     private static class Memento implements IMemento {
@@ -281,7 +301,11 @@ public class User extends BukkitPlayer implements IBankUser, IBankOwner {
             synchronized (wallet) {
                 //UUID and BigDecimal are both immutable
                 wallet.putAll(user.wallet);
+            }
+            synchronized (buyOrderIdSet) {
                 buyOrderIdSet.addAll(user.buyOrderIdSet);
+            }
+            synchronized (sellOrderIdSet) {
                 sellOrderIdSet.addAll(user.sellOrderIdSet);
             }
         }

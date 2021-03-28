@@ -46,10 +46,14 @@ public class Agent implements IBankUser {
         boolean bool = false;
         switch (type) {
             case BUY:
-                bool = buyOrderIdSet.add(orderId);
+                synchronized (buyOrderIdSet) {
+                    bool = buyOrderIdSet.add(orderId);
+                }
                 break;
             case SELL:
-                bool = sellOrderIdSet.add(orderId);
+                synchronized (sellOrderIdSet) {
+                    bool = sellOrderIdSet.add(orderId);
+                }
                 break;
             default:
                 throw new RuntimeException("Unknown order type " + type);
@@ -61,9 +65,13 @@ public class Agent implements IBankUser {
     public boolean hasOrderId(OrderType type, int orderId) {
         switch (type) {
             case BUY:
-                return buyOrderIdSet.contains(orderId);
+                synchronized (buyOrderIdSet) {
+                    return buyOrderIdSet.contains(orderId);
+                }
             case SELL:
-                return sellOrderIdSet.contains(orderId);
+                synchronized (sellOrderIdSet) {
+                    return sellOrderIdSet.contains(orderId);
+                }
             default:
                 throw new RuntimeException("Unknown order type " + type);
         }
@@ -74,10 +82,14 @@ public class Agent implements IBankUser {
         boolean bool = false;
         switch (type) {
             case BUY:
-                bool = buyOrderIdSet.remove(orderId);
+                synchronized (buyOrderIdSet) {
+                    bool = buyOrderIdSet.remove(orderId);
+                }
                 break;
             case SELL:
-                bool = sellOrderIdSet.remove(orderId);
+                synchronized (sellOrderIdSet) {
+                    bool = sellOrderIdSet.remove(orderId);
+                }
                 break;
             default:
                 throw new RuntimeException("Unknown order type " + type);
@@ -89,9 +101,13 @@ public class Agent implements IBankUser {
     public Collection<Integer> getOrderIds(OrderType type) {
         switch (type) {
             case BUY:
-                return new HashSet<>(buyOrderIdSet);
+                synchronized (buyOrderIdSet) {
+                    return new HashSet<>(buyOrderIdSet);
+                }
             case SELL:
-                return new HashSet<>(sellOrderIdSet);
+                synchronized (sellOrderIdSet) {
+                    return new HashSet<>(sellOrderIdSet);
+                }
             default:
                 throw new RuntimeException("Unknown order type " + type);
         }
@@ -110,14 +126,16 @@ public class Agent implements IBankUser {
         logger.fine("Type: " + type);
         logger.fine("Result: " + result);
 
-        if (type == OrderType.BUY) {
-            // if we bought successfully, could we buy it at cheaper price?
-            tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0) + info.getAmount());
-        } else if (type == OrderType.SELL) {
-            // if we sold successfully, could we sell it at higher price?
-            tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0) - info.getAmount());
-        } else {
-            throw new RuntimeException();
+        synchronized (tradeDemands) {
+            if (type == OrderType.BUY) {
+                // if we bought successfully, could we buy it at cheaper price?
+                tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0) + info.getAmount());
+            } else if (type == OrderType.SELL) {
+                // if we sold successfully, could we sell it at higher price?
+                tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0) - info.getAmount());
+            } else {
+                throw new RuntimeException();
+            }
         }
     }
 
@@ -144,8 +162,10 @@ public class Agent implements IBankUser {
     @Override
     public int realizeAsset(Asset asset) {
         if (asset instanceof Item) {
-            double current = assets.getOrDefault(asset.getSignature(), 0.0);
-            assets.put(asset.getSignature(), current + asset.getNumericalMeasure());
+            synchronized (assets) {
+                double current = assets.getOrDefault(asset.getSignature(), 0.0);
+                assets.put(asset.getSignature(), current + asset.getNumericalMeasure());
+            }
             return 0;
         } else {
             throw new RuntimeException("Not yet implemented: " + asset);
@@ -171,11 +191,13 @@ public class Agent implements IBankUser {
     public boolean canProduce(){
         for (Map.Entry<AssetSignature, Double> entry : resourcesNeeded.entrySet()) {
             AssetSignature sign = entry.getKey();
-            double current = assets.getOrDefault(sign, 0.0);
-            double need = resourcesNeeded.getOrDefault(sign, 0.0);
+            synchronized (assets) {
+                double current = assets.getOrDefault(sign, 0.0);
+                double need = resourcesNeeded.getOrDefault(sign, 0.0);
 
-            if(current < need)
-                return false;
+                if (current < need)
+                    return false;
+            }
         }
 
         return true;
@@ -189,9 +211,11 @@ public class Agent implements IBankUser {
         // consume
         for (Map.Entry<AssetSignature, Double> entry : resourcesNeeded.entrySet()) {
             AssetSignature sign = entry.getKey();
-            double current = assets.getOrDefault(sign, 0.0);
-            double need = resourcesNeeded.getOrDefault(sign, 0.0);
-            assets.put(sign, current - need);
+            synchronized (assets) {
+                double current = assets.getOrDefault(sign, 0.0);
+                double need = resourcesNeeded.getOrDefault(sign, 0.0);
+                assets.put(sign, current - need);
+            }
         }
 
         // produce
@@ -221,10 +245,12 @@ public class Agent implements IBankUser {
         }
 
         for(Map.Entry<AssetSignature, Double> entry : resourcesNeeded.entrySet()) {
-            BigDecimal currentPrice = currentPricing.getOrDefault(entry.getKey(), BigDecimal.ZERO);
-            double amountNeeded = entry.getValue();
+            synchronized (currentPricing) {
+                BigDecimal currentPrice = currentPricing.getOrDefault(entry.getKey(), BigDecimal.ZERO);
+                double amountNeeded = entry.getValue();
 
-            cost = cost.add(currentPrice.multiply(BigDecimal.valueOf(amountNeeded)));
+                cost = cost.add(currentPrice.multiply(BigDecimal.valueOf(amountNeeded)));
+            }
         }
 
         return totalProduced < 1 ?
@@ -244,7 +270,9 @@ public class Agent implements IBankUser {
      * @return current number of stock; 0 if not found
      */
     public int getTradeDemand(UUID listingUuid) {
-        return tradeDemands.getOrDefault(listingUuid, 0);
+        synchronized (tradeDemands) {
+            return tradeDemands.getOrDefault(listingUuid, 0);
+        }
     }
 
     /**
@@ -260,7 +288,9 @@ public class Agent implements IBankUser {
      * @param num         new stock value to set
      */
     public void setTradeDemand(UUID listingUuid, int num) {
-        tradeDemands.put(listingUuid, num);
+        synchronized (tradeDemands) {
+            tradeDemands.put(listingUuid, num);
+        }
     }
 
     /**
@@ -278,12 +308,16 @@ public class Agent implements IBankUser {
      * @param sign signature
      * @return the current price target; null if not set
      */
-    public BigDecimal getCurrentPricing(AssetSignature sign){
-        return currentPricing.get(sign);
+    public BigDecimal getCurrentPricing(AssetSignature sign) {
+        synchronized (currentPricing) {
+            return currentPricing.get(sign);
+        }
     }
 
-    public void updateCurrentPricing(AssetSignature sign, BigDecimal price){
-        currentPricing.put(sign, price);
+    public void updateCurrentPricing(AssetSignature sign, BigDecimal price) {
+        synchronized (currentPricing) {
+            currentPricing.put(sign, price);
+        }
     }
 
     @Override
@@ -293,10 +327,6 @@ public class Agent implements IBankUser {
                 ", name='" + name + '\'' +
                 ", resourcesNeeded=" + resourcesNeeded +
                 ", production=" + production +
-                ", buyOrderIdSet=" + buyOrderIdSet +
-                ", sellOrderIdSet=" + sellOrderIdSet +
-                ", assets=" + assets +
-                ", currentPricing=" + currentPricing +
                 '}';
     }
 
@@ -309,17 +339,30 @@ public class Agent implements IBankUser {
     public void restoreState(IMemento iMemento) {
         SavedState savedState = (SavedState) iMemento;
 
-        this.buyOrderIdSet.clear();
-        this.buyOrderIdSet.addAll(savedState.buyOrderIdSet);
+        synchronized (buyOrderIdSet) {
+            this.buyOrderIdSet.clear();
+            this.buyOrderIdSet.addAll(savedState.buyOrderIdSet);
+        }
 
-        this.sellOrderIdSet.clear();
-        this.sellOrderIdSet.addAll(savedState.sellOrderIdSet);
+        synchronized (sellOrderIdSet) {
+            this.sellOrderIdSet.clear();
+            this.sellOrderIdSet.addAll(savedState.sellOrderIdSet);
+        }
 
-        this.assets.clear();
-        this.assets.putAll(savedState.assets);
+        synchronized (assets) {
+            this.assets.clear();
+            this.assets.putAll(savedState.assets);
+        }
 
-        this.currentPricing.clear();
-        this.currentPricing.putAll(savedState.currentPricing);
+        synchronized (currentPricing) {
+            this.currentPricing.clear();
+            this.currentPricing.putAll(savedState.currentPricing);
+        }
+
+        synchronized (tradeDemands) {
+            this.tradeDemands.clear();
+            this.tradeDemands.putAll(savedState.tradeDemands);
+        }
     }
 
     private static class SavedState implements IMemento{
@@ -327,12 +370,24 @@ public class Agent implements IBankUser {
         private final Set<Integer> sellOrderIdSet = new HashSet<>();
         private final Map<AssetSignature, Double> assets = new HashMap<>();
         private final Map<AssetSignature, BigDecimal> currentPricing = new HashMap<>();
+        private final Map<UUID, Integer> tradeDemands = new HashMap<>();
 
-        private SavedState(Agent agent){
-            this.buyOrderIdSet.addAll(agent.buyOrderIdSet);
-            this.sellOrderIdSet.addAll(agent.sellOrderIdSet);
-            this.assets.putAll(agent.assets);
-            this.currentPricing.putAll(agent.currentPricing);
+        private SavedState(Agent agent) {
+            synchronized (buyOrderIdSet) {
+                this.buyOrderIdSet.addAll(agent.buyOrderIdSet);
+            }
+            synchronized (sellOrderIdSet) {
+                this.sellOrderIdSet.addAll(agent.sellOrderIdSet);
+            }
+            synchronized (assets) {
+                this.assets.putAll(agent.assets);
+            }
+            synchronized (currentPricing) {
+                this.currentPricing.putAll(agent.currentPricing);
+            }
+            synchronized (tradeDemands) {
+                this.tradeDemands.putAll(agent.tradeDemands);
+            }
         }
     }
 }
