@@ -11,9 +11,11 @@ import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.listing.AssetListing;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
+import io.github.wysohn.realeconomy.manager.listing.OrderType;
 import org.bukkit.Material;
 
 import java.lang.ref.Reference;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -211,7 +213,25 @@ public class MarketSimulationManager extends Manager {
 
     @Override
     public void disable() throws Exception {
-
+        // cancel all agent orders
+        agentList.forEach((uuid, agent) -> {
+            agent.getOrderIds(OrderType.BUY).forEach(id -> {
+                try {
+                    assetListingManager.cancelOrder(id, OrderType.BUY, result -> {
+                    });
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            });
+            agent.getOrderIds(OrderType.SELL).forEach(id -> {
+                try {
+                    assetListingManager.cancelOrder(id, OrderType.SELL, result -> {
+                    });
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            });
+        });
     }
 
     /**
