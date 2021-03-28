@@ -144,16 +144,11 @@ public class SimulationMediator extends Mediator {
                     // this is a failed buy order, so subtract the amount from the number of trades
                     // the number being negative (agent not able to buy at the current price)
                     //   will lead to decline in price and vice versa
-                    try {
-                        Optional.ofNullable(assetListingManager.getInfo(orderId, OrderType.BUY))
-                                .ifPresent(orderInfo -> {
-                                    UUID listingUuid = orderInfo.getListingUuid();
-                                    agent.setNumberOfTrades(listingUuid,
-                                            agent.getNumberOfTrades(listingUuid) - orderInfo.getAmount());
-                                });
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
+                    tradeMediator.getInfo(orderId, OrderType.BUY, orderInfo -> {
+                        UUID listingUuid = orderInfo.getListingUuid();
+                        agent.setNumberOfTrades(listingUuid,
+                                agent.getNumberOfTrades(listingUuid) - orderInfo.getAmount());
+                    });
                     tradeMediator.cancelOrder(agent, orderId, OrderType.BUY);
                 });
 
@@ -276,16 +271,11 @@ public class SimulationMediator extends Mediator {
                     // this is failed sell order so add amount to the number of trades
                     // the number being positive (agent is unable to sell at the current price)
                     //   will lead to the decline in price and vice versa
-                    try {
-                        Optional.ofNullable(assetListingManager.getInfo(orderId, OrderType.SELL))
-                                .ifPresent(orderInfo -> {
-                                    UUID listingUuid = orderInfo.getListingUuid();
-                                    agent.setNumberOfTrades(listingUuid,
-                                            agent.getNumberOfTrades(listingUuid) + orderInfo.getAmount());
-                                });
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
+                    tradeMediator.getInfo(orderId, OrderType.SELL, orderInfo -> {
+                        UUID listingUuid = orderInfo.getListingUuid();
+                        agent.setNumberOfTrades(listingUuid,
+                                agent.getNumberOfTrades(listingUuid) + orderInfo.getAmount());
+                    });
                     tradeMediator.cancelOrder(agent, orderId, OrderType.SELL);
                 });
 

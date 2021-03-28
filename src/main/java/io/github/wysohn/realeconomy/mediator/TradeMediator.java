@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -310,6 +311,19 @@ public class TradeMediator extends Mediator {
         });
     }
 
+    public void getInfo(int orderId, OrderType type, Consumer<OrderInfo> consumer) {
+        Validation.validate(orderId, id -> id > 0, "Negative or 0 is not allowed for order id.");
+        Validation.assertNotNull(type);
+
+        tradeExecutor.submit(() -> {
+            try {
+                Optional.ofNullable(assetListingManager.getInfo(orderId, type)).ifPresent(consumer);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
     //TODO now this is a static class, make a separate test instead
     // of doing it all in one test
     static class TradeBroker extends Thread {
@@ -318,7 +332,11 @@ public class TradeMediator extends Mediator {
         private final CurrencyManager currencyManager;
         private final Logger logger;
 
-        public TradeBroker(AssetListingManager assetListingManager, Set<IBankUserProvider> bankUserProviders, CurrencyManager currencyManager, Logger logger, TradeBroker tradeBroker) {
+        public TradeBroker(AssetListingManager assetListingManager,
+                           Set<IBankUserProvider> bankUserProviders,
+                           CurrencyManager currencyManager,
+                           Logger logger,
+                           TradeBroker tradeBroker) {
             this.assetListingManager = assetListingManager;
             this.bankUserProviders = bankUserProviders;
             this.currencyManager = currencyManager;
