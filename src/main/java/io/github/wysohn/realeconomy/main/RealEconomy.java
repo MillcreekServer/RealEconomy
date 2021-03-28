@@ -697,12 +697,12 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_Header, (sen, man) ->
                                             man.addInteger(7)); //TODO later may change
                                     lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_Seller, (sen, man) ->
-                                            man.addInteger(lowestAsk.getAmount())
-                                                    .addDouble(lowestAsk.getPrice())
+                                            man.addInteger(lowestAsk == null ? -1 : lowestAsk.getAmount())
+                                                    .addDouble(lowestAsk == null ? -1.0 : lowestAsk.getPrice())
                                                     .addString(currency.toString()));
                                     lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_Buyer, (sen, man) ->
-                                            man.addInteger(highestBid.getAmount())
-                                                    .addDouble(highestBid.getPrice())
+                                            man.addInteger(highestBid == null ? -1 : highestBid.getAmount())
+                                                    .addDouble(highestBid == null ? -1.0 : highestBid.getPrice())
                                                     .addString(currency.toString()));
                                     lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_LastPrice, (sen, man) ->
                                             man.addDouble(Optional.ofNullable(lastPrice)
