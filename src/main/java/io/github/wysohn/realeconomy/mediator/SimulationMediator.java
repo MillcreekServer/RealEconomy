@@ -194,7 +194,10 @@ public class SimulationMediator extends Mediator {
                     // change the price according to the number of trades
                     midPoint = midPoint.multiply(BigDecimal.valueOf(1.0
                             + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getNumberOfTrades(assetListingManager.signatureToUuid(sign)))));
+
                     agent.updateCurrentPricing(sign, midPoint);
+                    logger.fine("agent " + agent + " updating price (bid).");
+                    logger.fine(sign + " : " + midPoint);
 
                     // before making bids, make sure we have enough balance in the bank
                     BigDecimal totalPrice = midPoint.multiply(BigDecimal.valueOf(amount));
@@ -204,8 +207,8 @@ public class SimulationMediator extends Mediator {
                             totalPrice,
                             centralBank.getBaseCurrency());
                     if (sendResult != TransactionUtil.Result.OK) {
-                        logger.fine("agent "+agent+" is unable to borrow currency from the bank.");
-                        logger.fine("amount: "+totalPrice);
+                        logger.fine("agent " + agent + " is unable to borrow currency from the bank.");
+                        logger.fine("amount: " + totalPrice);
                         logger.fine("reason: "+sendResult);
                         return;
                     }
@@ -315,6 +318,8 @@ public class SimulationMediator extends Mediator {
                     }
 
                     agent.updateCurrentPricing(sign, sellingPrice);
+                    logger.fine("agent " + agent + " updating price (ask).");
+                    logger.fine(sign + " : " + sellingPrice);
 
                     try {
                         assetListingManager.addOrder(sign,
