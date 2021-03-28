@@ -20,14 +20,13 @@ import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Singleton
 public class SimulationMediator extends Mediator {
     private static final BigDecimal DEFAULT_PRICING_START = BigDecimal.ONE;
-    // denominator is threshold.
-    private static final double PRICE_ADJUSTMENT_FACTOR = -4.0 / 100000.0;
+    private static final double PURCHASE_THRESHOLD = 100000.0;
+    private static final double PRICE_ADJUSTMENT_FACTOR = -4.0 / PURCHASE_THRESHOLD;
 
     private final Logger logger;
     private final MarketSimulationManager marketSimulationManager;
@@ -53,7 +52,7 @@ public class SimulationMediator extends Mediator {
 
     @Override
     public void enable() throws Exception {
-        logger.setLevel(Level.FINE); // TODO
+
     }
 
     @Override
@@ -146,8 +145,8 @@ public class SimulationMediator extends Mediator {
                     //   will lead to decline in price and vice versa
                     tradeMediator.getInfo(orderId, OrderType.BUY, orderInfo -> {
                         UUID listingUuid = orderInfo.getListingUuid();
-                        agent.setNumberOfTrades(listingUuid,
-                                agent.getNumberOfTrades(listingUuid) - orderInfo.getAmount());
+                        agent.setTradeDemand(listingUuid,
+                                agent.getTradeDemand(listingUuid) - orderInfo.getAmount());
                     });
                     tradeMediator.cancelOrder(agent, orderId, OrderType.BUY);
                 });
@@ -171,6 +170,18 @@ public class SimulationMediator extends Mediator {
                     AssetSignature sign = pair.key;
                     int amount = (int) Math.ceil(pair.value);
 
+                    // how much we have right now?
+                    // don't bid on resources if we have enough
+                    int currentStock = (int) Math.ceil(centralBank.countAccountAsset(agent, sign));
+                    if (currentStock > amount)
+                        return;
+
+                    // if threshold passes the lower bound, we probably need to stop it
+                    // this will prevent the case where the price will go sky-high indefinitely
+                    UUID listingUuid = assetListingManager.signatureToUuid(sign);
+                    int currentDemand = agent.getTradeDemand(listingUuid);
+                    agent.setTradeDemand(listingUuid, (int) Math.max(-PURCHASE_THRESHOLD, currentDemand));
+
                     // get pricing of this agent is using
                     BigDecimal currentPricing = agent.getCurrentPricing(sign);
                     if (currentPricing == null)
@@ -188,7 +199,7 @@ public class SimulationMediator extends Mediator {
 
                     // change the price according to the number of trades
                     midPoint = midPoint.multiply(BigDecimal.valueOf(1.0
-                            + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getNumberOfTrades(assetListingManager.signatureToUuid(sign)))));
+                            + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getTradeDemand(assetListingManager.signatureToUuid(sign)))));
 
                     agent.updateCurrentPricing(sign, midPoint);
                     logger.fine("agent " + agent + " updating price (bid).");
@@ -273,8 +284,8 @@ public class SimulationMediator extends Mediator {
                     //   will lead to the decline in price and vice versa
                     tradeMediator.getInfo(orderId, OrderType.SELL, orderInfo -> {
                         UUID listingUuid = orderInfo.getListingUuid();
-                        agent.setNumberOfTrades(listingUuid,
-                                agent.getNumberOfTrades(listingUuid) + orderInfo.getAmount());
+                        agent.setTradeDemand(listingUuid,
+                                agent.getTradeDemand(listingUuid) + orderInfo.getAmount());
                     });
                     tradeMediator.cancelOrder(agent, orderId, OrderType.SELL);
                 });
@@ -299,7 +310,7 @@ public class SimulationMediator extends Mediator {
 
                     // change the price according to the number of trades
                     sellingPrice = sellingPrice.multiply(BigDecimal.valueOf(1.0
-                            + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getNumberOfTrades(assetListingManager.signatureToUuid(sign)))));
+                            + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getTradeDemand(assetListingManager.signatureToUuid(sign)))));
 
                     // we cannot sell items at the price cheaper than the unit cost!
                     // that would be a dumb thing to do

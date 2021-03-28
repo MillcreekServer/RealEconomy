@@ -27,7 +27,7 @@ public class Agent implements IBankUser {
     private final Set<Integer> sellOrderIdSet = new HashSet<>();
     private final Map<AssetSignature, Double> assets = new HashMap<>();
     private final Map<AssetSignature, BigDecimal> currentPricing = new HashMap<>();
-    private final Map<UUID, Integer> numTrade = new HashMap<>(); // assetListingUuid -> # of trades
+    private final Map<UUID, Integer> tradeDemands = new HashMap<>(); // assetListingUuid -> # of trades
 
     public Agent(Logger logger,
                  UUID uuid,
@@ -112,10 +112,10 @@ public class Agent implements IBankUser {
 
         if (type == OrderType.BUY) {
             // if we bought successfully, could we buy it at cheaper price?
-            numTrade.put(info.getListingUuid(), numTrade.getOrDefault(info.getListingUuid(), 0) + info.getAmount());
+            tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0) + info.getAmount());
         } else if (type == OrderType.SELL) {
             // if we sold successfully, could we sell it at higher price?
-            numTrade.put(info.getListingUuid(), numTrade.getOrDefault(info.getListingUuid(), 0) - info.getAmount());
+            tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0) - info.getAmount());
         } else {
             throw new RuntimeException();
         }
@@ -243,8 +243,8 @@ public class Agent implements IBankUser {
      * @param listingUuid target asset signature UUID
      * @return current number of stock; 0 if not found
      */
-    public int getNumberOfTrades(UUID listingUuid) {
-        return numTrade.getOrDefault(listingUuid, 0);
+    public int getTradeDemand(UUID listingUuid) {
+        return tradeDemands.getOrDefault(listingUuid, 0);
     }
 
     /**
@@ -259,8 +259,8 @@ public class Agent implements IBankUser {
      * @param listingUuid target asset signature UUID
      * @param num         new stock value to set
      */
-    public void setNumberOfTrades(UUID listingUuid, int num) {
-        numTrade.put(listingUuid, num);
+    public void setTradeDemand(UUID listingUuid, int num) {
+        tradeDemands.put(listingUuid, num);
     }
 
     /**
