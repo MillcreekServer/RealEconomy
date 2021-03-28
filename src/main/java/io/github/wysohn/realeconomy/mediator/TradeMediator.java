@@ -39,7 +39,6 @@ public class TradeMediator extends Mediator {
     public static final String MATERIALS = "materials";
     public static final String MATERIAL_CATEGORY_DEFAULT = "item";
     public static final String DENY_LIST = "denyItemsList";
-    public static final double PRICE_CHANGE_PCT = 0.01;
 
     private final ExecutorService tradeExecutor = Executors.newSingleThreadExecutor();
 

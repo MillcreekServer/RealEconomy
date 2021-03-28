@@ -27,6 +27,7 @@ public class Agent implements IBankUser {
     private final Set<Integer> sellOrderIdSet = new HashSet<>();
     private final Map<AssetSignature, Double> assets = new HashMap<>();
     private final Map<AssetSignature, BigDecimal> currentPricing = new HashMap<>();
+    private final Map<UUID, Integer> numTrade = new HashMap<>(); // assetListingUuid -> # of trades
 
     public Agent(Logger logger,
                  UUID uuid,
@@ -104,10 +105,20 @@ public class Agent implements IBankUser {
 
     @Override
     public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
-        logger.fine("Agent: "+toString());
-        logger.fine("Info: "+simplifyTradeInfo(info));
-        logger.fine("Type: "+type);
-        logger.fine("Result: "+result);
+        logger.fine("Agent: " + toString());
+        logger.fine("Info: " + simplifyTradeInfo(info));
+        logger.fine("Type: " + type);
+        logger.fine("Result: " + result);
+
+        if (type == OrderType.BUY) {
+            // if we bought successfully, could we buy it at cheaper price?
+            numTrade.put(info.getListingUuid(), numTrade.getOrDefault(info.getListingUuid(), 0) + info.getAmount());
+        } else if (type == OrderType.SELL) {
+            // if we sold successfully, could we sell it at higher price?
+            numTrade.put(info.getListingUuid(), numTrade.getOrDefault(info.getListingUuid(), 0) - info.getAmount());
+        } else {
+            throw new RuntimeException();
+        }
     }
 
     @Override
@@ -221,10 +232,43 @@ public class Agent implements IBankUser {
     }
 
     /**
+     * Get number of trades successfully made.
+     * <p>
+     * This can be thought of the 'stock' piling up in the
+     * warehouse. So, if the agent is buying something and stock is piling up, the demand for the asset
+     * will decrease, thus decreasing the price, and vice versa. On the other hand, if the agent is selling
+     * something and stock is piling up, this means the seller should decrease the price to meet the
+     * price point where buyers will be willing to buy it.
+     *
+     * @param listingUuid target asset signature UUID
+     * @return current number of stock; 0 if not found
+     */
+    public int getNumberOfTrades(UUID listingUuid) {
+        return numTrade.getOrDefault(listingUuid, 0);
+    }
+
+    /**
+     * Set number of trades successfully made.
+     * <p>
+     * This can be thought of the 'stock' piling up in the
+     * warehouse. So, if the agent is buying something and stock is piling up, the demand for the asset
+     * will decrease, thus decreasing the price, and vice versa. On the other hand, if the agent is selling
+     * something and stock is piling up, this means the seller should decrease the price to meet the
+     * price point where buyers will be willing to buy it.
+     *
+     * @param listingUuid target asset signature UUID
+     * @param num         new stock value to set
+     */
+    public void setNumberOfTrades(UUID listingUuid, int num) {
+        numTrade.put(listingUuid, num);
+    }
+
+    /**
      * Get collection of read-only AssetSignatures that are produced.
+     *
      * @return
      */
-    public Collection<AssetSignature> getProductionTypes(){
+    public Collection<AssetSignature> getProductionTypes() {
         return Collections.unmodifiableCollection(production.keySet());
     }
 

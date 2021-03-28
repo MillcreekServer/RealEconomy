@@ -19,11 +19,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Singleton
 public class SimulationMediator extends Mediator {
     private static final BigDecimal DEFAULT_PRICING_START = BigDecimal.ONE;
+    // denominator is threshold.
+    private static final double PRICE_ADJUSTMENT_FACTOR = -4.0 / 100000.0;
 
     private final Logger logger;
     private final MarketSimulationManager marketSimulationManager;
@@ -49,7 +53,7 @@ public class SimulationMediator extends Mediator {
 
     @Override
     public void enable() throws Exception {
-
+        logger.setLevel(Level.FINE); // TODO
     }
 
     @Override
@@ -112,7 +116,8 @@ public class SimulationMediator extends Mediator {
                 iterate();
 
                 try {
-                    Thread.sleep(60 * 60 * 1000L); // hourly
+                    Thread.sleep(1000L); // TODO for test
+                    //Thread.sleep(60 * 60 * 1000L); // hourly
                 } catch (InterruptedException e) {
                     logger.info(getName() + " is interrupted.");
                     break;
@@ -135,8 +140,22 @@ public class SimulationMediator extends Mediator {
 
             for (Agent agent : marketSimulationManager.getAgents()) {
                 // cancel previous bids first to not make duplicated orders
-                agent.getOrderIds(OrderType.BUY).forEach(orderId ->
-                        tradeMediator.cancelOrder(agent, orderId, OrderType.BUY));
+                agent.getOrderIds(OrderType.BUY).forEach(orderId -> {
+                    // this is a failed buy order, so subtract the amount from the number of trades
+                    // the number being negative (agent not able to buy at the current price)
+                    //   will lead to decline in price and vice versa
+                    try {
+                        Optional.ofNullable(assetListingManager.getInfo(orderId, OrderType.BUY))
+                                .ifPresent(orderInfo -> {
+                                    UUID listingUuid = orderInfo.getListingUuid();
+                                    agent.setNumberOfTrades(listingUuid,
+                                            agent.getNumberOfTrades(listingUuid) - orderInfo.getAmount());
+                                });
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                    tradeMediator.cancelOrder(agent, orderId, OrderType.BUY);
+                });
 
                 // also, return the currency to the bank.
                 BigDecimal currentBalance = centralBank.balanceOfAccount(agent,
@@ -146,7 +165,7 @@ public class SimulationMediator extends Mediator {
                         centralBank,
                         currentBalance,
                         centralBank.getBaseCurrency());
-                if(returnResult != TransactionUtil.Result.OK){
+                if (returnResult != TransactionUtil.Result.OK) {
                     logger.fine("agent "+agent+" is unable to return currency to the bank.");
                     logger.fine("amount: "+currentBalance);
                     logger.fine("reason: "+returnResult);
@@ -159,9 +178,8 @@ public class SimulationMediator extends Mediator {
 
                     // get pricing of this agent is using
                     BigDecimal currentPricing = agent.getCurrentPricing(sign);
-                    if (currentPricing == null) {
+                    if (currentPricing == null)
                         currentPricing = DEFAULT_PRICING_START;
-                    }
 
                     // get current lowest market price
                     BigDecimal lowestPricing = Optional.of(assetListingManager)
@@ -173,10 +191,9 @@ public class SimulationMediator extends Mediator {
                     BigDecimal midPoint = currentPricing.add(lowestPricing)
                             .divide(BigDecimal.valueOf(2.0), RoundingMode.HALF_UP);
 
-                    // we are probably making a bid again, that means the market is not willing
-                    // to take the price we suggested an hour ago
-                    // increase bid a bit to make it more attractable
-                    midPoint = midPoint.multiply(BigDecimal.valueOf(1.0 + TradeMediator.PRICE_CHANGE_PCT));
+                    // change the price according to the number of trades
+                    midPoint = midPoint.multiply(BigDecimal.valueOf(1.0
+                            + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getNumberOfTrades(assetListingManager.signatureToUuid(sign)))));
                     agent.updateCurrentPricing(sign, midPoint);
 
                     // before making bids, make sure we have enough balance in the bank
@@ -186,7 +203,7 @@ public class SimulationMediator extends Mediator {
                             BankingTypeRegistry.TRADING,
                             totalPrice,
                             centralBank.getBaseCurrency());
-                    if(sendResult != TransactionUtil.Result.OK){
+                    if (sendResult != TransactionUtil.Result.OK) {
                         logger.fine("agent "+agent+" is unable to borrow currency from the bank.");
                         logger.fine("amount: "+totalPrice);
                         logger.fine("reason: "+sendResult);
@@ -252,15 +269,29 @@ public class SimulationMediator extends Mediator {
 
             for (Agent agent : marketSimulationManager.getAgents()) {
                 // cancel previous asks first to not make duplicated orders
-                agent.getOrderIds(OrderType.SELL).forEach(orderId ->
-                        tradeMediator.cancelOrder(agent, orderId, OrderType.SELL));
+                agent.getOrderIds(OrderType.SELL).forEach(orderId -> {
+                    // this is failed sell order so add amount to the number of trades
+                    // the number being positive (agent is unable to sell at the current price)
+                    //   will lead to the decline in price and vice versa
+                    try {
+                        Optional.ofNullable(assetListingManager.getInfo(orderId, OrderType.SELL))
+                                .ifPresent(orderInfo -> {
+                                    UUID listingUuid = orderInfo.getListingUuid();
+                                    agent.setNumberOfTrades(listingUuid,
+                                            agent.getNumberOfTrades(listingUuid) + orderInfo.getAmount());
+                                });
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                    tradeMediator.cancelOrder(agent, orderId, OrderType.SELL);
+                });
 
                 BigDecimal unitCost = agent.getFixedUnitCost();
                 agent.getProductionTypes().forEach(sign -> {
                     int currentStock = (int) Math.ceil(centralBank.countAccountAsset(agent, sign));
 
                     // we don't have enough stock
-                    if(currentStock < 1)
+                    if (currentStock < 1)
                         return;
 
                     // get current highest market price
@@ -273,10 +304,9 @@ public class SimulationMediator extends Mediator {
                     BigDecimal sellingPrice = unitCost.add(highestPricing)
                             .divide(BigDecimal.valueOf(2.0), RoundingMode.HALF_UP);
 
-                    // we are probably making an ask again, that means the market is not willing
-                    // to take the price we suggested an hour ago
-                    // decrease the price a bit to make it more attractable
-                    sellingPrice = sellingPrice.multiply(BigDecimal.valueOf(1.0 - TradeMediator.PRICE_CHANGE_PCT));
+                    // change the price according to the number of trades
+                    sellingPrice = sellingPrice.multiply(BigDecimal.valueOf(1.0
+                            + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getNumberOfTrades(assetListingManager.signatureToUuid(sign)))));
 
                     // we cannot sell items at the price cheaper than the unit cost!
                     // that would be a dumb thing to do

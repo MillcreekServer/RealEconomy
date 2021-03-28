@@ -137,6 +137,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
     }
 
     public UUID signatureToUuid(AssetSignature sign){
+        newListing(sign);
         return signatureUUIDMap.get(sign);
     }
 
