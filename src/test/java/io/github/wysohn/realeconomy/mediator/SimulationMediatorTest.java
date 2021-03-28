@@ -123,58 +123,28 @@ public class SimulationMediatorTest {
         verify(assetListingManager).addOrder(eq(WHEAT),
                 eq(OrderType.BUY),
                 eq(agent1),
-                eq(1.01),
+                eq(1.0),
                 eq(currency),
                 eq(200));
-        assertEquals(BigDecimal.valueOf(1.01),
+        assertEquals(BigDecimal.valueOf(1.0),
                 agent1.getCurrentPricing(WHEAT));
 
         verify(assetListingManager).addOrder(eq(COCOA),
                 eq(OrderType.BUY),
                 eq(agent1),
-                eq(1.01),
+                eq(1.0),
                 eq(currency),
                 eq(100));
-        assertEquals(BigDecimal.valueOf(1.01),
+        assertEquals(BigDecimal.valueOf(1.0),
                 agent1.getCurrentPricing(COCOA));
 
         verify(assetListingManager).addOrder(eq(WHEAT),
                 eq(OrderType.BUY),
                 eq(agent2),
-                eq(1.01),
+                eq(1.0),
                 eq(currency),
                 eq(300));
-        assertEquals(BigDecimal.valueOf(1.01),
-                agent2.getCurrentPricing(WHEAT));
-
-        // an hour later
-        simulator.iterate();
-
-        verify(assetListingManager).addOrder(eq(WHEAT),
-                eq(OrderType.BUY),
-                eq(agent1),
-                eq(1.0201),
-                eq(currency),
-                eq(200));
-        assertEquals(BigDecimal.valueOf(1.0201),
-                agent1.getCurrentPricing(WHEAT));
-
-        verify(assetListingManager).addOrder(eq(COCOA),
-                eq(OrderType.BUY),
-                eq(agent1),
-                eq(1.0201),
-                eq(currency),
-                eq(100));
-        assertEquals(BigDecimal.valueOf(1.0201),
-                agent1.getCurrentPricing(COCOA));
-
-        verify(assetListingManager).addOrder(eq(WHEAT),
-                eq(OrderType.BUY),
-                eq(agent2),
-                eq(1.0201),
-                eq(currency),
-                eq(300));
-        assertEquals(BigDecimal.valueOf(1.0201),
+        assertEquals(BigDecimal.valueOf(1.0),
                 agent2.getCurrentPricing(WHEAT));
     }
 
