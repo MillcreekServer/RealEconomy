@@ -708,9 +708,11 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             man.addDouble(Optional.ofNullable(lastPrice)
                                                     .map(PricePoint::getPrice)
                                                     .map(BigDecimal::doubleValue)
-                                                    .orElse(-1.0)));
+                                                    .orElse(-1.0))
+                                                    .addString(currency.toString()));
                                     lang.sendMessage(sender, RealEconomyLangs.Command_Price_Format_Average, (sen, man) ->
-                                            man.addDouble(avgPrice));
+                                            man.addDouble(avgPrice)
+                                                    .addString(currency.toString()));
 
                                     lang.sendMessage(sender, DefaultLangs.General_Line);
                                 });

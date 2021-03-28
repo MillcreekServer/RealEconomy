@@ -135,8 +135,8 @@ public enum RealEconomyLangs implements ILang {
     Command_Price_Format_Header("&6${integer} days &7trends&8:"),
     Command_Price_Format_Seller("  &dSeller &7wants&8: &d${integer} &8@ &6${double} ${string}"), // Seller want: 119 @ 232 dollar
     Command_Price_Format_Buyer("  &dBuyer &7wants&8: &d${integer} &8@ &6${double} ${string}"), // Buyer want: 22 @ 199 dollar
-    Command_Price_Format_LastPrice("  &dLast Trade Price&8: ${double}"),
-    Command_Price_Format_Average("  &dAverage Trade Price&8: ${double}"),
+    Command_Price_Format_LastPrice("  &dLast Trade Price&8: &6${double} ${string}"),
+    Command_Price_Format_Average("  &dAverage Trade Price&8: &6${double} ${string}"),
 
     Command_Orders_Desc("List all orders issued by you."),
     Command_Orders_Usage("&d/eco orders &8- &7list all orders."),
