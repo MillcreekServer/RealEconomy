@@ -1,7 +1,6 @@
 package io.github.wysohn.realeconomy.manager.banking;
 
 import io.github.wysohn.rapidframework3.core.caching.CachedElement;
-import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
@@ -94,9 +93,6 @@ public class TransactionUtil {
         if (to == null)
             to = currencyOwner;
 
-        IMemento savedFromState = from.saveState();
-        IMemento savedToState = to.saveState();
-
         IFinancialEntity finalFrom = from;
         IFinancialEntity finalTo = to;
         return FailSensitiveTaskResult.of(() -> {
@@ -107,10 +103,12 @@ public class TransactionUtil {
                 return Result.TO_DEPOSIT_REFUSED;
 
             return Result.OK;
-        }, Result.OK).onFail(() -> {
-            finalFrom.restoreState(savedFromState);
-            finalTo.restoreState(savedToState);
-        }).handleException(Throwable::printStackTrace).run();
+        }, Result.OK).handleException(Throwable::printStackTrace)
+                .addStateSupplier("from", finalFrom::saveState)
+                .addStateConsumer("from", finalFrom::restoreState)
+                .addStateSupplier("to", finalTo::saveState)
+                .addStateConsumer("to", finalTo::restoreState)
+                .run();
     }
 
     public static class FailSensitiveTaskResult extends FailSensitiveTaskGeneric<FailSensitiveTaskResult, Result> {

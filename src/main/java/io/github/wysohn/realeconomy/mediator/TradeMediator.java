@@ -3,7 +3,6 @@ package io.github.wysohn.realeconomy.mediator;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
-import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
 import io.github.wysohn.rapidframework3.utils.Validation;
@@ -426,9 +425,6 @@ public class TradeMediator extends Mediator {
                     return;
                 }
 
-                IMemento buyerState = buyer.saveState();
-                IMemento sellerState = seller.saveState();
-                IMemento bankState = bank.saveState();
                 CentralBank finalBank = bank;
                 TradeResult result = FailSensitiveTradeResult.of(() -> {
                     // get listing info
@@ -530,17 +526,20 @@ public class TradeMediator extends Mediator {
                     }
 
                     return TradeResult.OK;
-                }).handleException(Throwable::printStackTrace).onFail(() -> {
-                    buyer.restoreState(buyerState);
-                    seller.restoreState(sellerState);
-                    finalBank.restoreState(bankState);
-
-                    try {
-                        assetListingManager.rollbackOrders();
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
-                }).run();
+                }).handleException(Throwable::printStackTrace)
+                        .addStateSupplier("buyer", buyer::saveState)
+                        .addStateConsumer("buyer", buyer::restoreState)
+                        .addStateSupplier("seller", seller::saveState)
+                        .addStateConsumer("seller", seller::restoreState)
+                        .addStateSupplier("bank", bank::saveState)
+                        .addStateConsumer("bank", bank::restoreState)
+                        .onFail(() -> {
+                            try {
+                                assetListingManager.rollbackOrders();
+                            } catch (SQLException ex) {
+                                ex.printStackTrace();
+                            }
+                        }).run();
 
                 // since this is an un-handled case, stop the broker
                 if (result == null) {

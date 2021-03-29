@@ -6,7 +6,6 @@ import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
-import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ITypeAsserter;
@@ -143,13 +142,13 @@ public class UserManager extends AbstractUserManager<User> {
         if (user == null)
             return;
 
-        IMemento savedState = user.saveState();
         FailSensitiveTask.of(() -> {
             List<ItemStack> checks = itemizeCurrencies(user);
             event.getDrops().addAll(checks);
             return true;
         }).handleException(Throwable::printStackTrace)
-                .onFail(() -> user.restoreState(savedState))
+                .addStateSupplier("state", user::saveState)
+                .addStateConsumer("state", user::restoreState)
                 .run();
     }
 

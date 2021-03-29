@@ -11,7 +11,6 @@ import io.github.wysohn.rapidframework3.bukkit.utils.InventoryUtil;
 import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.core.serialize.BukkitConfigurationSerializer;
 import io.github.wysohn.rapidframework3.interfaces.ICommandSender;
-import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
@@ -169,20 +168,6 @@ public class AssetTransferGUI implements InventoryProvider {
             return;
         }
 
-        IMemento mementoFrom = null;
-        IMemento mementoTo = null;
-        try {
-            mementoFrom = assetStore.saveState();
-            mementoTo = targetToSendAsset.saveState();
-        } catch (Exception ex) {
-            // if saveState() failed for some reason, prevent item duplication here
-            ex.printStackTrace();
-            event.setCancelled(true);
-            return;
-        }
-
-        IMemento finalMementoTo = mementoTo;
-        IMemento finalMementoFrom = mementoFrom;
         FailSensitiveTask.of(() -> {
             if (cursor == null || cursor.getType() == Material.AIR) {
                 // empty slot and empty item in hand; nothing will happen
@@ -206,14 +191,15 @@ public class AssetTransferGUI implements InventoryProvider {
             // and avoid possible duplications
             dataProvider = assetStore.assetDataProvider();
             return true;
-        }).handleException(Throwable::printStackTrace).onFail(() -> {
-            // if something ever goes wrong, cancel the click event to minimize the impact.
-            event.setCancelled(true);
-
-            // also restore state
-            targetToSendAsset.restoreState(finalMementoTo);
-            assetStore.restoreState(finalMementoFrom);
-        }).run();
+        }).handleException(Throwable::printStackTrace)
+                .addStateSupplier("from", assetStore::saveState)
+                .addStateConsumer("from", assetStore::restoreState)
+                .addStateSupplier("to", targetToSendAsset::saveState)
+                .addStateConsumer("to", targetToSendAsset::restoreState)
+                .onFail(() -> {
+                    // if something ever goes wrong, cancel the click event to minimize the impact.
+                    event.setCancelled(true);
+                }).run();
     }
 
     private boolean transferAsset(IAssetHolder from, IFinancialEntity to, int slotIndex) {
