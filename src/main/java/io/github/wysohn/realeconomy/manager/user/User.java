@@ -298,14 +298,14 @@ public class User extends BukkitPlayer implements IBankUser, IBankOwner {
         private final Set<Integer> sellOrderIdSet = new HashSet<>();
 
         public Memento(User user) {
-            synchronized (wallet) {
+            synchronized (user.wallet) {
                 //UUID and BigDecimal are both immutable
                 wallet.putAll(user.wallet);
             }
-            synchronized (buyOrderIdSet) {
+            synchronized (user.buyOrderIdSet) {
                 buyOrderIdSet.addAll(user.buyOrderIdSet);
             }
-            synchronized (sellOrderIdSet) {
+            synchronized (user.sellOrderIdSet) {
                 sellOrderIdSet.addAll(user.sellOrderIdSet);
             }
         }

@@ -469,19 +469,19 @@ public class Agent implements IBankUser {
         private final Map<UUID, Integer> tradeDemands = new HashMap<>();
 
         private SavedState(Agent agent) {
-            synchronized (buyOrderIdSet) {
+            synchronized (agent.buyOrderIdSet) {
                 this.buyOrderIdSet.addAll(agent.buyOrderIdSet);
             }
-            synchronized (sellOrderIdSet) {
+            synchronized (agent.sellOrderIdSet) {
                 this.sellOrderIdSet.addAll(agent.sellOrderIdSet);
             }
-            synchronized (assets) {
+            synchronized (agent.assets) {
                 this.assets.putAll(agent.assets);
             }
-            synchronized (currentPricing) {
+            synchronized (agent.currentPricing) {
                 this.currentPricing.putAll(agent.currentPricing);
             }
-            synchronized (tradeDemands) {
+            synchronized (agent.tradeDemands) {
                 this.tradeDemands.putAll(agent.tradeDemands);
             }
         }
