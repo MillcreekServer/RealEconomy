@@ -89,165 +89,167 @@ public class MarketSimulationManager extends Manager {
               <UUID>: 2
          */
 
-        agentList.clear();
-        if (!config.get(SIMULATOR).isPresent()) {
+        synchronized (agentList) {
+            agentList.clear();
+            if (!config.get(SIMULATOR).isPresent()) {
 //            addAgent(new AgentConfigBuilder("")
 //                    .build(logger, config, assetInfoProvider));
 
-            addAgent(new AgentConfigBuilder("Pastry_1")
-                    .addNeededResource(Material.WHEAT, 300)
-                    .addOutput(Material.BREAD, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Pastry_2")
-                    .addNeededResource(Material.WHEAT, 200)
-                    .addNeededResource(Material.COCOA_BEANS, 100)
-                    .addOutput(Material.COOKIE, 800)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Pastry_3")
-                    .addNeededResource(Material.PUMPKIN, 100)
-                    .addNeededResource(Material.SUGAR, 100)
-                    .addNeededResource(Material.EGG, 100)
-                    .addOutput(Material.PUMPKIN_PIE, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Pastry_4")
-                    .addNeededResource(Material.SUGAR, 200)
-                    .addNeededResource(Material.EGG, 100)
-                    .addNeededResource(Material.WHEAT, 300)
-                    .addNeededResource(Material.IRON_INGOT, 9) // represents 3 buckets
-                    .addOutput(Material.CAKE, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Pastry_5")
-                    .addNeededResource(Material.GOLD_NUGGET, 800)
-                    .addNeededResource(Material.CARROT, 100)
-                    .addOutput(Material.GOLDEN_CARROT, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Pastry_6")
-                    .addNeededResource(Material.GOLD_NUGGET, 800)
-                    .addNeededResource(Material.MELON_SLICE, 100)
-                    .addOutput(Material.GLISTERING_MELON_SLICE, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Pastry_7")
-                    .addNeededResource(Material.POTATO, 100)
-                    .addOutput(Material.BAKED_POTATO, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Pastry_8")
-                    .addNeededResource(Material.BEETROOT, 600)
-                    .addNeededResource(Material.BOWL, 100) // this is made of easy to get material
-                    .addOutput(Material.BEETROOT_SOUP, 100)
-                    .build(logger, config, assetInfoProvider));
-
-            addAgent(new AgentConfigBuilder("Farmer_1")
-                    .addNeededResource(Material.WHEAT_SEEDS, 100)
-                    .addOutput(Material.WHEAT, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Farmer_1_2")
-                    .addNeededResource(Material.WHEAT_SEEDS, 100)
-                    .addOutput(Material.WHEAT_SEEDS, 150)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Farmer_2")
-                    .addNeededResource(Material.CARROT, 100)
-                    .addOutput(Material.CARROT, 150)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Farmer_3")
-                    .addNeededResource(Material.POTATO, 100)
-                    .addOutput(Material.POTATO, 150)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Farmer_4")
-                    .addNeededResource(Material.BEETROOT_SEEDS, 100)
-                    .addOutput(Material.BEETROOT, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Farmer_4_2")
-                    .addNeededResource(Material.BEETROOT_SEEDS, 100)
-                    .addOutput(Material.BEETROOT_SEEDS, 150)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Farmer_5")
-                    .addNeededResource(Material.SWEET_BERRIES, 100)
-                    .addOutput(Material.SWEET_BERRIES, 125)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Farmer_6")
-                    .addNeededResource(Material.MELON_SEEDS, 100)
-                    .addOutput(Material.MELON_SLICE, 500)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Farmer_7")
-                    .addNeededResource(Material.PUMPKIN_SEEDS, 100)
-                    .addOutput(Material.PUMPKIN, 500)
-                    .build(logger, config, assetInfoProvider));
-
-            addAgent(new AgentConfigBuilder("Librarian_1")
-                    .addNeededResource(Material.PAPER, 300)
-                    .addNeededResource(Material.LEATHER, 100)
-                    .addOutput(Material.BOOK, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Librarian_2")
-                    .addNeededResource(Material.PAPER, 100)
-                    .addNeededResource(Material.DIAMOND, 200)
-                    .addNeededResource(Material.OBSIDIAN, 400)
-                    .addOutput(Material.ENCHANTING_TABLE, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Librarian_3")
-                    .addNeededResource(Material.PAPER, 300)
-                    .addNeededResource(Material.LEATHER, 100)
-                    .addOutput(Material.BOOK, 100)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Librarian_4")
-                    .addNeededResource(Material.IRON_INGOT, 40)
-                    .addNeededResource(Material.REDSTONE, 10)
-                    .addOutput(Material.COMPASS, 10)
-                    .build(logger, config, assetInfoProvider));
-            addAgent(new AgentConfigBuilder("Librarian_5")
-                    .addNeededResource(Material.GOLD_INGOT, 40)
-                    .addNeededResource(Material.REDSTONE, 10)
-                    .addOutput(Material.CLOCK, 10)
-                    .build(logger, config, assetInfoProvider));
-            for (Material wood : WOODS) {
-                addAgent(new AgentConfigBuilder("Librarian_BookShelf_" + wood)
-                        .addNeededResource(wood, 60)
-                        .addNeededResource(Material.BOOK, 30)
-                        .addOutput(Material.BOOKSHELF, 10)
+                addAgent(new AgentConfigBuilder("Pastry_1")
+                        .addNeededResource(Material.WHEAT, 300)
+                        .addOutput(Material.BREAD, 100)
                         .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Librarian_NameTag_" + wood)
-                        .addNeededResource(wood, 20)
-                        .addNeededResource(Material.STRING, 10)
-                        .addNeededResource(Material.DIAMOND, 1)
-                        .addOutput(Material.NAME_TAG, 10)
+                addAgent(new AgentConfigBuilder("Pastry_2")
+                        .addNeededResource(Material.WHEAT, 200)
+                        .addNeededResource(Material.COCOA_BEANS, 100)
+                        .addOutput(Material.COOKIE, 800)
                         .build(logger, config, assetInfoProvider));
-            }
-            for (Enchantment ench : Enchantment.values()) {
-                ItemStack enchBook = new ItemStack(Material.ENCHANTED_BOOK);
-                EnchantmentStorageMeta esm = (EnchantmentStorageMeta) enchBook.getItemMeta();
-                esm.addStoredEnchant(ench, ench.getStartLevel()
-                                + RAND.nextInt(ench.getMaxLevel() - ench.getStartLevel() + 1),
-                        false);
-                enchBook.setItemMeta(esm);
+                addAgent(new AgentConfigBuilder("Pastry_3")
+                        .addNeededResource(Material.PUMPKIN, 100)
+                        .addNeededResource(Material.SUGAR, 100)
+                        .addNeededResource(Material.EGG, 100)
+                        .addOutput(Material.PUMPKIN_PIE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Pastry_4")
+                        .addNeededResource(Material.SUGAR, 200)
+                        .addNeededResource(Material.EGG, 100)
+                        .addNeededResource(Material.WHEAT, 300)
+                        .addNeededResource(Material.IRON_INGOT, 9) // represents 3 buckets
+                        .addOutput(Material.CAKE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Pastry_5")
+                        .addNeededResource(Material.GOLD_NUGGET, 800)
+                        .addNeededResource(Material.CARROT, 100)
+                        .addOutput(Material.GOLDEN_CARROT, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Pastry_6")
+                        .addNeededResource(Material.GOLD_NUGGET, 800)
+                        .addNeededResource(Material.MELON_SLICE, 100)
+                        .addOutput(Material.GLISTERING_MELON_SLICE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Pastry_7")
+                        .addNeededResource(Material.POTATO, 100)
+                        .addOutput(Material.BAKED_POTATO, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Pastry_8")
+                        .addNeededResource(Material.BEETROOT, 600)
+                        .addNeededResource(Material.BOWL, 100) // this is made of easy to get material
+                        .addOutput(Material.BEETROOT_SOUP, 100)
+                        .build(logger, config, assetInfoProvider));
 
-                addAgent(new AgentConfigBuilder("Librarian_E_" + ench)
-                        .addNeededResource(Material.BOOK, 10)
-                        .addNeededResource(Material.EMERALD, 5)
+                addAgent(new AgentConfigBuilder("Farmer_1")
+                        .addNeededResource(Material.WHEAT_SEEDS, 100)
+                        .addOutput(Material.WHEAT, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Farmer_1_2")
+                        .addNeededResource(Material.WHEAT_SEEDS, 100)
+                        .addOutput(Material.WHEAT_SEEDS, 150)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Farmer_2")
+                        .addNeededResource(Material.CARROT, 100)
+                        .addOutput(Material.CARROT, 150)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Farmer_3")
+                        .addNeededResource(Material.POTATO, 100)
+                        .addOutput(Material.POTATO, 150)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Farmer_4")
+                        .addNeededResource(Material.BEETROOT_SEEDS, 100)
+                        .addOutput(Material.BEETROOT, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Farmer_4_2")
+                        .addNeededResource(Material.BEETROOT_SEEDS, 100)
+                        .addOutput(Material.BEETROOT_SEEDS, 150)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Farmer_5")
+                        .addNeededResource(Material.SWEET_BERRIES, 100)
+                        .addOutput(Material.SWEET_BERRIES, 125)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Farmer_6")
+                        .addNeededResource(Material.MELON_SEEDS, 100)
+                        .addOutput(Material.MELON_SLICE, 500)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Farmer_7")
+                        .addNeededResource(Material.PUMPKIN_SEEDS, 100)
+                        .addOutput(Material.PUMPKIN, 500)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Librarian_1")
+                        .addNeededResource(Material.PAPER, 300)
+                        .addNeededResource(Material.LEATHER, 100)
+                        .addOutput(Material.BOOK, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Librarian_2")
+                        .addNeededResource(Material.PAPER, 100)
+                        .addNeededResource(Material.DIAMOND, 200)
+                        .addNeededResource(Material.OBSIDIAN, 400)
+                        .addOutput(Material.ENCHANTING_TABLE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Librarian_3")
+                        .addNeededResource(Material.PAPER, 300)
+                        .addNeededResource(Material.LEATHER, 100)
+                        .addOutput(Material.BOOK, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Librarian_4")
+                        .addNeededResource(Material.IRON_INGOT, 40)
+                        .addNeededResource(Material.REDSTONE, 10)
+                        .addOutput(Material.COMPASS, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Librarian_5")
+                        .addNeededResource(Material.GOLD_INGOT, 40)
+                        .addNeededResource(Material.REDSTONE, 10)
+                        .addOutput(Material.CLOCK, 10)
+                        .build(logger, config, assetInfoProvider));
+                for (Material wood : WOODS) {
+                    addAgent(new AgentConfigBuilder("Librarian_BookShelf_" + wood)
+                            .addNeededResource(wood, 60)
+                            .addNeededResource(Material.BOOK, 30)
+                            .addOutput(Material.BOOKSHELF, 10)
+                            .build(logger, config, assetInfoProvider));
+                    addAgent(new AgentConfigBuilder("Librarian_NameTag_" + wood)
+                            .addNeededResource(wood, 20)
+                            .addNeededResource(Material.STRING, 10)
+                            .addNeededResource(Material.DIAMOND, 1)
+                            .addOutput(Material.NAME_TAG, 10)
+                            .build(logger, config, assetInfoProvider));
+                }
+                for (Enchantment ench : Enchantment.values()) {
+                    ItemStack enchBook = new ItemStack(Material.ENCHANTED_BOOK);
+                    EnchantmentStorageMeta esm = (EnchantmentStorageMeta) enchBook.getItemMeta();
+                    esm.addStoredEnchant(ench, ench.getStartLevel()
+                                    + RAND.nextInt(ench.getMaxLevel() - ench.getStartLevel() + 1),
+                            false);
+                    enchBook.setItemMeta(esm);
+
+                    addAgent(new AgentConfigBuilder("Librarian_E_" + ench)
+                            .addNeededResource(Material.BOOK, 10)
+                            .addNeededResource(Material.EMERALD, 5)
+                            .addNeededResource(Material.DIAMOND, 5)
+                            .addNeededResource(Material.GOLD_INGOT, 5)
+                            .addNeededResource(Material.LAPIS_LAZULI, 10)
+                            .addOutput(enchBook, 10)
+                            .build(logger, config, assetInfoProvider));
+                }
+
+                addAgent(new AgentConfigBuilder("Toolsmith_1")
+                        .addNeededResource(Material.GOLD_INGOT, 25)
+                        .addNeededResource(Material.STICK, 10)
                         .addNeededResource(Material.DIAMOND, 5)
-                        .addNeededResource(Material.GOLD_INGOT, 5)
-                        .addNeededResource(Material.LAPIS_LAZULI, 10)
-                        .addOutput(enchBook, 10)
+                        .addOutput(Material.BELL, 5)
                         .build(logger, config, assetInfoProvider));
+
+            } else {
+                config.get(SIMULATOR)
+                        .filter(config::isSection)
+                        .map(section -> Agent.readAll(config,
+                                logger,
+                                assetInfoProvider,
+                                section))
+                        .ifPresent(agentCollection -> agentCollection.forEach(this::addAgent));
             }
 
-            addAgent(new AgentConfigBuilder("Toolsmith_1")
-                    .addNeededResource(Material.GOLD_INGOT, 25)
-                    .addNeededResource(Material.STICK, 10)
-                    .addNeededResource(Material.DIAMOND, 5)
-                    .addOutput(Material.BELL, 5)
-                    .build(logger, config, assetInfoProvider));
-
-        } else {
-            config.get(SIMULATOR)
-                    .filter(config::isSection)
-                    .map(section -> Agent.readAll(config,
-                            logger,
-                            assetInfoProvider,
-                            section))
-                    .ifPresent(agentCollection -> agentCollection.forEach(this::addAgent));
+            logger.info(agentList.size() + " Market Simulation Agents are active");
         }
-
-        logger.info(agentList.size() + " Market Simulation Agents are active");
     }
 
     @Override
@@ -265,7 +267,9 @@ public class MarketSimulationManager extends Manager {
      * @return
      */
     public Collection<Agent> getAgents() {
-        return Collections.unmodifiableCollection(agentList.values());
+        synchronized (agentList) {
+            return new LinkedList<>(agentList.values());
+        }
     }
 
     public IBankUserProvider getAgentProvider() {
