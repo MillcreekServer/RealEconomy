@@ -80,6 +80,10 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
     @Override
     public void enable() throws Exception {
         super.enable();
+
+        orderQueryModule.clearTemporaryBuyOrders();
+        orderQueryModule.clearTemporarySellOrders();
+
         forEach(listing -> {
             signatureUUIDMap.put(listing.getSignature(), listing.getKey());
             orderQueryModule.setListingName(listing.getKey(), listing.getSignature().toString());
@@ -94,6 +98,9 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
     @Override
     public void disable() throws Exception {
         super.disable();
+
+        orderQueryModule.clearTemporaryBuyOrders();
+        orderQueryModule.clearTemporarySellOrders();
     }
 
     /**
@@ -172,13 +179,15 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
      * @param price     price
      * @param currency  currency of price
      * @param stock     amount to purchase/sell
+     * @param temp      mark this order as temporary. Will be deleted when plugin disables.
      */
     public void addOrder(AssetSignature signature,
                          OrderType type,
                          IOrderIssuer issuer,
                          double price,
                          Currency currency,
-                         int stock) throws SQLException {
+                         int stock,
+                         boolean temp) throws SQLException {
         Validation.assertNotNull(type);
         Validation.assertNotNull(issuer);
         Validation.validate(price, val -> val > 0.0, "Price cannot be 0 or less.");
@@ -195,7 +204,28 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                 issuer,
                 price,
                 currency,
-                stock);
+                stock,
+                temp);
+    }
+
+    /**
+     * {@link #addOrder(AssetSignature, OrderType, IOrderIssuer, double, Currency, int, boolean)}
+     *
+     * @param signature
+     * @param type
+     * @param issuer
+     * @param price
+     * @param currency
+     * @param stock
+     * @throws SQLException
+     */
+    public void addOrder(AssetSignature signature,
+                         OrderType type,
+                         IOrderIssuer issuer,
+                         double price,
+                         Currency currency,
+                         int stock) throws SQLException {
+        addOrder(signature, type, issuer, price, currency, stock, false);
     }
 
     public OrderInfo getInfo(int orderId, OrderType type) throws SQLException {

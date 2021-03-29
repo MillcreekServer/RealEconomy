@@ -1,0 +1,1 @@
+DELETE FROM buy_orders WHERE temp = 1;

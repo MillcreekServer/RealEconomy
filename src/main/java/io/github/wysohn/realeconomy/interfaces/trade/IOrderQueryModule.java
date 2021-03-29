@@ -32,6 +32,7 @@ public interface IOrderQueryModule {
      * @param price       price
      * @param currency    currency of price
      * @param stock       number of stocks
+     * @param temp  mark this order as temporary; flag will be set for this record
      * @throws SQLException if some unexpected SQL error occurs.
      */
     void addOrder(UUID listingUuid,
@@ -40,7 +41,8 @@ public interface IOrderQueryModule {
                   IOrderIssuer issuer,
                   double price,
                   Currency currency,
-                  int stock) throws SQLException;
+                  int stock,
+                  boolean temp) throws SQLException;
 
     /**
      * Get current order info. This is merely a snapshot of the order, so the order may or may not be valid
@@ -101,6 +103,22 @@ public interface IOrderQueryModule {
     void cancelOrder(int orderId,
                      OrderType type,
                      Consumer<Integer> callback) throws SQLException;
+
+    /**
+     * Clean-up all buy orders that is flagged with 'temp' field set true.
+     * <p>
+     * This will require full table scan, so it's better to use it only in appropriate
+     * places like enable/disable step.
+     */
+    void clearTemporaryBuyOrders() throws SQLException;
+
+    /**
+     * Clean-up all sell orders that is flagged with 'temp' field set true.
+     * <p>
+     * This will require full table scan, so it's better to use it only in appropriate
+     * places like enable/disable step.
+     */
+    void clearTemporarySellOrders() throws SQLException;
 
     /**
      * Commit the scheduled order operations invoked by

@@ -73,7 +73,8 @@ public class OrderSQLModule extends AbstractModule {
                         .field("price", "double precision", SQLSession.Attribute.NOT_NULL)
                         .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
-                        .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
+                        .field("maximum", "integer", SQLSession.Attribute.NOT_NULL)
+                        .field("temp", "boolean"))
                 .createTable("sell_orders", tableInitializer -> tableInitializer.ifNotExist()
                         .field(ORDER_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)
@@ -84,7 +85,8 @@ public class OrderSQLModule extends AbstractModule {
                         .field("price", "double precision", SQLSession.Attribute.NOT_NULL)
                         .field("currency_uuid", "char(36)", SQLSession.Attribute.NOT_NULL)
                         .field("amount", "integer", SQLSession.Attribute.NOT_NULL)
-                        .field("maximum", "integer", SQLSession.Attribute.NOT_NULL))
+                        .field("maximum", "integer", SQLSession.Attribute.NOT_NULL)
+                        .field("temp", "boolean"))
                 .createTable("category", tableInitializer -> tableInitializer.ifNotExist()
                         .field(CATEGORY_ID, "integer",
                                 SQLSession.Attribute.PRIMARY_KEY, SQLSession.Attribute.AUTO_INCREMENT)

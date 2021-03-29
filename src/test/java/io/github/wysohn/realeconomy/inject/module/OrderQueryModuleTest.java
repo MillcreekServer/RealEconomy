@@ -93,7 +93,8 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 1023.22,
                 currency,
-                10);
+                10,
+                false);
 
         orderPlacementHandler.addOrder(uuid2,
                 "item1",
@@ -101,7 +102,8 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 20304.55,
                 currency,
-                20);
+                20,
+                false);
 
         assertEquals(OrderInfo.create(1,
                 uuid1,
@@ -155,7 +157,8 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 1023.22,
                 currency,
-                10);
+                10,
+                false);
 
         orderPlacementHandler.addOrder(uuid2,
                 "item1",
@@ -163,7 +166,8 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 20304.55,
                 currency,
-                20);
+                20,
+                false);
 
         assertEquals(OrderInfo.create(1,
                 uuid1,
@@ -216,7 +220,8 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 1023.22,
                 currency,
-                10);
+                10,
+                false);
 
         orderPlacementHandler.editOrder(1,
                 OrderType.BUY,
@@ -264,21 +269,24 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 1023.22,
                 currency,
-                10);
+                10,
+                false);
         orderPlacementHandler.addOrder(uuid1,
                 "item2",
                 OrderType.BUY,
                 orderIssuer,
                 3464.25,
                 currency,
-                20);
+                20,
+                false);
         orderPlacementHandler.addOrder(uuid1,
                 "item3",
                 OrderType.SELL,
                 orderIssuer,
                 5525.33,
                 currency,
-                30);
+                30,
+                false);
 
         orderPlacementHandler.commitOrders();
 
@@ -326,21 +334,24 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 2000.55,
                 currency,
-                20);
+                20,
+                false);
         orderPlacementHandler.addOrder(listingUuid,
                 TradeMediator.MATERIAL_CATEGORY_DEFAULT,
                 OrderType.SELL,
                 orderIssuer,
                 1034.55,
                 currency,
-                5);
+                5,
+                false);
         orderPlacementHandler.addOrder(listingUuid,
                 TradeMediator.MATERIAL_CATEGORY_DEFAULT,
                 OrderType.SELL,
                 orderIssuer,
                 2050.55,
                 currency,
-                30);
+                30,
+                false);
 
         Consumer<TradeInfo> consumer = mock(Consumer.class);
 
@@ -354,7 +365,8 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 1000.0,
                 currency,
-                30);
+                30,
+                false);
 
         orderPlacementHandler.addOrder(listingUuid,
                 TradeMediator.MATERIAL_CATEGORY_DEFAULT,
@@ -362,7 +374,8 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 3000.0,
                 currency,
-                30);
+                30,
+                false);
 
         orderPlacementHandler.addOrder(listingUuid,
                 TradeMediator.MATERIAL_CATEGORY_DEFAULT,
@@ -370,7 +383,8 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 5000.0,
                 currency,
-                30);
+                30,
+                false);
 
         orderPlacementHandler.peekMatchingOrders(consumer);
 
@@ -423,63 +437,72 @@ public class OrderQueryModuleTest {
                 orderIssuer,
                 2000.55,
                 currency,
-                20);
+                20,
+                false);
         orderPlacementHandler.addOrder(listingUuid1,
                 "item1",
                 OrderType.SELL,
                 orderIssuer,
                 1045.33,
                 currency,
-                20);
+                20,
+                false);
         orderPlacementHandler.addOrder(listingUuid1,
                 "item1",
                 OrderType.SELL,
                 orderIssuer,
                 1001.32,
                 currency,
-                20);
+                20,
+                false);
         orderPlacementHandler.addOrder(listingUuid2,
                 "item2",
                 OrderType.SELL,
                 orderIssuer,
                 3463.55,
                 currency,
-                5);
+                5,
+                false);
         orderPlacementHandler.addOrder(listingUuid2,
                 "item2",
                 OrderType.SELL,
                 orderIssuer,
                 5534.55,
                 currency,
-                5);
+                5,
+                false);
         orderPlacementHandler.addOrder(listingUuid2,
                 "item2",
                 OrderType.SELL,
                 orderIssuer,
                 3940.23,
                 currency,
-                5);
+                5,
+                false);
         orderPlacementHandler.addOrder(listingUuid3,
                 "item3",
                 OrderType.SELL,
                 orderIssuer,
                 980.42,
                 currency,
-                30);
+                30,
+                false);
         orderPlacementHandler.addOrder(listingUuid3,
                 "item3",
                 OrderType.SELL,
                 orderIssuer,
                 1212.34,
                 currency,
-                30);
+                30,
+                false);
         orderPlacementHandler.addOrder(listingUuid3,
                 "item3",
                 OrderType.SELL,
                 orderIssuer,
                 1050.53,
                 currency,
-                30);
+                30,
+                false);
 
         DataProvider<OrderInfo> provider =
                 orderPlacementHandler.getListedOrderProvider();

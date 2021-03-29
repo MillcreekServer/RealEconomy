@@ -45,7 +45,9 @@ public class OrderQueryModule extends AbstractModule {
         orderPlacementHandler.UPDATE_BUY = Metrics.resourceToString(resourceProvider, "update_buy_orders.sql");
         orderPlacementHandler.UPDATE_SELL = Metrics.resourceToString(resourceProvider, "update_sell_orders.sql");
         orderPlacementHandler.DELETE_BUY = Metrics.resourceToString(resourceProvider, "delete_buy_order.sql");
+        orderPlacementHandler.DELETE_BUY_TEMPS = Metrics.resourceToString(resourceProvider, "delete_buy_temp_orders.sql");
         orderPlacementHandler.DELETE_SELL = Metrics.resourceToString(resourceProvider, "delete_sell_order.sql");
+        orderPlacementHandler.DELETE_SELL_TEMPS = Metrics.resourceToString(resourceProvider, "delete_sell_temp_orders.sql");
         orderPlacementHandler.SELECT_BY_BUY_ID = Metrics.resourceToString(resourceProvider, "select_buy_order_by_id.sql");
         orderPlacementHandler.SELECT_BY_SELL_ID = Metrics.resourceToString(resourceProvider, "select_sell_order_by_id.sql");
         orderPlacementHandler.SELECT_CATEGORIES = Metrics.resourceToString(resourceProvider, "select_categories.sql");
@@ -108,7 +110,9 @@ public class OrderQueryModule extends AbstractModule {
         private String UPDATE_BUY;
         private String UPDATE_SELL;
         private String DELETE_BUY;
+        private String DELETE_BUY_TEMPS;
         private String DELETE_SELL;
+        private String DELETE_SELL_TEMPS;
         private String SELECT_BY_BUY_ID;
         private String SELECT_BY_SELL_ID;
         private String SELECT_CATEGORIES;
@@ -134,7 +138,8 @@ public class OrderQueryModule extends AbstractModule {
                              IOrderIssuer issuer,
                              double price,
                              Currency currency,
-                             int stock) throws SQLException {
+                             int stock,
+                             boolean temp) throws SQLException {
             String sql;
             if (type == OrderType.BUY) {
                 sql = INSERT_BUY;
@@ -155,6 +160,7 @@ public class OrderQueryModule extends AbstractModule {
                     pstmt.setString(6, currency.getKey().toString());
                     pstmt.setInt(7, stock);
                     pstmt.setInt(8, stock);
+                    pstmt.setBoolean(9, temp);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
@@ -277,6 +283,24 @@ public class OrderQueryModule extends AbstractModule {
                     callback.accept(orderId);
                 else
                     callback.accept(0);
+            });
+        }
+
+        @Override
+        public void clearTemporaryBuyOrders() throws SQLException {
+            String sql = DELETE_BUY_TEMPS;
+
+            ordersSession.execute(sql, (pstmt) -> {
+            }, index -> {
+            });
+        }
+
+        @Override
+        public void clearTemporarySellOrders() throws SQLException {
+            String sql = DELETE_SELL_TEMPS;
+
+            ordersSession.execute(sql, (pstmt) -> {
+            }, index -> {
             });
         }
 

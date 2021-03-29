@@ -5,8 +5,10 @@ INSERT INTO buy_orders(listing_uuid,
     price,
     currency_uuid,
     amount,
-    maximum)
+    maximum,
+    temp)
 VALUES (?,
+    ?,
     ?,
     ?,
     ?,
