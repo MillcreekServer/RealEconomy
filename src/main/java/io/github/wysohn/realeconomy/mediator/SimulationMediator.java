@@ -18,6 +18,7 @@ import io.github.wysohn.realeconomy.manager.simulation.MarketSimulationManager;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -73,7 +74,17 @@ public class SimulationMediator extends Mediator {
 
     @Override
     public void disable() throws Exception {
-        marketSimulator.interrupt();
+        shutdown();
+
+        // cancel all agent orders
+        cancelAgentOrders(marketSimulationManager.getAgents());
+    }
+
+    public void cancelAgentOrders(Collection<Agent> agents) {
+        agents.forEach(agent -> {
+            agent.getOrderIds(OrderType.BUY).forEach(id -> tradeMediator.cancelOrder(agent, id, OrderType.BUY));
+            agent.getOrderIds(OrderType.SELL).forEach(id -> tradeMediator.cancelOrder(agent, id, OrderType.SELL));
+        });
     }
 
     /**
@@ -81,7 +92,7 @@ public class SimulationMediator extends Mediator {
      */
     public void shutdown() throws InterruptedException {
         marketSimulator.interrupt();
-        marketSimulator.join();
+        marketSimulator.join(30 * 1000L);
     }
 
     static class MarketSimulator extends Thread {

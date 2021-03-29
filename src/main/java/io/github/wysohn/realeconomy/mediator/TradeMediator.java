@@ -127,13 +127,12 @@ public class TradeMediator extends Mediator {
 
     @Override
     public void disable() throws Exception {
-        logger.info("Finalizing trade schedules...");
-        tradeExecutor.shutdown();
-        tradeExecutor.awaitTermination(10, TimeUnit.SECONDS);
-        logger.info("Done");
-
         tradeBroker.interrupt();
 
+        logger.info("Finalizing trade schedules...");
+        tradeExecutor.shutdown();
+        tradeExecutor.awaitTermination(30, TimeUnit.SECONDS);
+        logger.info("Done");
     }
 
     public DataProvider<OrderInfo> getPrices() {

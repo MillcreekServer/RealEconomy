@@ -1,8 +1,10 @@
 package io.github.wysohn.realeconomy.manager.simulation;
 
+import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.interfaces.listing.IListingInfoProvider;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.Item;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
@@ -10,13 +12,19 @@ import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
+import org.bukkit.configuration.ConfigurationSection;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class Agent implements IBankUser {
+    public static final String AGENT_UUID = "uuid";
+    public static final String RESOURCES_NEEDED = "resourcesNeeded";
+    public static final String PRODUCTION = "production";
+
     private final Logger logger;
     private final UUID uuid;
     private final String name;
@@ -365,7 +373,95 @@ public class Agent implements IBankUser {
         }
     }
 
-    private static class SavedState implements IMemento{
+    public void write(ConfigurationSection section, IListingInfoProvider assetInfoProvider) {
+        section.set(name + "." + AGENT_UUID, uuid.toString());
+
+        resourcesNeeded.forEach((sign, amount) -> {
+            assetInfoProvider.newListing(sign);
+            UUID uuid = assetInfoProvider.signatureToUuid(sign);
+            section.set(name + "." + RESOURCES_NEEDED + "." + uuid, amount);
+        });
+
+        production.forEach((sign, amount) -> {
+            assetInfoProvider.newListing(sign);
+            UUID uuid = assetInfoProvider.signatureToUuid(sign);
+            section.set(name + "." + PRODUCTION + "." + uuid, amount);
+        });
+    }
+
+    public static Agent read(ManagerConfig config,
+                             Logger logger,
+                             IListingInfoProvider assetInfoProvider,
+                             String agentName,
+                             Object agentSection) {
+        List<Pair<AssetSignature, Double>> resourcedNeeded = new LinkedList<>();
+        List<Pair<AssetSignature, Double>> production = new LinkedList<>();
+
+        UUID uuid = config.get(agentSection, AGENT_UUID)
+                .map(String.class::cast)
+                .map(UUID::fromString)
+                .orElseThrow(RuntimeException::new);
+
+        config.get(agentSection, RESOURCES_NEEDED).ifPresent(resourcesSection -> {
+            config.getKeys(resourcesSection, false).forEach(uuidKey -> {
+                UUID listingUuid = UUID.fromString(uuidKey);
+                double amount = config.get(resourcesSection, uuidKey)
+                        .map(Number.class::cast)
+                        .map(Number::doubleValue)
+                        .orElse(0.0);
+
+                if (amount <= 0.0)
+                    return;
+
+                Optional.of(listingUuid)
+                        .map(assetInfoProvider::uuidToSignature)
+                        .ifPresent(signature -> resourcedNeeded.add(Pair.of(signature, amount)));
+            });
+        });
+
+        config.get(agentSection, PRODUCTION).ifPresent(productionSection -> {
+            config.getKeys(productionSection, false).forEach(uuidKey -> {
+                UUID listingUuid = UUID.fromString(uuidKey);
+                double amount = config.get(productionSection, uuidKey)
+                        .map(Number.class::cast)
+                        .map(Number::doubleValue)
+                        .orElse(0.0);
+
+                if (amount <= 0.0)
+                    return;
+
+                Optional.of(listingUuid)
+                        .map(assetInfoProvider::uuidToSignature)
+                        .ifPresent(signature -> production.add(Pair.of(signature, amount)));
+            });
+        });
+
+        return new Agent(logger,
+                uuid,
+                agentName,
+                resourcedNeeded,
+                production);
+    }
+
+    public static Collection<Agent> readAll(ManagerConfig config,
+                                            Logger logger,
+                                            IListingInfoProvider assetInfoProvider,
+                                            Object section) {
+        return Optional.of(section)
+                .map(obj -> config.getKeys(obj, false))
+                .map(agentNames -> agentNames.stream().map(agentName ->
+                        config.get(section, agentName).map(agentSection -> read(config,
+                                logger,
+                                assetInfoProvider,
+                                agentName,
+                                agentSection)))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get))
+                .map(stream -> stream.collect(Collectors.toList()))
+                .orElseGet(LinkedList::new);
+    }
+
+    private static class SavedState implements IMemento {
         private final Set<Integer> buyOrderIdSet = new HashSet<>();
         private final Set<Integer> sellOrderIdSet = new HashSet<>();
         private final Map<AssetSignature, Double> assets = new HashMap<>();
