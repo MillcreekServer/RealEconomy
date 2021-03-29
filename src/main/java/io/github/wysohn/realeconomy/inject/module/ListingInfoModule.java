@@ -11,7 +11,7 @@ import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import java.lang.ref.Reference;
 import java.util.UUID;
 
-public class AssetInfoModule extends AbstractModule {
+public class ListingInfoModule extends AbstractModule {
     @Provides
     @Singleton
     IListingInfoProvider assetInfoProvider(AssetListingManager assetListingManager) {

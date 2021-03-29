@@ -125,7 +125,8 @@ public class SimulationMediatorTest {
                 eq(agent1),
                 eq(1.0),
                 eq(currency),
-                eq(200));
+                eq(200),
+                anyBoolean());
         assertEquals(BigDecimal.valueOf(1.0),
                 agent1.getCurrentPricing(WHEAT));
 
@@ -134,7 +135,8 @@ public class SimulationMediatorTest {
                 eq(agent1),
                 eq(1.0),
                 eq(currency),
-                eq(100));
+                eq(100),
+                anyBoolean());
         assertEquals(BigDecimal.valueOf(1.0),
                 agent1.getCurrentPricing(COCOA));
 
@@ -143,7 +145,8 @@ public class SimulationMediatorTest {
                 eq(agent2),
                 eq(1.0),
                 eq(currency),
-                eq(300));
+                eq(300),
+                anyBoolean());
         assertEquals(BigDecimal.valueOf(1.0),
                 agent2.getCurrentPricing(WHEAT));
     }

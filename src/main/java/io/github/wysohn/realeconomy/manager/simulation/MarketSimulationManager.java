@@ -35,19 +35,17 @@ public class MarketSimulationManager extends Manager {
     private final ManagerConfig config;
     private final Logger logger;
     private final IListingInfoProvider assetInfoProvider;
-    private final IAgentReloadObserver agentReloadObserver;
+    private final Set<IAgentReloadObserver> agentReloadObservers = new HashSet<>();
 
     private final IBankUserProvider provider = agentList::get;
 
     @Inject
     public MarketSimulationManager(ManagerConfig config,
                                    @PluginLogger Logger logger,
-                                   IListingInfoProvider assetInfoProvider,
-                                   IAgentReloadObserver agentReloadObserver) {
+                                   IListingInfoProvider assetInfoProvider) {
         this.config = config;
         this.logger = logger;
         this.assetInfoProvider = assetInfoProvider;
-        this.agentReloadObserver = agentReloadObserver;
 
         dependsOn(AssetListingManager.class);
 
@@ -78,7 +76,7 @@ public class MarketSimulationManager extends Manager {
 
     @Override
     public void load() throws Exception {
-        agentReloadObserver.beforeAgentReload(getAgents());
+        agentReloadObservers.forEach(observer -> observer.beforeAgentReload(getAgents()));
 
         /*
         simulator:
@@ -257,8 +255,13 @@ public class MarketSimulationManager extends Manager {
 
     }
 
+    public void registerAgentReloadObserver(IAgentReloadObserver observer) {
+        agentReloadObservers.add(observer);
+    }
+
     /**
      * Get read-only collection of Agents.
+     *
      * @return
      */
     public Collection<Agent> getAgents() {

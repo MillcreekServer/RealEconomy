@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
+import io.github.wysohn.realeconomy.interfaces.simulation.IAgentReloadObserver;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
@@ -37,6 +38,7 @@ public class SimulationMediator extends Mediator {
     private final BankingMediator bankingMediator;
 
     MarketSimulator marketSimulator;
+    ReloadObserver reloadObserver = new ReloadObserver();
 
     @Inject
     public SimulationMediator(@PluginLogger Logger logger,
@@ -80,7 +82,7 @@ public class SimulationMediator extends Mediator {
         cancelAgentOrders(marketSimulationManager.getAgents());
     }
 
-    public void cancelAgentOrders(Collection<Agent> agents) {
+    private void cancelAgentOrders(Collection<Agent> agents) {
         agents.forEach(agent -> {
             agent.getOrderIds(OrderType.BUY).forEach(id -> tradeMediator.cancelOrder(agent, id, OrderType.BUY));
             agent.getOrderIds(OrderType.SELL).forEach(id -> tradeMediator.cancelOrder(agent, id, OrderType.SELL));
@@ -93,6 +95,17 @@ public class SimulationMediator extends Mediator {
     public void shutdown() throws InterruptedException {
         marketSimulator.interrupt();
         marketSimulator.join(30 * 1000L);
+    }
+
+    public ReloadObserver getReloadObserver() {
+        return reloadObserver;
+    }
+
+    class ReloadObserver implements IAgentReloadObserver {
+        @Override
+        public void beforeAgentReload(Collection<Agent> agents) {
+            cancelAgentOrders(agents);
+        }
     }
 
     static class MarketSimulator extends Thread {

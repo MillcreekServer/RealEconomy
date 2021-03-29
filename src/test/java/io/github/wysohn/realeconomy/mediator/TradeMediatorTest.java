@@ -7,8 +7,10 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.ProvidesIntoSet;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
+import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
+import io.github.wysohn.realeconomy.inject.module.ListingInfoModule;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
@@ -77,7 +79,14 @@ public class TradeMediatorTest {
             BigDecimal min() {
                 return BigDecimal.valueOf(-Double.MAX_VALUE);
             }
+
+            @Provides
+            SimulationMediator simulationMediator() {
+                return mock(SimulationMediator.class);
+            }
         });
+        moduleList.add(new MockShutdownModule(() -> {
+        }));
     }
 
     @Test
@@ -101,6 +110,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
+        moduleList.add(new ListingInfoModule());
 
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
@@ -151,6 +161,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
+        moduleList.add(new ListingInfoModule());
 
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
@@ -212,6 +223,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
+        moduleList.add(new ListingInfoModule());
 
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
@@ -275,6 +287,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
+        moduleList.add(new ListingInfoModule());
 
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
@@ -342,6 +355,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
+        moduleList.add(new ListingInfoModule());
 
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
@@ -411,6 +425,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
+        moduleList.add(new ListingInfoModule());
 
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
@@ -484,7 +499,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
-
+        moduleList.add(new ListingInfoModule());
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
         IBankUser buyer = mock(IBankUser.class);
@@ -559,6 +574,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
+        moduleList.add(new ListingInfoModule());
 
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 
@@ -637,6 +653,7 @@ public class TradeMediatorTest {
                 return bankUserProvider;
             }
         });
+        moduleList.add(new ListingInfoModule());
 
         TradeMediator mediator = Guice.createInjector(moduleList).getInstance(TradeMediator.class);
 

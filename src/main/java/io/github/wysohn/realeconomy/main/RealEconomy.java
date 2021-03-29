@@ -123,8 +123,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
         pluginMainBuilder.addModule(new BlockGeneratorModule());
         pluginMainBuilder.addModule(new BusinessConstantsModule());
         pluginMainBuilder.addModule(new VisitStateProviderModule());
-        pluginMainBuilder.addModule(new AssetInfoModule());
-        pluginMainBuilder.addModule(new AgentInfoModule());
+        pluginMainBuilder.addModule(new ListingInfoModule());
         //TODO and some other modules as your need...
     }
 
