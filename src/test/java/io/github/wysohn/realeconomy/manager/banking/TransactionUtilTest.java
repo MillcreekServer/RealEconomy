@@ -1,5 +1,6 @@
 package io.github.wysohn.realeconomy.manager.banking;
 
+import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -82,6 +83,11 @@ public class TransactionUtilTest {
         IFinancialEntity to = mock(IFinancialEntity.class);
         CentralBank bank = mock(CentralBank.class);
 
+        IMemento fromState = mock(IMemento.class);
+        when(from.saveState()).thenReturn(fromState);
+        IMemento toState = mock(IMemento.class);
+        when(to.saveState()).thenReturn(toState);
+
         when(currency.ownerBank()).thenReturn(bank);
 
         assertEquals(TransactionUtil.Result.FROM_WITHDRAW_REFUSED,
@@ -92,8 +98,8 @@ public class TransactionUtilTest {
         verify(to, never()).deposit(any(BigDecimal.class), any(Currency.class));
         verify(to, never()).withdraw(any(BigDecimal.class), any(Currency.class));
 
-        verify(from).restoreState(any());
-        verify(to).restoreState(any());
+        verify(from).restoreState(eq(fromState));
+        verify(to).restoreState(eq(toState));
     }
 
     @Test
@@ -101,6 +107,11 @@ public class TransactionUtilTest {
         IFinancialEntity from = mock(IFinancialEntity.class);
         IFinancialEntity to = mock(IFinancialEntity.class);
         CentralBank bank = mock(CentralBank.class);
+
+        IMemento fromState = mock(IMemento.class);
+        when(from.saveState()).thenReturn(fromState);
+        IMemento toState = mock(IMemento.class);
+        when(to.saveState()).thenReturn(toState);
 
         when(currency.ownerBank()).thenReturn(bank);
         when(from.withdraw(any(BigDecimal.class), any(Currency.class))).thenReturn(true);
@@ -113,8 +124,8 @@ public class TransactionUtilTest {
         verify(to, times(1)).deposit(eq(BigDecimal.valueOf(20314.87)), eq(currency));
         verify(to, never()).withdraw(any(BigDecimal.class), any(Currency.class));
 
-        verify(from).restoreState(any());
-        verify(to).restoreState(any());
+        verify(from).restoreState(eq(fromState));
+        verify(to).restoreState(eq(toState));
     }
 
     @Test
@@ -122,6 +133,11 @@ public class TransactionUtilTest {
         IFinancialEntity from = mock(IFinancialEntity.class);
         IFinancialEntity to = mock(IFinancialEntity.class);
         CentralBank bank = mock(CentralBank.class);
+
+        IMemento fromState = mock(IMemento.class);
+        when(from.saveState()).thenReturn(fromState);
+        IMemento toState = mock(IMemento.class);
+        when(to.saveState()).thenReturn(toState);
 
         when(currency.ownerBank()).thenReturn(bank);
         when(from.withdraw(any(BigDecimal.class), any(Currency.class))).thenReturn(true);
@@ -137,7 +153,7 @@ public class TransactionUtilTest {
                 .deposit(eq(BigDecimal.valueOf(87943.44)), eq(currency));
         verify(to, never()).withdraw(any(BigDecimal.class), any(Currency.class));
 
-        verify(from, never()).restoreState(any());
-        verify(to, never()).restoreState(any());
+        verify(from, never()).restoreState(eq(fromState));
+        verify(to, never()).restoreState(eq(toState));
     }
 }

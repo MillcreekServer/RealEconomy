@@ -292,7 +292,7 @@ dependencies {
     implementation ('org.spigotmc:spigot-api:1.16.+'){
         exclude group: 'com.google.code.gson'
     }
-    implementation "io.github.wysohn:rapidframework:3.17.7"
+    implementation "io.github.wysohn:rapidframework:3.17.8"
     implementation "com.github.MilkBowl:VaultAPI:1.7"
 
     testCompile 'junit:junit:4.+'
