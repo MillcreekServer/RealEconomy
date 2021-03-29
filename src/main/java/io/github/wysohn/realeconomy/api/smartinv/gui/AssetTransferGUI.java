@@ -169,8 +169,20 @@ public class AssetTransferGUI implements InventoryProvider {
             return;
         }
 
-        IMemento mementoFrom = assetStore.saveState();
-        IMemento mementoTo = targetToSendAsset.saveState();
+        IMemento mementoFrom = null;
+        IMemento mementoTo = null;
+        try {
+            mementoFrom = assetStore.saveState();
+            mementoTo = targetToSendAsset.saveState();
+        } catch (Exception ex) {
+            // if saveState() failed for some reason, prevent item duplication here
+            ex.printStackTrace();
+            event.setCancelled(true);
+            return;
+        }
+
+        IMemento finalMementoTo = mementoTo;
+        IMemento finalMementoFrom = mementoFrom;
         FailSensitiveTask.of(() -> {
             if (cursor == null || cursor.getType() == Material.AIR) {
                 // empty slot and empty item in hand; nothing will happen
@@ -199,8 +211,8 @@ public class AssetTransferGUI implements InventoryProvider {
             event.setCancelled(true);
 
             // also restore state
-            targetToSendAsset.restoreState(mementoTo);
-            assetStore.restoreState(mementoFrom);
+            targetToSendAsset.restoreState(finalMementoTo);
+            assetStore.restoreState(finalMementoFrom);
         }).run();
     }
 
