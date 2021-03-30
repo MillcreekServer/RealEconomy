@@ -351,7 +351,7 @@ public class SimulationMediator extends Mediator {
                         assetListingManager.addOrder(sign,
                                 OrderType.SELL,
                                 agent,
-                                unitCost.doubleValue(),
+                                sellingPrice.doubleValue(),
                                 currency,
                                 currentStock,
                                 true);

@@ -24,6 +24,7 @@ public class Agent implements IBankUser {
     public static final String AGENT_UUID = "uuid";
     public static final String RESOURCES_NEEDED = "resourcesNeeded";
     public static final String PRODUCTION = "production";
+    public static final BigDecimal MINIMUM_UNIT_COST = BigDecimal.valueOf(0.000001);
 
     private final Logger logger;
     private final UUID uuid;
@@ -261,8 +262,12 @@ public class Agent implements IBankUser {
             }
         }
 
-        return totalProduced < 1 ?
+        BigDecimal result = totalProduced < 1 ?
                 BigDecimal.ONE : cost.divide(BigDecimal.valueOf(totalProduced), RoundingMode.HALF_UP);
+        if (result.compareTo(MINIMUM_UNIT_COST) < 0)
+            result = MINIMUM_UNIT_COST;
+
+        return result;
     }
 
     /**
