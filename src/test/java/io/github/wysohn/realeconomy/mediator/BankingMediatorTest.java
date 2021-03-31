@@ -1,20 +1,26 @@
 package io.github.wysohn.realeconomy.mediator;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
 import com.google.inject.Module;
-import com.google.inject.Provides;
+import com.google.inject.*;
+import com.google.inject.multibindings.ProvidesIntoSet;
+import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
 import io.github.wysohn.realeconomy.interfaces.banking.IAccount;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
+import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
+import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import io.github.wysohn.realeconomy.manager.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
+import io.github.wysohn.realeconomy.manager.user.AbstractBankUser;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,27 +32,37 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-public class BankingMediatorTest {
+public class BankingMediatorTest extends AbstractBukkitManagerTest {
 
     List<Module> moduleList = new LinkedList<>();
     private CentralBank serverBank;
     private Currency serverCurrency;
+    private UUID serverCurrencyUuid;
     private CurrencyManager currencyManager;
     private CentralBankingManager centralBankingManager;
     private ManagerConfig config;
 
     @Before
     public void init() {
-        serverBank = mock(CentralBank.class);
+        UUID bankUuid = UUID.randomUUID();
+        serverCurrencyUuid = UUID.randomUUID();
+        serverBank = new CentralBank(bankUuid);
         serverCurrency = mock(Currency.class);
         currencyManager = mock(CurrencyManager.class);
         config = mock(ManagerConfig.class);
 
-        when(serverBank.isOperating()).thenReturn(true);
+        when(serverCurrency.getKey()).thenReturn(serverCurrencyUuid);
+        when(serverCurrency.ownerBank()).thenReturn(serverBank);
+        addFakeObserver(serverBank);
+        serverBank.setBaseCurrency(serverCurrency);
+        serverBank.setLimitlessPapers(true);
+
         when(currencyManager.newCurrency(anyString(), anyString(), any())).thenReturn(CurrencyManager.Result.OK);
         centralBankingManager = mock(CentralBankingManager.class);
         when(config.get(eq(BankingMediator.KEY_SERVER_BANK_ENABLE))).thenReturn(Optional.of(true));
         when(currencyManager.get(eq(BankingMediator.SERVER_CURRENCY)))
+                .thenReturn(Optional.of(new WeakReference<>(serverCurrency)));
+        when(currencyManager.get(eq(serverCurrencyUuid)))
                 .thenReturn(Optional.of(new WeakReference<>(serverCurrency)));
 
         moduleList.add(new AbstractModule() {
@@ -76,7 +92,14 @@ public class BankingMediatorTest {
             BigDecimal min() {
                 return BigDecimal.valueOf(-Double.MAX_VALUE);
             }
+
+            @ProvidesIntoSet
+            IBankOwnerProvider bankOwnerProvider() {
+                return mock(IBankOwnerProvider.class);
+            }
         });
+
+        Guice.createInjector(moduleList).injectMembers(serverBank);
     }
 
     @Test
@@ -308,5 +331,71 @@ public class BankingMediatorTest {
                 eq(BankingTypeRegistry.CHECKING),
                 eq(BigDecimal.TEN),
                 eq(currency));
+    }
+
+    @Test
+    public void test() throws Exception {
+        Injector injector = Guice.createInjector(moduleList);
+
+        BankingMediator mediator = injector.getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
+
+        UUID uuid1 = UUID.randomUUID();
+        TempUser user1 = new TempUser(uuid1);
+        injector.injectMembers(user1);
+        addFakeObserver(user1);
+        UUID uuid2 = UUID.randomUUID();
+        TempUser user2 = new TempUser(uuid2);
+        injector.injectMembers(user2);
+        addFakeObserver(user2);
+
+        serverBank.putAccount(user1, BankingTypeRegistry.TRADING);
+        serverBank.putAccount(user2, BankingTypeRegistry.TRADING);
+        serverBank.depositAccount(user1, BankingTypeRegistry.TRADING, 500200, serverCurrency);
+        serverBank.depositAccount(user2, BankingTypeRegistry.TRADING, 499800, serverCurrency);
+
+        // user 1 sending money to bank
+        Thread thread1 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                assertEquals(TransactionUtil.Result.OK,
+                        mediator.send(user1, BankingTypeRegistry.TRADING, serverBank, BigDecimal.valueOf(i + 1), serverCurrency));
+            }
+        });
+
+        // user 2 sending money to bank
+        Thread thread2 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                assertEquals(TransactionUtil.Result.OK,
+                        mediator.send(user2, BankingTypeRegistry.TRADING, serverBank, BigDecimal.valueOf(i + 1), serverCurrency));
+            }
+        });
+
+        thread1.start();
+        thread2.start();
+
+        thread1.join();
+        thread2.join();
+
+        // (1 + 2 + ... + 999) = 499500
+        assertEquals(BigDecimal.valueOf(700.0), serverBank.balanceOfAccount(user1, BankingTypeRegistry.TRADING, serverCurrency));
+        assertEquals(BigDecimal.valueOf(300.0), serverBank.balanceOfAccount(user2, BankingTypeRegistry.TRADING, serverCurrency));
+    }
+
+    private static class TempUser extends AbstractBankUser {
+        public TempUser(UUID key) {
+            super(key);
+        }
+
+        @Override
+        public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
+
+        }
+
+        @Override
+        public int realizeAsset(Asset asset) {
+            return 0;
+        }
     }
 }

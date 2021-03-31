@@ -236,7 +236,7 @@ public class BankingMediator extends Mediator {
      * @param currency
      * @return
      */
-    public TransactionUtil.Result send(
+    public synchronized TransactionUtil.Result send(
             IFinancialEntity from,
             IFinancialEntity to,
             BigDecimal amount,
@@ -245,7 +245,7 @@ public class BankingMediator extends Mediator {
         return TransactionUtil.send(from, to, amount, currency);
     }
 
-    public TransactionUtil.Result send(
+    public synchronized TransactionUtil.Result send(
             IBankUser from,
             IBankingType type,
             IFinancialEntity to,
@@ -254,7 +254,7 @@ public class BankingMediator extends Mediator {
         return send(new BankAccountWrapper(getUsingBank(from), from, type), to, amount, currency);
     }
 
-    public TransactionUtil.Result send(
+    public synchronized TransactionUtil.Result send(
             IFinancialEntity from,
             IBankUser to,
             IBankingType type,
@@ -263,7 +263,7 @@ public class BankingMediator extends Mediator {
         return send(from, new BankAccountWrapper(getUsingBank(to), to, type), amount, currency);
     }
 
-    public TransactionUtil.Result send(
+    public synchronized TransactionUtil.Result send(
             IBankUser from,
             IBankingType from_type,
             IBankUser to,

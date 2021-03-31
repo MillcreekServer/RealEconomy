@@ -1,5 +1,6 @@
 package io.github.wysohn.realeconomy.manager.banking;
 
+import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.realeconomy.interfaces.IFinancialEntity;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
@@ -17,7 +18,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
-public class TransactionUtilTest {
+public class TransactionUtilTest extends AbstractBukkitManagerTest {
     private BigDecimal maximum;
     private BigDecimal minimum;
     private Map<UUID, BigDecimal> capitals;
