@@ -5,12 +5,12 @@ import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CheckingAccount implements IAccount {
-    public final Map<UUID, BigDecimal> balances = new HashMap<>();
+    public final Map<UUID, BigDecimal> balances = new ConcurrentHashMap<>();
 
     @Override
     public Map<UUID, BigDecimal> getCurrencyMap() {

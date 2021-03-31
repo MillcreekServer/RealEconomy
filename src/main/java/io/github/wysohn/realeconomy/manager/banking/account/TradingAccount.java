@@ -30,7 +30,10 @@ public class TradingAccount implements IAccount, IAssetHolder {
 
     @Override
     public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
-        return AssetUtil.removeAsset(ownedAssets, signature, amount);
+        // TODO temporary solution
+        synchronized (ownedAssets) {
+            return AssetUtil.removeAsset(ownedAssets, signature, amount);
+        }
     }
 
     @Override

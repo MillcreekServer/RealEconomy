@@ -362,10 +362,13 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
-        Collection<Asset> assets = AssetUtil.removeAsset(ownedAssets, signature, amount);
-        if (assets.size() > 0)
-            notifyObservers();
-        return assets;
+        // TODO temporary solution
+        synchronized (ownedAssets) {
+            Collection<Asset> assets = AssetUtil.removeAsset(ownedAssets, signature, amount);
+            if (assets.size() > 0)
+                notifyObservers();
+            return assets;
+        }
     }
 
     @Override

@@ -121,10 +121,13 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
 
     @Override
     public Collection<Asset> removeAsset(AssetSignature signature, double amount) {
-        Collection<Asset> assets = AssetUtil.removeAsset(ownedAssets, signature, amount);
-        if (assets.size() > 0)
-            notifyObservers();
-        return assets;
+        // TODO temporary solution
+        synchronized (ownedAssets) {
+            Collection<Asset> assets = AssetUtil.removeAsset(ownedAssets, signature, amount);
+            if (assets.size() > 0)
+                notifyObservers();
+            return assets;
+        }
     }
 
     @Override
@@ -385,12 +388,16 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
             AssetSignature sign = entry.getKey();
             Double requiredAmount = entry.getValue();
             double current = destination.getOrDefault(sign, 0.0);
-            for (Asset removed : AssetUtil.removeAsset(ownedAssets, sign, requiredAmount - current)) {
-                double updated = destination.getOrDefault(sign, 0.0) + removed.getNumericalMeasure();
-                destination.put(sign, updated);
 
-                if (current == updated) {
-                    update = true;
+            // TODO temporary solution
+            synchronized (ownedAssets) {
+                for (Asset removed : AssetUtil.removeAsset(ownedAssets, sign, requiredAmount - current)) {
+                    double updated = destination.getOrDefault(sign, 0.0) + removed.getNumericalMeasure();
+                    destination.put(sign, updated);
+
+                    if (current == updated) {
+                        update = true;
+                    }
                 }
             }
         }
