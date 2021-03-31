@@ -56,14 +56,14 @@ public class TradingAccount implements IAccount, IAssetHolder {
         return BankingTypeRegistry.TRADING;
     }
 
-    @Override
-    public IAccount clone() {
-        TradingAccount checkingAccount = new TradingAccount();
-        // both UUID and BigDecimal are immutable
-        checkingAccount.balances.putAll(balances);
-        ownedAssets.forEach(asset -> checkingAccount.ownedAssets.add(asset.clone()));
-        return checkingAccount;
-    }
+//    @Override
+//    public IAccount clone() {
+//        TradingAccount checkingAccount = new TradingAccount();
+//        // both UUID and BigDecimal are immutable
+//        checkingAccount.balances.putAll(balances);
+//        ownedAssets.forEach(asset -> checkingAccount.ownedAssets.add(asset.clone()));
+//        return checkingAccount;
+//    }
 
     @Override
     public IMemento saveState() {
@@ -83,7 +83,7 @@ public class TradingAccount implements IAccount, IAssetHolder {
                 .forEach(ownedAssets::add);
     }
 
-    private class Memento implements IMemento {
+    private static class Memento implements IMemento {
         private final Map<UUID, BigDecimal> balances = new HashMap<>();
         private final List<Asset> ownedAssets = new ArrayList<>();
 
