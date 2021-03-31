@@ -12,10 +12,11 @@ import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TradingAccount implements IAccount, IAssetHolder {
-    public final Map<UUID, BigDecimal> balances = new HashMap<>();
-    private final List<Asset> ownedAssets = new ArrayList<>();
+    public final Map<UUID, BigDecimal> balances = new ConcurrentHashMap<>();
+    private final List<Asset> ownedAssets = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     public void addAsset(Asset asset) {

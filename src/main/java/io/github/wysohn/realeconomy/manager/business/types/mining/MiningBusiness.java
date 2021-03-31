@@ -40,7 +40,7 @@ public class MiningBusiness extends AbstractBusiness {
     @Named("oreRegenDelay")
     private long oreRegenDelay;
 
-    private final Map<SimpleLocation, OreInfo> regenQueue = new LinkedHashMap<>();
+    private final Map<SimpleLocation, OreInfo> regenQueue = Collections.synchronizedMap(new LinkedHashMap<>());
 
     private MiningBusiness() {
         super(null);
@@ -67,22 +67,28 @@ public class MiningBusiness extends AbstractBusiness {
     public void update() {
         super.update();
 
-        Iterator<Map.Entry<SimpleLocation, OreInfo>> iter = regenQueue.entrySet().iterator();
-        if (!iter.hasNext())
-            return;
+        SimpleLocation location = null;
+        OreInfo oreInfo = null;
+        synchronized (regenQueue) {
+            Iterator<Map.Entry<SimpleLocation, OreInfo>> iter = regenQueue.entrySet().iterator();
+            if (!iter.hasNext())
+                return;
 
-        Map.Entry<SimpleLocation, OreInfo> oldestEntry = iter.next();
-        SimpleLocation location = oldestEntry.getKey();
-        OreInfo oreInfo = oldestEntry.getValue();
+            Map.Entry<SimpleLocation, OreInfo> oldestEntry = iter.next();
+            location = oldestEntry.getKey();
+            oreInfo = oldestEntry.getValue();
+        }
 
-        // check if regen time is passed.
-        if (System.currentTimeMillis() < oreInfo.breakAt + oreRegenDelay)
-            return;
+        if (location != null && oreInfo != null) {
+            // check if regen time is passed.
+            if (System.currentTimeMillis() < oreInfo.breakAt + oreRegenDelay)
+                return;
 
-        // delete from queue
-        regenQueue.remove(location);
-        // regen ore
-        blockGenerator.generateBlockAt(location, oreInfo.material);
+            // delete from queue
+            regenQueue.remove(location);
+            // regen ore
+            blockGenerator.generateBlockAt(location, oreInfo.material);
+        }
     }
 
     /**

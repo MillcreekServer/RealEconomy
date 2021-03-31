@@ -33,12 +33,12 @@ public abstract class AbstractBusiness extends CachedElement<UUID> implements IB
     private transient Map<AssetSignature, Double> inputs;
     private transient Map<AssetSignature, Double> outputs;
 
-    private final List<Asset> ownedAssets = new ArrayList<>();
-    private final Map<AssetSignature, Double> currentProgress = new HashMap<>();
-    private final Map<AssetSignature, Double> productionStorage = new HashMap<>();
+    private final List<Asset> ownedAssets = Collections.synchronizedList(new ArrayList<>());
+    private final Map<AssetSignature, Double> currentProgress = new ConcurrentHashMap<>();
+    private final Map<AssetSignature, Double> productionStorage = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> upgrades = new ConcurrentHashMap<>();
 
-    private final Map<String, String> stringStore = new HashMap<>();
+    private final Map<String, String> stringStore = new ConcurrentHashMap<>();
     private UUID ownerUuid;
     private ITier tier;
     private String subType = ITier.DEFAULT_SUB_TYPE;

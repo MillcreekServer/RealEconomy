@@ -25,6 +25,7 @@ import javax.inject.Inject;
 import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractBank extends CachedElement<UUID> implements IPluginObject, IFinancialEntity, IAssetHolder {
     public static final String BANK_MARK = "\u2608";
@@ -43,9 +44,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
     protected BigDecimal maximum;
 
     // Currency uuid -> value
-    private final Map<UUID, BigDecimal> capitals = new HashMap<>();
-    private final Map<UUID, Map<IBankingType, IAccount>> accounts = new HashMap<>();
-    private final List<Asset> ownedAssets = new ArrayList<>();
+    private final Map<UUID, BigDecimal> capitals = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<IBankingType, IAccount>> accounts = new ConcurrentHashMap<>();
+    private final List<Asset> ownedAssets = Collections.synchronizedList(new ArrayList<>());
 
     private UUID bankOwnerUuid;
     private UUID baseCurrencyUuid;

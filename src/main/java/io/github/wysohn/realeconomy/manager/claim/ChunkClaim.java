@@ -4,12 +4,13 @@ import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.data.SimpleChunkLocation;
 import io.github.wysohn.rapidframework3.utils.Validation;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 public class ChunkClaim extends CachedElement<SimpleChunkLocation> {
-    private final Set<UUID> memberList = new HashSet<>();
+    private final Set<UUID> memberList = Collections.synchronizedSet(new HashSet<>());
 
     private UUID businessUuid;
 
