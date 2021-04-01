@@ -19,7 +19,7 @@ public class TransactionUtil {
         return Optional.of(currency)
                 .map(CachedElement::getKey)
                 .map(capitals::get)
-                .orElse(BigDecimal.ZERO);
+                .orElse(BigDecimal.valueOf(0.0));
     }
 
     public static boolean deposit(BigDecimal maximum,
@@ -32,7 +32,7 @@ public class TransactionUtil {
         final boolean aBoolean = Optional.of(currency)
                 .map(CachedElement::getKey)
                 .map(uuid -> {
-                    BigDecimal current = capitals.getOrDefault(uuid, BigDecimal.ZERO);
+                    BigDecimal current = capitals.getOrDefault(uuid, BigDecimal.valueOf(0.0));
                     BigDecimal added = current.add(value);
 
                     if (added.compareTo(maximum) > 0)
@@ -56,7 +56,7 @@ public class TransactionUtil {
         final boolean aBoolean = Optional.of(currency)
                 .map(CachedElement::getKey)
                 .map(uuid -> {
-                    BigDecimal current = capitals.getOrDefault(uuid, BigDecimal.ZERO);
+                    BigDecimal current = capitals.getOrDefault(uuid, BigDecimal.valueOf(0.0));
                     BigDecimal subtracted = current.subtract(value);
 
                     if (!allowNegative && subtracted.signum() < 0)

@@ -293,7 +293,9 @@ public class VaultHook extends ExternalAPI {
         public boolean createPlayerAccount(String playerName) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .map(user -> bankingMediator.openAccount(user, BankingTypeRegistry.CHECKING))
+                    .flatMap(user -> Optional.of(bankingMediator)
+                            .map(mediator -> mediator.getUsingBank(user))
+                            .map(bank -> bank.putAccount(user, BankingTypeRegistry.TRADING)))
                     .orElse(false);
         }
 
@@ -301,7 +303,9 @@ public class VaultHook extends ExternalAPI {
         public boolean createPlayerAccount(OfflinePlayer player) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .map(user -> bankingMediator.openAccount(user, BankingTypeRegistry.CHECKING))
+                    .flatMap(user -> Optional.of(bankingMediator)
+                            .map(mediator -> mediator.getUsingBank(user))
+                            .map(bank -> bank.putAccount(user, BankingTypeRegistry.TRADING)))
                     .orElse(false);
         }
 

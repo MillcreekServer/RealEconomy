@@ -61,8 +61,9 @@ public class SimulationMediator extends Mediator {
     @Override
     public void load() throws Exception {
         // make sure that all agents have their accounts open for trade
-        marketSimulationManager.getAgents().forEach(agent ->
-                bankingMediator.openAccount(agent, BankingTypeRegistry.TRADING));
+        marketSimulationManager.getAgents().forEach(agent -> Optional.of(bankingMediator)
+                .map(mediator -> mediator.getUsingBank(agent))
+                .ifPresent(bank -> bank.putAccount(agent, BankingTypeRegistry.TRADING)));
 
         if (marketSimulator != null)
             marketSimulator.interrupt();

@@ -1,6 +1,5 @@
 package io.github.wysohn.realeconomy.mediator;
 
-import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
@@ -157,76 +156,6 @@ public class BankingMediator extends Mediator {
         return Result.UNKNOWN;
     }
 
-    public boolean openAccount(IBankUser user, IBankingType type) {
-        return this.openAccount(getUsingBank(user), user, type);
-    }
-
-    public boolean openAccount(AbstractBank bank, IBankUser user, IBankingType type) {
-        return bank.putAccount(user, type);
-    }
-
-    public BigDecimal balance(IBankUser user, IBankingType type) {
-        return this.balance(getUsingBank(user), user, type);
-    }
-
-    public BigDecimal balance(AbstractBank bank, IBankUser user, IBankingType type) {
-        Validation.assertNotNull(bank);
-        Validation.assertNotNull(user);
-        Validation.assertNotNull(type);
-
-        return Optional.of(bank)
-                .map(AbstractBank::getBaseCurrency)
-                .map(CachedElement::getKey)
-                .map(currencyUuid -> bank.balanceOfAccount(user, type))
-                .orElse(BigDecimal.ZERO);
-    }
-
-    public Result deposit(IBankUser user, IBankingType type, BigDecimal amount) {
-        return deposit(getUsingBank(user), user, type, amount);
-    }
-
-    public Result deposit(AbstractBank bank, IBankUser user, IBankingType type, BigDecimal amount) {
-        Validation.assertNotNull(bank);
-        Validation.assertNotNull(user);
-        Validation.assertNotNull(type);
-        Validation.assertNotNull(amount);
-
-        if (bank.getBaseCurrency() == null)
-            return Result.NO_CURRENCY_SET;
-
-        if (!bank.hasAccount(user, type))
-            return Result.NO_ACCOUNT;
-
-        if (bank.depositAccount(user, type, amount, bank.getBaseCurrency())) {
-            return Result.OK;
-        } else {
-            return Result.FAIL_DEPOSIT;
-        }
-    }
-
-    public Result withdraw(IBankUser user, IBankingType type, BigDecimal amount) {
-        return this.withdraw(getUsingBank(user), user, type, amount);
-    }
-
-    public Result withdraw(AbstractBank bank, IBankUser user, IBankingType type, BigDecimal amount) {
-        Validation.assertNotNull(bank);
-        Validation.assertNotNull(user);
-        Validation.assertNotNull(type);
-        Validation.assertNotNull(amount);
-
-        if (bank.getBaseCurrency() == null)
-            return Result.NO_CURRENCY_SET;
-
-        if (!bank.hasAccount(user, type))
-            return Result.NO_ACCOUNT;
-
-        if (bank.withdrawAccount(user, type, amount, bank.getBaseCurrency())) {
-            return Result.OK;
-        } else {
-            return Result.FAIL_WITHDRAW;
-        }
-    }
-
     /**
      * {@link TransactionUtil#send(IFinancialEntity, IFinancialEntity, BigDecimal, Currency)}
      *
@@ -353,21 +282,21 @@ public class BankingMediator extends Mediator {
         public BigDecimal balance(Currency currency) {
             verifyCurrency(currency);
 
-            return BankingMediator.this.balance(bank, user, type);
+            return bank.balanceOfAccount(user, type);
         }
 
         @Override
         public boolean deposit(BigDecimal value, Currency currency) {
             verifyCurrency(currency);
 
-            return BankingMediator.this.deposit(bank, user, type, value) == Result.OK;
+            return bank.depositAccount(user, type, value, currency);
         }
 
         @Override
         public boolean withdraw(BigDecimal value, Currency currency) {
             verifyCurrency(currency);
 
-            return BankingMediator.this.withdraw(bank, user, type, value) == Result.OK;
+            return bank.withdrawAccount(user, type, value, currency);
         }
 
         @Override
@@ -452,9 +381,5 @@ public class BankingMediator extends Mediator {
         CODE_LENGTH,
         ALREADY_SET,
         NOT_FOUND,
-        NO_CURRENCY_SET,
-        NO_ACCOUNT,
-        FAIL_DEPOSIT,
-        FAIL_WITHDRAW,
     }
 }

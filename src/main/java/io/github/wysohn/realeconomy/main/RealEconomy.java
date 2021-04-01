@@ -385,7 +385,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                         getMain().lang().sendMessage(sender, DefaultLangs.General_Header, (sen, man) ->
                                 man.addString(translated));
                         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
-                            BigDecimal balance = bankingMediator.balance(bank, sender, type);
+                            BigDecimal balance = bank.balanceOfAccount(sender, type);
                             getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Balance, (sen, man) ->
                                     man.addString(balance.toString())
                                             .addString(Objects.toString(bank.getBaseCurrency())));
@@ -453,7 +453,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                       AbstractBank bank,
                                       IBankingType type) {
                         getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
-                            if (bankingMediator.openAccount(bank, sender, type)) {
+                            if (bank.putAccount(sender, type)) {
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Open_Success);
                             } else {
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_Open_AlreadyExist);

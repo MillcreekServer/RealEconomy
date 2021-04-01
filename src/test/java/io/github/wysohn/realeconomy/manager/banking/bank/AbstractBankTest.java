@@ -21,6 +21,10 @@ import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import io.github.wysohn.realeconomy.manager.listing.OrderType;
+import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
+import io.github.wysohn.realeconomy.manager.user.AbstractBankUser;
+import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.junit.Before;
@@ -284,40 +288,45 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
     }
 
     @Test
-    public void testBankMementoConcurrency() throws Exception {
+    public void testConcurrency() throws Exception {
         AbstractBank bank = new TempBank();
         addFakeObserver(bank);
         Guice.createInjector(moduleList).injectMembers(bank);
 
-        IBankUser user1 = mock(IBankUser.class);
-        UUID uuid1 = UUID.randomUUID();
-        IBankUser user2 = mock(IBankUser.class);
-        UUID uuid2 = UUID.randomUUID();
-
         Currency currency = mock(Currency.class);
         UUID currencyUuid = UUID.randomUUID();
-
-        when(user1.getUuid()).thenReturn(uuid1);
-        when(user2.getUuid()).thenReturn(uuid2);
         when(currency.getKey()).thenReturn(currencyUuid);
+        when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
+
+        bank.setBaseCurrency(currency);
+
+        UUID uuid1 = UUID.randomUUID();
+        TempUser user1 = new TempUser(uuid1);
+        addFakeObserver(user1);
+        UUID uuid2 = UUID.randomUUID();
+        TempUser user2 = new TempUser(uuid2);
+        addFakeObserver(user2);
 
         bank.putAccount(user1, BankingTypeRegistry.TRADING);
         bank.putAccount(user2, BankingTypeRegistry.TRADING);
 
-        // user 1 taking money from bank
+        // user 1 sending money to bank
         Thread thread1 = new Thread(() -> {
             for (int i = 0; i < 1000; i++) {
-                if (i == 500)
-                    throw new RuntimeException();
-
-                assertTrue(bank.depositAccount(user1, BankingTypeRegistry.TRADING, BigDecimal.valueOf(i + 1), currency));
+                assertTrue(bank.depositAccount(user1,
+                        BankingTypeRegistry.TRADING,
+                        BigDecimal.valueOf(i + 1),
+                        bank.getBaseCurrency()));
             }
         });
 
-        // user 2 taking money from bank
+        // user 2 sending money to bank
         Thread thread2 = new Thread(() -> {
             for (int i = 0; i < 1000; i++) {
-                assertTrue(bank.depositAccount(user2, BankingTypeRegistry.TRADING, BigDecimal.valueOf(i + 1), currency));
+                assertTrue(bank.depositAccount(user2,
+                        BankingTypeRegistry.TRADING,
+                        BigDecimal.valueOf(i + 1),
+                        bank.getBaseCurrency()));
             }
         });
 
@@ -327,8 +336,9 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         thread1.join();
         thread2.join();
 
-        assertEquals(BigDecimal.valueOf(125250), bank.balanceOfAccount(user1, BankingTypeRegistry.TRADING, currency));
-        assertEquals(BigDecimal.valueOf(500500), bank.balanceOfAccount(user2, BankingTypeRegistry.TRADING, currency));
+        // (1 + 2 + ... + 1000) = 500500
+        assertEquals(BigDecimal.valueOf(500500), bank.balanceOfAccount(user1, BankingTypeRegistry.TRADING, bank.getBaseCurrency()));
+        assertEquals(BigDecimal.valueOf(500500), bank.balanceOfAccount(user2, BankingTypeRegistry.TRADING, bank.getBaseCurrency()));
     }
 
     public static class TempBank extends AbstractBank {
@@ -338,6 +348,22 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
 
         public TempBank(UUID key) {
             super(key);
+        }
+
+        @Override
+        public int realizeAsset(Asset asset) {
+            return 0;
+        }
+    }
+
+    private static class TempUser extends AbstractBankUser {
+        public TempUser(UUID key) {
+            super(key);
+        }
+
+        @Override
+        public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
+
         }
 
         @Override

@@ -207,134 +207,13 @@ public class BankingMediatorTest extends AbstractBukkitManagerTest {
 
         when(user.getUuid()).thenReturn(uuid);
         when(currency.getKey()).thenReturn(currencyUuid);
-        when(serverBank.getBaseCurrency()).thenReturn(currency);
         when(account.getCurrencyMap()).thenReturn(balances);
 
-        assertEquals(BigDecimal.ZERO, mediator.balance(user, BankingTypeRegistry.CHECKING));
+        assertEquals(BigDecimal.ZERO, serverBank.balanceOfAccount(user, BankingTypeRegistry.CHECKING));
     }
 
     @Test
-    public void deposit() throws Exception {
-        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
-        when(centralBankingManager.getOrNew(any(UUID.class)))
-                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
-        mediator.enable();
-
-        IBankUser user = mock(IBankUser.class);
-
-        assertEquals(BankingMediator.Result.NO_CURRENCY_SET, mediator.deposit(user,
-                BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN));
-    }
-
-    @Test
-    public void deposit2() throws Exception {
-        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
-        when(centralBankingManager.getOrNew(any(UUID.class)))
-                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
-        mediator.enable();
-
-        IBankUser user = mock(IBankUser.class);
-        UUID currencyUuid = UUID.randomUUID();
-        Currency currency = mock(Currency.class);
-
-        when(currency.getKey()).thenReturn(currencyUuid);
-        when(serverBank.getBaseCurrency()).thenReturn(currency);
-
-        assertEquals(BankingMediator.Result.NO_ACCOUNT, mediator.deposit(user,
-                BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN));
-    }
-
-    @Test
-    public void deposit3() throws Exception {
-        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
-        when(centralBankingManager.getOrNew(any(UUID.class)))
-                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
-        mediator.enable();
-
-        IBankUser user = mock(IBankUser.class);
-        UUID currencyUuid = UUID.randomUUID();
-        Currency currency = mock(Currency.class);
-        IAccount account = mock(IAccount.class);
-        Map<UUID, BigDecimal> balances = new HashMap<>();
-
-        when(currency.getKey()).thenReturn(currencyUuid);
-        when(serverBank.getBaseCurrency()).thenReturn(currency);
-        when(serverBank.hasAccount(eq(user), eq(BankingTypeRegistry.CHECKING))).thenReturn(true);
-        when(account.getCurrencyMap()).thenReturn(balances);
-
-        mediator.deposit(user,
-                BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN);
-        verify(serverBank).depositAccount(eq(user),
-                eq(BankingTypeRegistry.CHECKING),
-                eq(BigDecimal.TEN),
-                eq(currency));
-    }
-
-    @Test
-    public void withdraw() throws Exception {
-        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
-        when(centralBankingManager.getOrNew(any(UUID.class)))
-                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
-        mediator.enable();
-
-        IBankUser user = mock(IBankUser.class);
-
-        assertEquals(BankingMediator.Result.NO_CURRENCY_SET, mediator.withdraw(user,
-                BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN));
-    }
-
-    @Test
-    public void withdraw2() throws Exception {
-        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
-        when(centralBankingManager.getOrNew(any(UUID.class)))
-                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
-        mediator.enable();
-
-        IBankUser user = mock(IBankUser.class);
-        UUID currencyUuid = UUID.randomUUID();
-        Currency currency = mock(Currency.class);
-
-        when(currency.getKey()).thenReturn(currencyUuid);
-        when(serverBank.getBaseCurrency()).thenReturn(currency);
-
-        assertEquals(BankingMediator.Result.NO_ACCOUNT, mediator.withdraw(user,
-                BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN));
-    }
-
-    @Test
-    public void withdraw3() throws Exception {
-        BankingMediator mediator = Guice.createInjector(moduleList).getInstance(BankingMediator.class);
-        when(centralBankingManager.getOrNew(any(UUID.class)))
-                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
-        mediator.enable();
-
-        IBankUser user = mock(IBankUser.class);
-        UUID currencyUuid = UUID.randomUUID();
-        Currency currency = mock(Currency.class);
-        IAccount account = mock(IAccount.class);
-        Map<UUID, BigDecimal> balances = new HashMap<>();
-
-        when(currency.getKey()).thenReturn(currencyUuid);
-        when(serverBank.getBaseCurrency()).thenReturn(currency);
-        when(serverBank.hasAccount(eq(user), eq(BankingTypeRegistry.CHECKING))).thenReturn(true);
-        when(account.getCurrencyMap()).thenReturn(balances);
-
-        mediator.withdraw(user,
-                BankingTypeRegistry.CHECKING,
-                BigDecimal.TEN);
-        verify(serverBank).withdrawAccount(eq(user),
-                eq(BankingTypeRegistry.CHECKING),
-                eq(BigDecimal.TEN),
-                eq(currency));
-    }
-
-    @Test
-    public void test() throws Exception {
+    public void testConcurrency() throws Exception {
         Injector injector = Guice.createInjector(moduleList);
 
         BankingMediator mediator = injector.getInstance(BankingMediator.class);
@@ -381,6 +260,120 @@ public class BankingMediatorTest extends AbstractBukkitManagerTest {
         // (1 + 2 + ... + 999) = 499500
         assertEquals(BigDecimal.valueOf(700.0), serverBank.balanceOfAccount(user1, BankingTypeRegistry.TRADING, serverCurrency));
         assertEquals(BigDecimal.valueOf(300.0), serverBank.balanceOfAccount(user2, BankingTypeRegistry.TRADING, serverCurrency));
+    }
+
+    @Test
+    public void testConcurrency2() throws Exception {
+        Injector injector = Guice.createInjector(moduleList);
+
+        BankingMediator mediator = injector.getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
+
+        UUID uuid1 = UUID.randomUUID();
+        TempUser user1 = new TempUser(uuid1);
+        injector.injectMembers(user1);
+        addFakeObserver(user1);
+        UUID uuid2 = UUID.randomUUID();
+        TempUser user2 = new TempUser(uuid2);
+        injector.injectMembers(user2);
+        addFakeObserver(user2);
+
+        serverBank.putAccount(user1, BankingTypeRegistry.TRADING);
+        serverBank.putAccount(user2, BankingTypeRegistry.TRADING);
+
+        serverBank.depositAccount(user1, BankingTypeRegistry.TRADING, 500500.0, serverCurrency);
+        serverBank.depositAccount(user2, BankingTypeRegistry.TRADING, 500500.0, serverCurrency);
+
+        // user 1 sends 125250 to user 2
+        Thread thread1 = new Thread(() -> {
+            for (int i = 0; i < 500; i++) {
+                assertEquals(TransactionUtil.Result.OK,
+                        mediator.send(user1, BankingTypeRegistry.TRADING,
+                                user2, BankingTypeRegistry.TRADING,
+                                BigDecimal.valueOf(i + 1),
+                                serverCurrency));
+            }
+        });
+
+        // user 2 sends 245350 to user 1
+        Thread thread2 = new Thread(() -> {
+            for (int i = 0; i < 700; i++) {
+                assertEquals(TransactionUtil.Result.OK,
+                        mediator.send(user2, BankingTypeRegistry.TRADING,
+                                user1, BankingTypeRegistry.TRADING,
+                                BigDecimal.valueOf(i + 1),
+                                serverCurrency));
+            }
+        });
+
+        thread1.start();
+        thread2.start();
+
+        thread1.join();
+        thread2.join();
+
+        // (1 + 2 + ... + 1000) = 500500
+        // (1 + 2 + ... + 500) = 125250
+        // (1 + 2 + ... + 700) = 245350
+        assertEquals(BigDecimal.valueOf(500500.0 - 125250 + 245350), serverBank.balanceOfAccount(user1, BankingTypeRegistry.TRADING, serverCurrency));
+        assertEquals(BigDecimal.valueOf(500500.0 - 245350 + 125250), serverBank.balanceOfAccount(user2, BankingTypeRegistry.TRADING, serverCurrency));
+    }
+
+    @Test
+    public void testConcurrency3() throws Exception {
+        Injector injector = Guice.createInjector(moduleList);
+
+        BankingMediator mediator = injector.getInstance(BankingMediator.class);
+        when(centralBankingManager.getOrNew(any(UUID.class)))
+                .thenReturn(Optional.of(new WeakReference<>(serverBank)));
+        mediator.enable();
+
+        UUID uuid1 = UUID.randomUUID();
+        TempUser user1 = new TempUser(uuid1);
+        injector.injectMembers(user1);
+        addFakeObserver(user1);
+        UUID uuid2 = UUID.randomUUID();
+        TempUser user2 = new TempUser(uuid2);
+        injector.injectMembers(user2);
+        addFakeObserver(user2);
+        UUID uuid3 = UUID.randomUUID();
+        TempUser user3 = new TempUser(uuid3);
+        injector.injectMembers(user3);
+        addFakeObserver(user3);
+
+        serverBank.putAccount(user1, BankingTypeRegistry.TRADING);
+        serverBank.putAccount(user2, BankingTypeRegistry.TRADING);
+        serverBank.putAccount(user3, BankingTypeRegistry.TRADING);
+        serverBank.depositAccount(user1, BankingTypeRegistry.TRADING, 125250.0, serverCurrency);
+        serverBank.depositAccount(user2, BankingTypeRegistry.TRADING, 125250.0, serverCurrency);
+
+        // user 1 sending to user 2
+        Thread thread1 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                assertEquals(TransactionUtil.Result.OK,
+                        mediator.send(user1, BankingTypeRegistry.TRADING, user2, BankingTypeRegistry.TRADING, BigDecimal.valueOf(i + 1), serverCurrency));
+            }
+        });
+
+        // user 2 sending to user 3
+        Thread thread2 = new Thread(() -> {
+            for (int i = 0; i < 500; i++) {
+                assertEquals(TransactionUtil.Result.OK,
+                        mediator.send(user2, BankingTypeRegistry.TRADING, user3, BankingTypeRegistry.TRADING, BigDecimal.valueOf(i + 1), serverCurrency));
+            }
+        });
+
+        thread1.start();
+        thread2.start();
+
+        thread1.join();
+        thread2.join();
+
+        assertEquals(BigDecimal.valueOf(0.0), serverBank.balanceOfAccount(user1, BankingTypeRegistry.TRADING, serverCurrency));
+        assertEquals(BigDecimal.valueOf(125250.0), serverBank.balanceOfAccount(user2, BankingTypeRegistry.TRADING, serverCurrency));
+        assertEquals(BigDecimal.valueOf(125250.0), serverBank.balanceOfAccount(user3, BankingTypeRegistry.TRADING, serverCurrency));
     }
 
     private static class TempUser extends AbstractBankUser {
