@@ -38,7 +38,7 @@ public class TransactionUtilTest extends AbstractBukkitManagerTest {
     @Test
     public void balance() {
         Currency otherCurrency = mock(Currency.class);
-        assertEquals(BigDecimal.ZERO, TransactionUtil.balance(capitals, otherCurrency));
+        assertEquals(BigDecimal.valueOf(0.0), TransactionUtil.balance(capitals, otherCurrency));
         capitals.put(currencyUuid, BigDecimal.valueOf(14235.33));
         assertEquals(BigDecimal.valueOf(14235.33), TransactionUtil.balance(capitals, currency));
     }

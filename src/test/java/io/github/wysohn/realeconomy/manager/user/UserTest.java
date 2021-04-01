@@ -102,9 +102,9 @@ public class UserTest extends AbstractBukkitManagerTest {
         assertTrue(currencies.contains(Pair.of(currency2Uuid, BigDecimal.valueOf(22304.67))));
         assertTrue(currencies.contains(Pair.of(currency3Uuid, BigDecimal.valueOf(40305.12))));
 
-        assertEquals(BigDecimal.ZERO, user.balance(currency1));
-        assertEquals(BigDecimal.ZERO, user.balance(currency2));
-        assertEquals(BigDecimal.ZERO, user.balance(currency3));
+        assertEquals(BigDecimal.valueOf(0.0), user.balance(currency1));
+        assertEquals(BigDecimal.valueOf(0.0), user.balance(currency2));
+        assertEquals(BigDecimal.valueOf(0.0), user.balance(currency3));
         assertEquals(0, user.clearWallet().size());
     }
 

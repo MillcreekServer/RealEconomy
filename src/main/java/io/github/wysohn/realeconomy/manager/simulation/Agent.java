@@ -245,7 +245,7 @@ public class Agent implements IBankUser {
      * @return
      */
     public BigDecimal getFixedUnitCost() {
-        BigDecimal cost = BigDecimal.ZERO;
+        BigDecimal cost = BigDecimal.valueOf(0.0);
         int totalProduced = 0;
 
         for (Map.Entry<AssetSignature, Double> entry : production.entrySet()) {
@@ -255,7 +255,7 @@ public class Agent implements IBankUser {
 
         for(Map.Entry<AssetSignature, Double> entry : resourcesNeeded.entrySet()) {
             synchronized (currentPricing) {
-                BigDecimal currentPrice = currentPricing.getOrDefault(entry.getKey(), BigDecimal.ZERO);
+                BigDecimal currentPrice = currentPricing.getOrDefault(entry.getKey(), BigDecimal.valueOf(0.0));
                 double amountNeeded = entry.getValue();
 
                 cost = cost.add(currentPrice.multiply(BigDecimal.valueOf(amountNeeded)));

@@ -1207,7 +1207,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .map(Double::parseDouble)
                 .filter(value -> value > 0.0)
                 .map(BigDecimal::valueOf)
-                .orElse(BigDecimal.ZERO);
+                .orElse(BigDecimal.valueOf(0.0));
     }
 
     private IArgumentMapper<User> mapUser() {

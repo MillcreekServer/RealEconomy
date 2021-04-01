@@ -165,9 +165,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
     }
 
     public boolean hasAccount(IBankUser user, IBankingType type) {
-        AccountVisitor<Boolean> visitor = new AccountVisitor<>((account) -> true);
+        AccountVisitor<Boolean> visitor = new AccountVisitor<>((account) -> true, false);
         synchronousAccountTask(user, type, visitor);
-        return visitor.result != null && visitor.result;
+        return visitor.result;
     }
 
     /**
@@ -252,7 +252,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
 
             TradingAccount tradingAccount = (TradingAccount) account;
             return tradingAccount.countAsset(signature);
-        });
+        }, 0.0);
         synchronousAccountTask(user, BankingTypeRegistry.TRADING, visitor);
 
         return visitor.result == null ? 0.0 : visitor.result;
@@ -272,7 +272,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
 
             TradingAccount tradingAccount = (TradingAccount) account;
             return tradingAccount.removeAsset(signature, amount);
-        });
+        }, new LinkedList<>());
         synchronousAccountTask(user, BankingTypeRegistry.TRADING, visitor);
 
         Collection<Asset> removed = visitor.result;
@@ -336,10 +336,10 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
                 throw new RuntimeException("Account of " + user + " does not exist.");
 
             return TransactionUtil.deposit(maximum, account.getCurrencyMap(), amount, currency);
-        });
+        }, false);
         synchronousAccountTask(user, type, visitor);
 
-        boolean deposit = visitor.result != null && visitor.result;
+        boolean deposit = visitor.result;
         if (deposit)
             notifyObservers();
         return deposit;
@@ -365,12 +365,11 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
 
             BigDecimal accountMinimum = minimum.compareTo(account.minimumBalance()) > 0 ? minimum : account.minimumBalance();
             return TransactionUtil.withdraw(accountMinimum, account.getCurrencyMap(), amount, currency, true);
-        });
+        }, false);
         synchronousAccountTask(user, type, visitor);
 
-        boolean result = visitor.result != null && visitor.result;
         notifyObservers();
-        return result;
+        return visitor.result;
     }
 
     public boolean withdrawAccount(IBankUser user, IBankingType type, double amount, Currency currency) {
@@ -391,7 +390,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
                 throw new RuntimeException("Account of " + user + " does not exist.");
 
             return TransactionUtil.balance(account.getCurrencyMap(), currency);
-        });
+        }, BigDecimal.valueOf(0.0));
         synchronousAccountTask(user, type, visitor);
 
         return visitor.result;
@@ -458,10 +457,15 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
 
     public static class AccountVisitor<U> {
         private final Function<IAccount, U> function;
-        private U result = null;
+        private U result;
+
+        public AccountVisitor(Function<IAccount, U> function, U defVal) {
+            this.function = function;
+            this.result = defVal;
+        }
 
         public AccountVisitor(Function<IAccount, U> function) {
-            this.function = function;
+            this(function, null);
         }
     }
 

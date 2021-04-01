@@ -209,7 +209,7 @@ public class BankingMediatorTest extends AbstractBukkitManagerTest {
         when(currency.getKey()).thenReturn(currencyUuid);
         when(account.getCurrencyMap()).thenReturn(balances);
 
-        assertEquals(BigDecimal.ZERO, serverBank.balanceOfAccount(user, BankingTypeRegistry.CHECKING));
+        assertEquals(BigDecimal.valueOf(0.0), serverBank.balanceOfAccount(user, BankingTypeRegistry.CHECKING));
     }
 
     @Test

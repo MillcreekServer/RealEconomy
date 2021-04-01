@@ -337,8 +337,8 @@ public class AbstractBankTest extends AbstractBukkitManagerTest {
         thread2.join();
 
         // (1 + 2 + ... + 1000) = 500500
-        assertEquals(BigDecimal.valueOf(500500), bank.balanceOfAccount(user1, BankingTypeRegistry.TRADING, bank.getBaseCurrency()));
-        assertEquals(BigDecimal.valueOf(500500), bank.balanceOfAccount(user2, BankingTypeRegistry.TRADING, bank.getBaseCurrency()));
+        assertEquals(BigDecimal.valueOf(500500.0), bank.balanceOfAccount(user1, BankingTypeRegistry.TRADING, bank.getBaseCurrency()));
+        assertEquals(BigDecimal.valueOf(500500.0), bank.balanceOfAccount(user2, BankingTypeRegistry.TRADING, bank.getBaseCurrency()));
     }
 
     public static class TempBank extends AbstractBank {

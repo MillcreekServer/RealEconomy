@@ -18,8 +18,8 @@ import java.util.UUID;
 public class CentralBank extends AbstractBank {
     private transient final Object transactionLock = new Object();
 
-    private BigDecimal numPapers = BigDecimal.ZERO;
-    private BigDecimal liquidity = BigDecimal.ZERO;
+    private BigDecimal numPapers = BigDecimal.valueOf(0.0);
+    private BigDecimal liquidity = BigDecimal.valueOf(0.0);
 
     private boolean limitlessPapers = false;
 
@@ -51,7 +51,7 @@ public class CentralBank extends AbstractBank {
 
     public BigDecimal getLiquidity() {
         return Optional.ofNullable(liquidity)
-                .orElse(BigDecimal.ZERO);
+                .orElse(BigDecimal.valueOf(0.0));
     }
 
     @Override

@@ -105,7 +105,7 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
 
         bank.deposit(BigDecimal.valueOf(20304.33), currency);
-        assertEquals(BigDecimal.ZERO, bank.getLiquidity());
+        assertEquals(BigDecimal.valueOf(0.0), bank.getLiquidity());
     }
 
     @Test
@@ -149,7 +149,7 @@ public class CentralBankTest extends AbstractBukkitManagerTest {
         when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
 
         bank.withdraw(BigDecimal.valueOf(30567.22), currency);
-        assertEquals(BigDecimal.valueOf(0), bank.getLiquidity());
+        assertEquals(BigDecimal.valueOf(0.0), bank.getLiquidity());
     }
 
     @Test

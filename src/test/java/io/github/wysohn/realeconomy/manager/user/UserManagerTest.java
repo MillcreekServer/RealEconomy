@@ -217,7 +217,7 @@ public class UserManagerTest {
                 .thenReturn(BigDecimal.valueOf(36753.45).toString());
 
         User user = manager.get(uuid).map(Reference::get).orElseThrow(RuntimeException::new);
-        assertEquals(BigDecimal.ZERO, user.balance(currency));
+        assertEquals(BigDecimal.valueOf(0.0), user.balance(currency));
         manager.onPickupCheck(event);
         verify(event).setCancelled(eq(true));
         verify(item).remove();

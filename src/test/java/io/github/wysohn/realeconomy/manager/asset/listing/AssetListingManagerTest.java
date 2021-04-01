@@ -251,13 +251,13 @@ public class AssetListingManagerTest {
         @Override
         public boolean deposit(BigDecimal value, Currency currency) {
             return wallet.put(currency.getKey(),
-                    wallet.getOrDefault(currency.getKey(), BigDecimal.ZERO).add(value)) != null;
+                    wallet.getOrDefault(currency.getKey(), BigDecimal.valueOf(0.0)).add(value)) != null;
         }
 
         @Override
         public boolean withdraw(BigDecimal value, Currency currency) {
             return wallet.put(currency.getKey(),
-                    wallet.getOrDefault(currency.getKey(), BigDecimal.ZERO).subtract(value)) != null;
+                    wallet.getOrDefault(currency.getKey(), BigDecimal.valueOf(0.0)).subtract(value)) != null;
         }
 
         @Override
