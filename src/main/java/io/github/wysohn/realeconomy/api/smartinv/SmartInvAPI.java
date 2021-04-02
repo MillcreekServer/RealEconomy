@@ -9,10 +9,10 @@ import io.github.wysohn.rapidframework3.core.main.PluginMain;
 import io.github.wysohn.realeconomy.api.smartinv.gui.AssetTransferGUI;
 import io.github.wysohn.realeconomy.inject.annotation.NamespaceKeyAssetSerialized;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
+import io.github.wysohn.realeconomy.manager.banking.TransactionManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.user.User;
 import io.github.wysohn.realeconomy.manager.user.UserManager;
-import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.NamespacedKey;
 
@@ -24,7 +24,7 @@ public class SmartInvAPI extends ExternalAPI {
     @Inject
     private ManagerLanguage lang;
     @Inject
-    private BankingMediator bankingMediator;
+    private TransactionManager transactionManager;
     @Inject
     private TradeMediator tradeMediator;
     @Inject
@@ -56,8 +56,8 @@ public class SmartInvAPI extends ExternalAPI {
         User user = userManager.get(bukkitPlayer.getKey())
                 .map(Reference::get)
                 .orElseThrow(RuntimeException::new);
-        BankingMediator.AssetStorageWrapper storageWrapper = bankingMediator.wrapStorage(bank, user);
-        BankingMediator.BankAccountWrapper accountWrapper = bankingMediator.wrapAccount(bank,
+        TransactionManager.AssetStorageWrapper storageWrapper = transactionManager.wrapStorage(bank, user);
+        TransactionManager.BankAccountWrapper accountWrapper = transactionManager.wrapAccount(bank,
                 user,
                 BankingTypeRegistry.TRADING);
 

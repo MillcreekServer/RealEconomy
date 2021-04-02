@@ -6,7 +6,7 @@ import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
-import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
+import io.github.wysohn.realeconomy.manager.banking.TransactionManager;
 import io.github.wysohn.realeconomy.manager.banking.account.TradingAccount;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
@@ -43,7 +43,7 @@ public class SimulationMediatorTest {
     private MarketSimulationManager marketSimulationManager;
     private Logger logger;
     private TradeMediator tradeMediator;
-    private BankingMediator bankingMediator;
+    private TransactionManager transactionManager;
     private CentralBank centralBank;
     private Currency currency;
     private Agent agent1;
@@ -63,7 +63,7 @@ public class SimulationMediatorTest {
         marketSimulationManager = mock(MarketSimulationManager.class);
         logger = mock(Logger.class);
         tradeMediator = mock(TradeMediator.class);
-        bankingMediator = mock(BankingMediator.class);
+        transactionManager = mock(TransactionManager.class);
 
         centralBank = mock(CentralBank.class);
         currency = mock(Currency.class);
@@ -98,17 +98,17 @@ public class SimulationMediatorTest {
     }
 
     @Test
-    public void testSimulatorBid() throws Exception{
-        when(bankingMediator.send(any(IBankUser.class),
+    public void testSimulatorBid() throws Exception {
+        when(transactionManager.send(any(IBankUser.class),
                 any(IBankingType.class),
                 any(),
                 any(),
-                any())).thenReturn(TransactionUtil.Result.OK);
-        when(bankingMediator.send(any(),
+                any())).thenReturn(TransactionManager.Result.OK);
+        when(transactionManager.send(any(),
                 any(IBankUser.class),
                 any(IBankingType.class),
                 any(),
-                any())).thenReturn(TransactionUtil.Result.OK);
+                any())).thenReturn(TransactionManager.Result.OK);
 
         SimulationMediator.MarketSimulator simulator = new SimulationMediator.MarketSimulator(
                 assetListingManager,
@@ -116,7 +116,7 @@ public class SimulationMediatorTest {
                 marketSimulationManager,
                 tradeMediator,
                 centralBank,
-                bankingMediator);
+                transactionManager);
 
         simulator.iterate();
 
@@ -159,7 +159,7 @@ public class SimulationMediatorTest {
                 marketSimulationManager,
                 tradeMediator,
                 centralBank,
-                bankingMediator);
+                transactionManager);
         Map<IBankUser, TradingAccount> accountMap = new HashMap<>();
 
         when(centralBank.removeAccountAsset(any(), any(), anyDouble()))

@@ -35,7 +35,8 @@ import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
-import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
+import io.github.wysohn.realeconomy.manager.banking.TransactionManager;
+import io.github.wysohn.realeconomy.manager.banking.VisitingBankManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.business.tiers.TierRegistry;
@@ -88,6 +89,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 ManagerPlayerLocation.class,
                 ChunkClaimManager.class,
                 MarketSimulationManager.class,
+                VisitingBankManager.class,
+                TransactionManager.class,
 
                 MiningBusinessManager.class
         ));
@@ -397,9 +400,9 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             AbstractBank bank,
                                             double amount,
                                             IBankingType type) {
-                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
+                        getMain().getManager(TransactionManager.class).ifPresent(manager ->
                                 // wallet -> bank account
-                                handleResult(sender, bankingMediator.send(sender, sender, type, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
+                                handleResult(sender, manager.send(sender, sender, type, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
                     }
 
                     private void withdraw(User sender,
@@ -407,11 +410,11 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                           double amount,
                                           IBankingType type) {
                         // bank account -> wallet
-                        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator ->
-                                handleResult(sender, bankingMediator.send(sender, type, sender, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
+                        getMain().getManager(TransactionManager.class).ifPresent(manager ->
+                                handleResult(sender, manager.send(sender, type, sender, BigDecimal.valueOf(amount), bank.getBaseCurrency())));
                     }
 
-                    private void handleResult(ICommandSender sender, TransactionUtil.Result result) {
+                    private void handleResult(ICommandSender sender, TransactionManager.Result result) {
                         switch (result) {
                             case NO_OWNER:
                                 getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Bank_NoCurrencyOwner);
@@ -557,8 +560,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     if (orderId < 0 || price < 0.0)
                         return true;
 
-                    AbstractBank bank = getMain().getMediator(BankingMediator.class)
-                            .flatMap(bankingMediator -> getUser(sender).map(bankingMediator::getUsingBank))
+                    AbstractBank bank = getMain().getManager(VisitingBankManager.class)
+                            .flatMap(manager -> getUser(sender).map(manager::getUsingBank))
                             .orElse(null);
 
                     if (bank == null) {
@@ -606,8 +609,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     if (price < 0.0)
                         return true;
 
-                    AbstractBank bank = getMain().getMediator(BankingMediator.class)
-                            .flatMap(bankingMediator -> getUser(sender).map(bankingMediator::getUsingBank))
+                    AbstractBank bank = getMain().getManager(VisitingBankManager.class)
+                            .flatMap(manager -> getUser(sender).map(manager::getUsingBank))
                             .orElse(null);
 
                     if (bank == null) {
@@ -657,8 +660,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .action(new CommandAction() {
                     @Override
                     public boolean execute(ICommandSender sender, SubCommand.Arguments args) {
-                        AbstractBank bank = getMain().getMediator(BankingMediator.class)
-                                .flatMap(bankingMediator -> getUser(sender).map(bankingMediator::getUsingBank))
+                        AbstractBank bank = getMain().getManager(VisitingBankManager.class)
+                                .flatMap(manager -> getUser(sender).map(manager::getUsingBank))
                                 .orElse(null);
 
                         if (bank == null) {
@@ -1136,8 +1139,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
             return;
         }
 
-        getMain().getMediator(BankingMediator.class).ifPresent(bankingMediator -> {
-            switch (bankingMediator.send(from, to, amount, currency)) {
+        getMain().getManager(TransactionManager.class).ifPresent(manager -> {
+            switch (manager.send(from, to, amount, currency)) {
                 case NO_OWNER:
                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoCurrencyOwner, (sen, man) ->
                             man.addString(currency.toString()));
@@ -1230,8 +1233,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
     }
 
     private AbstractBank getCurrentBank(ICommandSender sender) {
-        return getMain().getMediator(BankingMediator.class)
-                .flatMap(bankingMediator -> getUser(sender).map(bankingMediator::getUsingBank))
+        return getMain().getManager(VisitingBankManager.class)
+                .flatMap(manager -> getUser(sender).map(manager::getUsingBank))
                 .orElse(null);
     }
 

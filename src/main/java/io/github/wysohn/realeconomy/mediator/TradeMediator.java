@@ -12,6 +12,7 @@ import io.github.wysohn.realeconomy.interfaces.banking.IOrderIssuer;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
+import io.github.wysohn.realeconomy.manager.banking.VisitingBankManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -72,7 +73,7 @@ public class TradeMediator extends Mediator {
     public void enable() throws Exception {
         // make sure that all agents have their accounts open
         marketSimulationManager.getAgents().forEach(agent ->
-                BankingMediator.getServerBank().putAccount(agent, BankingTypeRegistry.TRADING));
+                VisitingBankManager.getServerBank().putAccount(agent, BankingTypeRegistry.TRADING));
     }
 
     @Override
@@ -82,8 +83,7 @@ public class TradeMediator extends Mediator {
         tradeBroker = new TradeBroker(assetListingManager,
                 bankUserProviders,
                 currencyManager,
-                logger,
-                tradeBroker);
+                logger);
         tradeBroker.start();
 
         if (config.get(MATERIALS).isPresent()) {
@@ -322,8 +322,6 @@ public class TradeMediator extends Mediator {
         });
     }
 
-    //TODO now this is a static class, make a separate test instead
-    // of doing it all in one test
     static class TradeBroker extends Thread {
         private final AssetListingManager assetListingManager;
         private final Set<IBankUserProvider> bankUserProviders;
@@ -333,8 +331,7 @@ public class TradeMediator extends Mediator {
         public TradeBroker(AssetListingManager assetListingManager,
                            Set<IBankUserProvider> bankUserProviders,
                            CurrencyManager currencyManager,
-                           Logger logger,
-                           TradeBroker tradeBroker) {
+                           Logger logger) {
             this.assetListingManager = assetListingManager;
             this.bankUserProviders = bankUserProviders;
             this.currencyManager = currencyManager;
@@ -425,121 +422,124 @@ public class TradeMediator extends Mediator {
                     return;
                 }
 
+                // get listing info
+                AssetListing listing = assetListingManager.get(tradeInfo.getListingUuid())
+                        .map(Reference::get)
+                        .orElse(null);
+
                 CentralBank finalBank = bank;
-                TradeResult result = FailSensitiveTradeResult.of(() -> {
-                    // get listing info
-                    AssetListing listing = assetListingManager.get(tradeInfo.getListingUuid())
-                            .map(Reference::get)
-                            .orElse(null);
-
-                    // order exist but listing doesn't? Weird.
-                    if (listing == null) {
-                        logger.warning("Found broken orders. They are deleted.");
-                        logger.warning("Trade Info: " + tradeInfo);
-                        cancelBoth(tradeInfo);
-                        return TradeResult.INVALID_INFO;
-                    }
-                    AssetSignature signature = listing.getSignature();
-
-                    // amount, price
-                    int amount = Math.min(tradeInfo.getStock(), tradeInfo.getAmount()); // use smaller of buy/sell
-                    double price = tradeInfo.getAsk(); // use the seller defined price
-
-                    // take asset from seller account
-                    int amountsRemoved = finalBank.removeAccountAsset(seller, signature, amount).stream()
-                            .map(Asset::getNumericalMeasure)
-                            .reduce(Double::sum)
-                            .map(Number.class::cast)
-                            .map(Number::intValue)
-                            .orElse(0);
-
-                    // trade only if at least one asset is removed successfully
-                    if (amountsRemoved > 0) {
-                        BigDecimal payTotal = BigDecimal.valueOf(price).multiply(BigDecimal.valueOf(amountsRemoved));
-
-                        // take currency from buyer account
-                        if (!finalBank.withdrawAccount(buyer, BankingTypeRegistry.TRADING, payTotal, currency)) {
-                            // cancel it since this buyer is unable to pay the initially promised price
-                            // give other buyers chance to purchase
-                            cancel(tradeInfo.getBuyId(), OrderType.BUY);
-                            buyer.removeOrderId(OrderType.BUY, tradeInfo.getBuyId());
-                            return TradeResult.WITHDRAW_REFUSED;
+                TradeResult result = null;
+                synchronized (finalBank) {
+                    result = FailSensitiveTradeResult.of(() -> {
+                        // order exist but listing doesn't? Weird.
+                        if (listing == null) {
+                            logger.warning("Found broken orders. They are deleted.");
+                            logger.warning("Trade Info: " + tradeInfo);
+                            cancelBoth(tradeInfo);
+                            return TradeResult.INVALID_INFO;
                         }
+                        AssetSignature signature = listing.getSignature();
 
-                        // give currency to the seller account
-                        if (!finalBank.depositAccount(seller, BankingTypeRegistry.TRADING, payTotal, currency)) {
-                            // something wrong with this seller's account, so cancel it
-                            // give other listed items the chance to be sold
+                        // amount, price
+                        int amount = Math.min(tradeInfo.getStock(), tradeInfo.getAmount()); // use smaller of buy/sell
+                        double price = tradeInfo.getAsk(); // use the seller defined price
+
+                        // take asset from seller account
+                        int amountsRemoved = finalBank.removeAccountAsset(seller, signature, amount).stream()
+                                .map(Asset::getNumericalMeasure)
+                                .reduce(Double::sum)
+                                .map(Number.class::cast)
+                                .map(Number::intValue)
+                                .orElse(0);
+
+                        // trade only if at least one asset is removed successfully
+                        if (amountsRemoved > 0) {
+                            BigDecimal payTotal = BigDecimal.valueOf(price).multiply(BigDecimal.valueOf(amountsRemoved));
+
+                            // take currency from buyer account
+                            if (!finalBank.withdrawAccount(buyer, BankingTypeRegistry.TRADING, payTotal, currency)) {
+                                // cancel it since this buyer is unable to pay the initially promised price
+                                // give other buyers chance to purchase
+                                cancel(tradeInfo.getBuyId(), OrderType.BUY);
+                                buyer.removeOrderId(OrderType.BUY, tradeInfo.getBuyId());
+                                return TradeResult.WITHDRAW_REFUSED;
+                            }
+
+                            // give currency to the seller account
+                            if (!finalBank.depositAccount(seller, BankingTypeRegistry.TRADING, payTotal, currency)) {
+                                // something wrong with this seller's account, so cancel it
+                                // give other listed items the chance to be sold
+                                cancel(tradeInfo.getSellId(), OrderType.SELL);
+                                seller.removeOrderId(OrderType.SELL, tradeInfo.getSellId());
+                                return TradeResult.DEPOSIT_REFUSED;
+                            }
+
+                            // give asset to the buyer account
+                            finalBank.addAccountAsset(buyer, signature.asset((double) amountsRemoved));
+
+                            // adjust the removed amount
+                            try {
+                                int newStock = tradeInfo.getStock() - amountsRemoved;
+                                if (newStock == 0) {
+                                    assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index ->
+                                            seller.removeOrderId(OrderType.SELL, index));
+                                } else if (newStock > 0) {
+                                    assetListingManager.editOrder(tradeInfo.getSellId(),
+                                            OrderType.SELL,
+                                            newStock);
+                                } else {
+                                    throw new RuntimeException("new stock became negative. How?");
+                                }
+
+                                int newAmount = tradeInfo.getAmount() - amountsRemoved;
+                                if (newAmount == 0) {
+                                    assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index ->
+                                            buyer.removeOrderId(OrderType.BUY, index));
+                                } else if (newAmount > 0) {
+                                    assetListingManager.editOrder(tradeInfo.getBuyId(),
+                                            OrderType.BUY,
+                                            newAmount);
+                                } else {
+                                    throw new RuntimeException("new amount became negative. How?");
+                                }
+
+                                // log results
+                                logTrade(tradeInfo, amountsRemoved);
+                            } catch (SQLException ex) {
+                                throw new RuntimeException("Trade Info: " + tradeInfo, ex);
+                            }
+                        } else {
+                            // No asset was removed from the seller
+                            // in this case, the seller is unable to deliver the promised asset to the buyer
+                            // cancel this order so other sellers can get chance to sell their assets.
                             cancel(tradeInfo.getSellId(), OrderType.SELL);
                             seller.removeOrderId(OrderType.SELL, tradeInfo.getSellId());
-                            return TradeResult.DEPOSIT_REFUSED;
+                            return TradeResult.INSUFFICIENT_ASSETS;
                         }
 
-                        // give asset to the buyer account
-                        finalBank.addAccountAsset(buyer, signature.asset((double) amountsRemoved));
-
-                        // adjust the removed amount
+                        // finalize SQL transaction
                         try {
-                            int newStock = tradeInfo.getStock() - amountsRemoved;
-                            if (newStock == 0) {
-                                assetListingManager.cancelOrder(tradeInfo.getSellId(), OrderType.SELL, index ->
-                                        seller.removeOrderId(OrderType.SELL, index));
-                            } else if (newStock > 0) {
-                                assetListingManager.editOrder(tradeInfo.getSellId(),
-                                        OrderType.SELL,
-                                        newStock);
-                            } else {
-                                throw new RuntimeException("new stock became negative. How?");
-                            }
-
-                            int newAmount = tradeInfo.getAmount() - amountsRemoved;
-                            if (newAmount == 0) {
-                                assetListingManager.cancelOrder(tradeInfo.getBuyId(), OrderType.BUY, index ->
-                                        buyer.removeOrderId(OrderType.BUY, index));
-                            } else if (newAmount > 0) {
-                                assetListingManager.editOrder(tradeInfo.getBuyId(),
-                                        OrderType.BUY,
-                                        newAmount);
-                            } else {
-                                throw new RuntimeException("new amount became negative. How?");
-                            }
-
-                            // log results
-                            logTrade(tradeInfo, amountsRemoved);
+                            assetListingManager.commitOrders();
                         } catch (SQLException ex) {
-                            throw new RuntimeException("Trade Info: " + tradeInfo, ex);
+                            ex.printStackTrace();
                         }
-                    } else {
-                        // No asset was removed from the seller
-                        // in this case, the seller is unable to deliver the promised asset to the buyer
-                        // cancel this order so other sellers can get chance to sell their assets.
-                        cancel(tradeInfo.getSellId(), OrderType.SELL);
-                        seller.removeOrderId(OrderType.SELL, tradeInfo.getSellId());
-                        return TradeResult.INSUFFICIENT_ASSETS;
-                    }
 
-                    // finalize SQL transaction
-                    try {
-                        assetListingManager.commitOrders();
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
-
-                    return TradeResult.OK;
-                }).handleException(Throwable::printStackTrace)
-                        .addStateSupplier("buyer", buyer::saveState)
-                        .addStateConsumer("buyer", buyer::restoreState)
-                        .addStateSupplier("seller", seller::saveState)
-                        .addStateConsumer("seller", seller::restoreState)
-                        .addStateSupplier("bank", bank::saveState)
-                        .addStateConsumer("bank", bank::restoreState)
-                        .onFail(() -> {
-                            try {
-                                assetListingManager.rollbackOrders();
-                            } catch (SQLException ex) {
-                                ex.printStackTrace();
-                            }
-                        }).run();
+                        return TradeResult.OK;
+                    }).handleException(Throwable::printStackTrace)
+                            .addStateSupplier("buyer", buyer::saveState)
+                            .addStateConsumer("buyer", buyer::restoreState)
+                            .addStateSupplier("seller", seller::saveState)
+                            .addStateConsumer("seller", seller::restoreState)
+                            .addStateSupplier("bank", bank::saveState)
+                            .addStateConsumer("bank", bank::restoreState)
+                            .onFail(() -> {
+                                try {
+                                    assetListingManager.rollbackOrders();
+                                } catch (SQLException ex) {
+                                    ex.printStackTrace();
+                                }
+                            }).run();
+                }
 
                 // since this is an un-handled case, stop the broker
                 if (result == null) {

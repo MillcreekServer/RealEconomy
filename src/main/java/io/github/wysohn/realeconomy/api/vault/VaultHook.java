@@ -4,10 +4,10 @@ import io.github.wysohn.rapidframework3.core.api.ExternalAPI;
 import io.github.wysohn.rapidframework3.core.main.PluginMain;
 import io.github.wysohn.realeconomy.main.Metrics;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
+import io.github.wysohn.realeconomy.manager.banking.VisitingBankManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.AbstractBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.user.UserManager;
-import io.github.wysohn.realeconomy.mediator.BankingMediator;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
@@ -24,7 +24,7 @@ import java.util.Optional;
 @Singleton
 public class VaultHook extends ExternalAPI {
     @Inject
-    private BankingMediator bankingMediator;
+    private VisitingBankManager visitingBankManager;
     @Inject
     private UserManager userManager;
 
@@ -83,7 +83,7 @@ public class VaultHook extends ExternalAPI {
 
         @Override
         public String currencyNamePlural() {
-            return Optional.of(BankingMediator.getServerBank())
+            return Optional.of(VisitingBankManager.getServerBank())
                     .filter(AbstractBank::isOperating)
                     .map(AbstractBank::getBaseCurrency)
                     .map(Currency::toString)
@@ -92,7 +92,7 @@ public class VaultHook extends ExternalAPI {
 
         @Override
         public String currencyNameSingular() {
-            return Optional.of(BankingMediator.getServerBank())
+            return Optional.of(VisitingBankManager.getServerBank())
                     .filter(AbstractBank::isOperating)
                     .map(AbstractBank::getBaseCurrency)
                     .map(Currency::getCode)
@@ -103,7 +103,7 @@ public class VaultHook extends ExternalAPI {
         public boolean hasAccount(String playerName) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .flatMap(user -> Optional.ofNullable(bankingMediator.getUsingBank(user))
+                    .flatMap(user -> Optional.ofNullable(visitingBankManager.getUsingBank(user))
                             .map(bank -> bank.hasAccount(user, BankingTypeRegistry.CHECKING)))
                     .orElse(false);
         }
@@ -112,7 +112,7 @@ public class VaultHook extends ExternalAPI {
         public boolean hasAccount(OfflinePlayer player) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .flatMap(user -> Optional.ofNullable(bankingMediator.getUsingBank(user))
+                    .flatMap(user -> Optional.ofNullable(visitingBankManager.getUsingBank(user))
                             .map(bank -> bank.hasAccount(user, BankingTypeRegistry.CHECKING)))
                     .orElse(false);
         }
@@ -131,7 +131,7 @@ public class VaultHook extends ExternalAPI {
         public double getBalance(String playerName) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .map(user -> user.balance(BankingMediator.getServerBank().getBaseCurrency()).doubleValue())
+                    .map(user -> user.balance(VisitingBankManager.getServerBank().getBaseCurrency()).doubleValue())
                     .orElse(0.0);
         }
 
@@ -139,7 +139,7 @@ public class VaultHook extends ExternalAPI {
         public double getBalance(OfflinePlayer player) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .map(user -> user.balance(BankingMediator.getServerBank().getBaseCurrency()).doubleValue())
+                    .map(user -> user.balance(VisitingBankManager.getServerBank().getBaseCurrency()).doubleValue())
                     .orElse(0.0);
         }
 
@@ -177,7 +177,7 @@ public class VaultHook extends ExternalAPI {
         public EconomyResponse withdrawPlayer(String playerName, double amount) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .filter(user -> user.withdraw(amount, BankingMediator.getServerBank().getBaseCurrency()))
+                    .filter(user -> user.withdraw(amount, VisitingBankManager.getServerBank().getBaseCurrency()))
                     .map(user -> new EconomyResponse(amount, getBalance(playerName), EconomyResponse.ResponseType.SUCCESS, null))
                     .orElseGet(() -> new EconomyResponse(0, getBalance(playerName), EconomyResponse.ResponseType.FAILURE, null));
         }
@@ -186,7 +186,7 @@ public class VaultHook extends ExternalAPI {
         public EconomyResponse withdrawPlayer(OfflinePlayer player, double amount) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .filter(user -> user.withdraw(amount, BankingMediator.getServerBank().getBaseCurrency()))
+                    .filter(user -> user.withdraw(amount, VisitingBankManager.getServerBank().getBaseCurrency()))
                     .map(user -> new EconomyResponse(amount, getBalance(player), EconomyResponse.ResponseType.SUCCESS, null))
                     .orElseGet(() -> new EconomyResponse(0, getBalance(player), EconomyResponse.ResponseType.FAILURE, null));
         }
@@ -205,7 +205,7 @@ public class VaultHook extends ExternalAPI {
         public EconomyResponse depositPlayer(String playerName, double amount) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .filter(user -> user.deposit(amount, BankingMediator.getServerBank().getBaseCurrency()))
+                    .filter(user -> user.deposit(amount, VisitingBankManager.getServerBank().getBaseCurrency()))
                     .map(user -> new EconomyResponse(amount, getBalance(playerName), EconomyResponse.ResponseType.SUCCESS, null))
                     .orElseGet(() -> new EconomyResponse(0, getBalance(playerName), EconomyResponse.ResponseType.FAILURE, null));
         }
@@ -214,7 +214,7 @@ public class VaultHook extends ExternalAPI {
         public EconomyResponse depositPlayer(OfflinePlayer player, double amount) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .filter(user -> user.deposit(amount, BankingMediator.getServerBank().getBaseCurrency()))
+                    .filter(user -> user.deposit(amount, VisitingBankManager.getServerBank().getBaseCurrency()))
                     .map(user -> new EconomyResponse(amount, getBalance(player), EconomyResponse.ResponseType.SUCCESS, null))
                     .orElseGet(() -> new EconomyResponse(0, getBalance(player), EconomyResponse.ResponseType.FAILURE, null));
         }
@@ -286,14 +286,14 @@ public class VaultHook extends ExternalAPI {
 
         @Override
         public List<String> getBanks() {
-            return Collections.singletonList(BankingMediator.getServerBank().getStringKey());
+            return Collections.singletonList(VisitingBankManager.getServerBank().getStringKey());
         }
 
         @Override
         public boolean createPlayerAccount(String playerName) {
             return userManager.get(playerName)
                     .map(Reference::get)
-                    .flatMap(user -> Optional.of(bankingMediator)
+                    .flatMap(user -> Optional.of(visitingBankManager)
                             .map(mediator -> mediator.getUsingBank(user))
                             .map(bank -> bank.putAccount(user, BankingTypeRegistry.TRADING)))
                     .orElse(false);
@@ -303,7 +303,7 @@ public class VaultHook extends ExternalAPI {
         public boolean createPlayerAccount(OfflinePlayer player) {
             return userManager.get(player.getUniqueId())
                     .map(Reference::get)
-                    .flatMap(user -> Optional.of(bankingMediator)
+                    .flatMap(user -> Optional.of(visitingBankManager)
                             .map(mediator -> mediator.getUsingBank(user))
                             .map(bank -> bank.putAccount(user, BankingTypeRegistry.TRADING)))
                     .orElse(false);

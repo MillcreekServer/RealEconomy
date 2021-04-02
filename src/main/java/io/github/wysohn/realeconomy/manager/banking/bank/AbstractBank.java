@@ -16,7 +16,7 @@ import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.AssetUtil;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
-import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
+import io.github.wysohn.realeconomy.manager.banking.CapitalManagementUtil;
 import io.github.wysohn.realeconomy.manager.banking.account.TradingAccount;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
@@ -28,10 +28,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+/**
+ * Represents a bank where transactions occur. This instance is used
+ * for synchronization, so if multiple transactions must happen at the same time,
+ * the caller may acquire monitor, which is the instance itself.
+ */
 public abstract class AbstractBank extends CachedElement<UUID> implements IPluginObject, IFinancialEntity, IAssetHolder {
     public static final String BANK_MARK = "\u2608";
-
-    private transient final Object transactionLock = new Object();
 
     @Inject
     private Set<IBankOwnerProvider> ownerProviders;
@@ -84,14 +87,12 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
     }
 
     public void setBaseCurrency(Currency currency) {
-        synchronized (transactionLock) {
-            if (this.baseCurrencyUuid != null)
-                throw new RuntimeException("BaseCurrency can be set only once.");
+        if (this.baseCurrencyUuid != null)
+            throw new RuntimeException("BaseCurrency can be set only once.");
 
-            this.baseCurrencyUuid = currency.getKey();
+        this.baseCurrencyUuid = currency.getKey();
 
-            notifyObservers();
-        }
+        notifyObservers();
     }
 
     public boolean isOperating() {
@@ -110,9 +111,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
 
     @Override
     public BigDecimal balance(Currency currency) {
-        synchronized (transactionLock) {
-            return TransactionUtil.balance(capitals, currency);
-        }
+        return CapitalManagementUtil.balance(capitals, currency);
     }
 
     @Override
@@ -120,11 +119,9 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
-        synchronized (transactionLock) {
-            final boolean aBoolean = TransactionUtil.deposit(maximum, capitals, value, currency);
-            notifyObservers();
-            return aBoolean;
-        }
+        final boolean aBoolean = CapitalManagementUtil.deposit(maximum, capitals, value, currency);
+        notifyObservers();
+        return aBoolean;
     }
 
     @Override
@@ -132,16 +129,14 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
-        synchronized (transactionLock) {
-            final boolean aBoolean = TransactionUtil.withdraw(minimum, capitals, value, currency, true);
-            notifyObservers();
-            return aBoolean;
-        }
+        final boolean aBoolean = CapitalManagementUtil.withdraw(minimum, capitals, value, currency, true);
+        notifyObservers();
+        return aBoolean;
     }
 
     /**
      * execute 'accountConsumer' while acquiring the lock for the specific user
-     * node and its bank account node.
+     * node and its account node.
      *
      * @param user
      * @param type
@@ -164,7 +159,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         });
     }
 
-    public boolean hasAccount(IBankUser user, IBankingType type) {
+    public synchronized boolean hasAccount(IBankUser user, IBankingType type) {
         AccountVisitor<Boolean> visitor = new AccountVisitor<>((account) -> true, false);
         synchronousAccountTask(user, type, visitor);
         return visitor.result;
@@ -175,7 +170,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
      * @param type the account type to be added to this bank.
      * @return true if newly created; false if the account type already exist
      */
-    public boolean putAccount(IBankUser user, IBankingType type) {
+    public synchronized boolean putAccount(IBankUser user, IBankingType type) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -203,7 +198,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
      * @param type the account type to be added to this bank.
      * @return true if deleted; false if account didn't exist in the first place.
      */
-    public boolean removeAccount(IBankUser user, IBankingType type) {
+    public synchronized boolean removeAccount(IBankUser user, IBankingType type) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -220,7 +215,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         }
     }
 
-    public void addAccountAsset(IBankUser user, Asset asset) {
+    public synchronized void addAccountAsset(IBankUser user, Asset asset) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -239,7 +234,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         notifyObservers();
     }
 
-    public double countAccountAsset(IBankUser user, AssetSignature signature) {
+    public synchronized double countAccountAsset(IBankUser user, AssetSignature signature) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -258,7 +253,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         return visitor.result == null ? 0.0 : visitor.result;
     }
 
-    public Collection<Asset> removeAccountAsset(IBankUser user, AssetSignature signature, double amount) {
+    public synchronized Collection<Asset> removeAccountAsset(IBankUser user, AssetSignature signature, double amount) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -281,7 +276,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         return removed;
     }
 
-    public Asset removeAccountAsset(IBankUser user, int index) {
+    public synchronized Asset removeAccountAsset(IBankUser user, int index) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -321,7 +316,10 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         return visitor.result;
     }
 
-    public boolean depositAccount(IBankUser user, IBankingType type, BigDecimal amount, Currency currency) {
+    public synchronized boolean depositAccount(IBankUser user,
+                                               IBankingType type,
+                                               BigDecimal amount,
+                                               Currency currency) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -335,7 +333,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
             if (account == null)
                 throw new RuntimeException("Account of " + user + " does not exist.");
 
-            return TransactionUtil.deposit(maximum, account.getCurrencyMap(), amount, currency);
+            return CapitalManagementUtil.deposit(maximum, account.getCurrencyMap(), amount, currency);
         }, false);
         synchronousAccountTask(user, type, visitor);
 
@@ -345,11 +343,14 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         return deposit;
     }
 
-    public boolean depositAccount(IBankUser user, IBankingType type, double amount, Currency currency) {
+    public synchronized boolean depositAccount(IBankUser user, IBankingType type, double amount, Currency currency) {
         return depositAccount(user, type, BigDecimal.valueOf(amount), currency);
     }
 
-    public boolean withdrawAccount(IBankUser user, IBankingType type, BigDecimal amount, Currency currency) {
+    public synchronized boolean withdrawAccount(IBankUser user,
+                                                IBankingType type,
+                                                BigDecimal amount,
+                                                Currency currency) {
         if (!operating)
             throw new RuntimeException("Cannot use the bank that is closed. Bank: " + getStringKey());
 
@@ -364,7 +365,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
                 throw new RuntimeException("Account of " + user + " does not exist.");
 
             BigDecimal accountMinimum = minimum.compareTo(account.minimumBalance()) > 0 ? minimum : account.minimumBalance();
-            return TransactionUtil.withdraw(accountMinimum, account.getCurrencyMap(), amount, currency, true);
+            return CapitalManagementUtil.withdraw(accountMinimum, account.getCurrencyMap(), amount, currency, true);
         }, false);
         synchronousAccountTask(user, type, visitor);
 
@@ -372,15 +373,15 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         return visitor.result;
     }
 
-    public boolean withdrawAccount(IBankUser user, IBankingType type, double amount, Currency currency) {
+    public synchronized boolean withdrawAccount(IBankUser user, IBankingType type, double amount, Currency currency) {
         return withdrawAccount(user, type, BigDecimal.valueOf(amount), currency);
     }
 
-    public BigDecimal balanceOfAccount(IBankUser user, IBankingType type) {
+    public synchronized BigDecimal balanceOfAccount(IBankUser user, IBankingType type) {
         return balanceOfAccount(user, type, getBaseCurrency());
     }
 
-    public BigDecimal balanceOfAccount(IBankUser user, IBankingType type, Currency currency) {
+    public synchronized BigDecimal balanceOfAccount(IBankUser user, IBankingType type, Currency currency) {
         Validation.assertNotNull(user);
         Validation.assertNotNull(type);
         Validation.assertNotNull(currency);
@@ -389,7 +390,7 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
             if (account == null)
                 throw new RuntimeException("Account of " + user + " does not exist.");
 
-            return TransactionUtil.balance(account.getCurrencyMap(), currency);
+            return CapitalManagementUtil.balance(account.getCurrencyMap(), currency);
         }, BigDecimal.valueOf(0.0));
         synchronousAccountTask(user, type, visitor);
 
@@ -470,28 +471,26 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
     }
 
     @Override
-    public IMemento saveState() {
+    public synchronized IMemento saveState() {
         return new AbstractMemento(this);
     }
 
     @Override
-    public void restoreState(IMemento memento) {
+    public synchronized void restoreState(IMemento memento) {
         AbstractMemento mem = (AbstractMemento) memento;
 
-        synchronized (transactionLock) {
-            this.capitals.clear();
-            this.capitals.putAll(mem.capitals);
+        this.capitals.clear();
+        this.capitals.putAll(mem.capitals);
 
-            this.accounts.forEach((uuid, accountMap) -> {
-                Map<IBankingType, IMemento> statesMap = mem.accountStates.get(uuid);
-                if (statesMap == null)
-                    return;
+        this.accounts.forEach((uuid, accountMap) -> {
+            Map<IBankingType, IMemento> statesMap = mem.accountStates.get(uuid);
+            if (statesMap == null)
+                return;
 
-                synchronized (accountMap) {
-                    accountMap.forEach((type, account) -> account.restoreState(statesMap.get(type)));
-                }
-            });
-        }
+            synchronized (accountMap) {
+                accountMap.forEach((type, account) -> account.restoreState(statesMap.get(type)));
+            }
+        });
     }
 
     protected static class AbstractMemento implements IMemento {
@@ -499,10 +498,8 @@ public abstract class AbstractBank extends CachedElement<UUID> implements IPlugi
         private final Map<UUID, Map<IBankingType, IMemento>> accountStates = new HashMap<>();
 
         public AbstractMemento(AbstractBank bank) {
-            synchronized (bank.transactionLock) {
-                capitals.putAll(bank.capitals);
-                accountStates.putAll(createAccountStates(bank.accounts));
-            }
+            capitals.putAll(bank.capitals);
+            accountStates.putAll(createAccountStates(bank.accounts));
         }
     }
 

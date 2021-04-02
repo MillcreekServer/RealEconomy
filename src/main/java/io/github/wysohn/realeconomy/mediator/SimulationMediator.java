@@ -7,7 +7,8 @@ import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.realeconomy.interfaces.simulation.IAgentReloadObserver;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
-import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
+import io.github.wysohn.realeconomy.manager.banking.TransactionManager;
+import io.github.wysohn.realeconomy.manager.banking.VisitingBankManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
@@ -33,9 +34,11 @@ public class SimulationMediator extends Mediator {
     private final Logger logger;
     private final MarketSimulationManager marketSimulationManager;
     private final AssetListingManager assetListingManager;
+    private final VisitingBankManager visitingBankManager;
+    private final TransactionManager transactionManager;
 
     private final TradeMediator tradeMediator;
-    private final BankingMediator bankingMediator;
+
 
     MarketSimulator marketSimulator;
     ReloadObserver reloadObserver = new ReloadObserver();
@@ -44,13 +47,15 @@ public class SimulationMediator extends Mediator {
     public SimulationMediator(@PluginLogger Logger logger,
                               MarketSimulationManager marketSimulationManager,
                               AssetListingManager assetListingManager,
-                              TradeMediator tradeMediator,
-                              BankingMediator bankingMediator) {
+                              VisitingBankManager visitingBankManager,
+                              TransactionManager transactionManager,
+                              TradeMediator tradeMediator) {
         this.logger = logger;
         this.marketSimulationManager = marketSimulationManager;
         this.assetListingManager = assetListingManager;
         this.tradeMediator = tradeMediator;
-        this.bankingMediator = bankingMediator;
+        this.transactionManager = transactionManager;
+        this.visitingBankManager = visitingBankManager;
     }
 
     @Override
@@ -61,7 +66,7 @@ public class SimulationMediator extends Mediator {
     @Override
     public void load() throws Exception {
         // make sure that all agents have their accounts open for trade
-        marketSimulationManager.getAgents().forEach(agent -> Optional.of(bankingMediator)
+        marketSimulationManager.getAgents().forEach(agent -> Optional.of(visitingBankManager)
                 .map(mediator -> mediator.getUsingBank(agent))
                 .ifPresent(bank -> bank.putAccount(agent, BankingTypeRegistry.TRADING)));
 
@@ -70,8 +75,8 @@ public class SimulationMediator extends Mediator {
         marketSimulator = new MarketSimulator(assetListingManager,
                 logger, marketSimulationManager,
                 tradeMediator,
-                BankingMediator.getServerBank(),
-                bankingMediator);
+                VisitingBankManager.getServerBank(),
+                transactionManager);
         marketSimulator.start();
     }
 
@@ -115,20 +120,20 @@ public class SimulationMediator extends Mediator {
         private final Logger logger;
         private final MarketSimulationManager marketSimulationManager;
         private final TradeMediator tradeMediator;
-        private final BankingMediator bankingMediator;
+        private final TransactionManager transactionManager;
 
         public MarketSimulator(AssetListingManager assetListingManager,
                                Logger logger,
                                MarketSimulationManager marketSimulationManager,
                                TradeMediator tradeMediator,
                                CentralBank centralBank,
-                               BankingMediator bankingMediator) {
+                               TransactionManager transactionManager) {
             this.centralBank = centralBank;
             this.assetListingManager = assetListingManager;
             this.logger = logger;
             this.marketSimulationManager = marketSimulationManager;
             this.tradeMediator = tradeMediator;
-            this.bankingMediator = bankingMediator;
+            this.transactionManager = transactionManager;
 
             setPriority(NORM_PRIORITY - 1);
             setName("RealEconomy - MarketSimulator");
@@ -179,15 +184,15 @@ public class SimulationMediator extends Mediator {
                 // also, return the currency to the bank.
                 BigDecimal currentBalance = centralBank.balanceOfAccount(agent,
                         BankingTypeRegistry.TRADING);
-                TransactionUtil.Result returnResult = bankingMediator.send(agent,
+                TransactionManager.Result returnResult = transactionManager.send(agent,
                         BankingTypeRegistry.TRADING,
                         centralBank,
                         currentBalance,
                         centralBank.getBaseCurrency());
-                if (returnResult != TransactionUtil.Result.OK) {
-                    logger.fine("agent "+agent+" is unable to return currency to the bank.");
-                    logger.fine("amount: "+currentBalance);
-                    logger.fine("reason: "+returnResult);
+                if (returnResult != TransactionManager.Result.OK) {
+                    logger.fine("agent " + agent + " is unable to return currency to the bank.");
+                    logger.fine("amount: " + currentBalance);
+                    logger.fine("reason: " + returnResult);
                     return;
                 }
 
@@ -232,15 +237,15 @@ public class SimulationMediator extends Mediator {
 
                     // before making bids, make sure we have enough balance in the bank
                     BigDecimal totalPrice = midPoint.multiply(BigDecimal.valueOf(amount));
-                    TransactionUtil.Result sendResult = bankingMediator.send(centralBank,
+                    TransactionManager.Result sendResult = transactionManager.send(centralBank,
                             agent,
                             BankingTypeRegistry.TRADING,
                             totalPrice,
                             centralBank.getBaseCurrency());
-                    if (sendResult != TransactionUtil.Result.OK) {
+                    if (sendResult != TransactionManager.Result.OK) {
                         logger.fine("agent " + agent + " is unable to borrow currency from the bank.");
                         logger.fine("amount: " + totalPrice);
-                        logger.fine("reason: "+sendResult);
+                        logger.fine("reason: " + sendResult);
                         return;
                     }
 

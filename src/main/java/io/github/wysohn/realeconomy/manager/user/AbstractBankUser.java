@@ -9,7 +9,7 @@ import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
-import io.github.wysohn.realeconomy.manager.banking.TransactionUtil;
+import io.github.wysohn.realeconomy.manager.banking.CapitalManagementUtil;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
@@ -45,19 +45,19 @@ public abstract class AbstractBankUser extends BukkitPlayer implements IBankUser
 
     @Override
     public BigDecimal balance(Currency currency) {
-        return TransactionUtil.balance(wallet, currency);
+        return CapitalManagementUtil.balance(wallet, currency);
     }
 
     @Override
     public boolean deposit(BigDecimal value, Currency currency) {
-        final boolean deposit = TransactionUtil.deposit(maximum, wallet, value, currency);
+        final boolean deposit = CapitalManagementUtil.deposit(maximum, wallet, value, currency);
         notifyObservers();
         return deposit;
     }
 
     @Override
     public boolean withdraw(BigDecimal value, Currency currency) {
-        final boolean withdraw = TransactionUtil.withdraw(minimum, wallet, value, currency);
+        final boolean withdraw = CapitalManagementUtil.withdraw(minimum, wallet, value, currency);
         notifyObservers();
         return withdraw;
     }
