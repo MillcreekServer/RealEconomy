@@ -1,20 +1,26 @@
 package io.github.wysohn.realeconomy.mediator;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.ProvidesIntoSet;
+import io.github.wysohn.rapidframework3.bukkit.testutils.manager.AbstractBukkitManagerTest;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
 import io.github.wysohn.rapidframework3.testmodules.MockLoggerModule;
 import io.github.wysohn.rapidframework3.testmodules.MockShutdownModule;
 import io.github.wysohn.realeconomy.inject.annotation.MaxCapital;
 import io.github.wysohn.realeconomy.inject.annotation.MinCapital;
+import io.github.wysohn.realeconomy.interfaces.banking.IBankOwnerProvider;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
+import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
+import io.github.wysohn.realeconomy.manager.listing.AssetListing;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
 import org.bukkit.Material;
@@ -29,19 +35,22 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-public class TradeMediatorTest {
+public class TradeMediatorTest extends AbstractBukkitManagerTest {
 
     List<Module> moduleList = new LinkedList<>();
     private ManagerConfig config;
     private Logger logger;
+    private CurrencyManager currencyManager;
 
     @Before
-    public void init() throws Exception{
+    public void init() throws Exception {
         config = mock(ManagerConfig.class);
         logger = mock(Logger.class);
+        currencyManager = mock(CurrencyManager.class);
 
         FileConfiguration materialsSec = new YamlConfiguration();
         materialsSec.set(Material.APPLE.name(), "food");
@@ -76,6 +85,16 @@ public class TradeMediatorTest {
             @Provides
             SimulationMediator simulationMediator() {
                 return mock(SimulationMediator.class);
+            }
+
+            @Provides
+            CurrencyManager currencyManager() {
+                return currencyManager;
+            }
+
+            @ProvidesIntoSet
+            IBankOwnerProvider bankOwnerProvider() {
+                return mock(IBankOwnerProvider.class);
             }
         });
         moduleList.add(new MockShutdownModule(() -> {
@@ -403,7 +422,7 @@ public class TradeMediatorTest {
     }
 
     @Test
-    public void testTransaction() throws Exception {
+    public void testTransactionNoAssets() throws Exception {
         CurrencyManager currencyManager = mock(CurrencyManager.class);
         AssetListingManager assetListingManager = mock(AssetListingManager.class);
         IBankUserProvider bankUserProvider = mock(IBankUserProvider.class);
@@ -422,6 +441,8 @@ public class TradeMediatorTest {
         UUID currencyUuid = UUID.randomUUID();
         Currency currency = mock(Currency.class);
         CentralBank bank = mock(CentralBank.class);
+        AssetListing listing = mock(AssetListing.class);
+        UUID listingUuid = UUID.randomUUID();
 
         IMemento buyerState = mock(IMemento.class);
         IMemento sellerState = mock(IMemento.class);
@@ -439,7 +460,7 @@ public class TradeMediatorTest {
                     3099.34,
                     50,
                     currencyUuid,
-                    UUID.randomUUID(),
+                    listingUuid,
                     1));
 
             return null;
@@ -453,9 +474,120 @@ public class TradeMediatorTest {
         when(bank.hasAccount(eq(seller), eq(BankingTypeRegistry.TRADING))).thenReturn(true);
         when(buyer.hasOrderId(any(), anyInt())).thenReturn(true);
         when(seller.hasOrderId(any(), anyInt())).thenReturn(true);
+        when(assetListingManager.get(eq(listingUuid))).thenReturn(Optional.of(new WeakReference<>(listing)));
+        when(buyer.saveState()).thenReturn(buyerState);
+        when(seller.saveState()).thenReturn(sellerState);
+        when(bank.saveState()).thenReturn(bankState);
 
         tradeBroker.processOrder();
 
         verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
+        verify(buyer).restoreState(eq(buyerState));
+        verify(seller).restoreState(eq(sellerState));
+        verify(bank).restoreState(eq(bankState));
+    }
+
+    @Test
+    public void testTransactionConcurrent() throws Exception {
+        CurrencyManager currencyManager = mock(CurrencyManager.class);
+        AssetListingManager assetListingManager = mock(AssetListingManager.class);
+        IBankUserProvider bankUserProvider = mock(IBankUserProvider.class);
+
+        TradeMediator.TradeBroker tradeBroker = new TradeMediator.TradeBroker(assetListingManager,
+                new HashSet<IBankUserProvider>() {{
+                    add(bankUserProvider);
+                }},
+                currencyManager,
+                logger);
+
+        UUID buyerUuid = UUID.randomUUID();
+        IBankUser buyer = mock(IBankUser.class);
+        UUID sellerUuid = UUID.randomUUID();
+        IBankUser seller = mock(IBankUser.class);
+        UUID currencyUuid = UUID.randomUUID();
+        Currency currency = mock(Currency.class);
+        CentralBank bank = new CentralBank(UUID.randomUUID());
+        AssetListing listing = mock(AssetListing.class);
+        UUID listingUuid = UUID.randomUUID();
+        ItemStackSignature sign = new ItemStackSignature(Material.DIAMOND);
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+        when(listing.getSignature()).thenReturn(sign);
+        IMemento buyerState = mock(IMemento.class);
+        IMemento sellerState = mock(IMemento.class);
+        when(buyer.getUuid()).thenReturn(buyerUuid);
+        when(seller.getUuid()).thenReturn(sellerUuid);
+        addFakeObserver(bank);
+        Guice.createInjector(moduleList).injectMembers(bank);
+
+        doAnswer(invocation -> {
+            Consumer<TradeInfo> consumer = (Consumer<TradeInfo>) invocation.getArguments()[0];
+
+            consumer.accept(TradeInfo.create(35,
+                    sellerUuid,
+                    3000.55,
+                    244,
+                    232,
+                    buyerUuid,
+                    3099.34,
+                    5,
+                    currencyUuid,
+                    listingUuid,
+                    1));
+
+            return null;
+        }).when(assetListingManager).peekMatchingOrder(any(Consumer.class));
+
+        bank.putAccount(buyer, BankingTypeRegistry.TRADING);
+        bank.putAccount(seller, BankingTypeRegistry.TRADING);
+        bank.addAccountAsset(seller, sign.asset(100.0));
+        bank.depositAccount(buyer, BankingTypeRegistry.TRADING, 3000.55 * 5, currency);
+        bank.depositAccount(seller, BankingTypeRegistry.TRADING, 12345.678, currency);
+
+        when(bankUserProvider.get(eq(buyerUuid))).thenReturn(buyer);
+        when(bankUserProvider.get(eq(sellerUuid))).thenReturn(seller);
+        when(currencyManager.get(eq(currencyUuid))).thenReturn(Optional.of(new WeakReference<>(currency)));
+        when(currency.ownerBank()).thenReturn(bank);
+        when(buyer.hasOrderId(any(), anyInt())).thenReturn(true);
+        when(seller.hasOrderId(any(), anyInt())).thenReturn(true);
+        when(assetListingManager.get(eq(listingUuid))).thenReturn(Optional.of(new WeakReference<>(listing)));
+        when(buyer.saveState()).thenReturn(buyerState);
+        when(seller.saveState()).thenReturn(sellerState);
+
+        Thread thread1 = new Thread(() -> {
+            // run it 100 times
+            // only the first trade will success since the buyer has just enough money for 5 diamonds
+            for (int i = 0; i < 100; i++) {
+                tradeBroker.processOrder();
+            }
+        });
+        Thread thread2 = new Thread(() -> {
+            // save total of 45150 to account
+            for (int i = 0; i < 300; i++) {
+                bank.depositAccount(seller, BankingTypeRegistry.TRADING, i + 1, currency);
+            }
+        });
+        Thread thread3 = new Thread(() -> {
+            // take out total of 5050 to account
+            for (int i = 0; i < 100; i++) {
+                bank.withdrawAccount(seller, BankingTypeRegistry.TRADING, i + 1, currency);
+            }
+        });
+
+        thread1.start();
+        thread2.start();
+        thread3.start();
+
+        thread1.join();
+        thread2.join();
+        thread3.join();
+
+        verify(assetListingManager, atLeast(1)).peekMatchingOrder(any(Consumer.class));
+
+        // we should have balance only for
+        //   initial amount + the diamonds sold + amount difference of thread2 and thread3
+        // if we have more or less than it suppose to be, probably race condition happened
+        assertEquals(BigDecimal.valueOf(12345.678 + 3000.55 * 5 + (45150 - 5050)),
+                bank.balanceOfAccount(seller, BankingTypeRegistry.TRADING, currency));
     }
 }
