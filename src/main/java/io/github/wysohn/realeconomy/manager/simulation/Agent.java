@@ -11,6 +11,7 @@ import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.listing.OrderType;
 import io.github.wysohn.realeconomy.manager.listing.TradeInfo;
+import io.github.wysohn.realeconomy.mediator.SimulationMediator;
 import io.github.wysohn.realeconomy.mediator.TradeMediator;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -138,10 +139,12 @@ public class Agent implements IBankUser {
         synchronized (tradeDemands) {
             if (type == OrderType.BUY) {
                 // if we bought successfully, could we buy it at cheaper price?
-                tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0) + info.getAmount());
+                tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0)
+                        + SimulationMediator.DEMAND_SENSITIVITY_BID * info.getAmount());
             } else if (type == OrderType.SELL) {
                 // if we sold successfully, could we sell it at higher price?
-                tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0) - info.getAmount());
+                tradeDemands.put(info.getListingUuid(), tradeDemands.getOrDefault(info.getListingUuid(), 0)
+                        - SimulationMediator.DEMAND_SENSITIVITY_ASK * info.getAmount());
             } else {
                 throw new RuntimeException();
             }

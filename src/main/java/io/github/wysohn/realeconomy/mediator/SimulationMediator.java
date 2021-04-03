@@ -28,8 +28,13 @@ import java.util.logging.Logger;
 @Singleton
 public class SimulationMediator extends Mediator {
     private static final BigDecimal DEFAULT_PRICING_START = BigDecimal.ONE;
-    private static final double PURCHASE_THRESHOLD = 100000.0;
+    private static final long ITERATION_PERIOD = 60 * 60 * 1000L; // hour
+    private static final double PURCHASE_THRESHOLD = 10000.0;
     private static final double PRICE_ADJUSTMENT_FACTOR = -4.0 / PURCHASE_THRESHOLD;
+    // each iteration takes an hour, so multiplying 24 would yield a day worth of demand
+    //   for each purchase a user make.
+    public static final int DEMAND_SENSITIVITY_BID = 24;
+    public static final int DEMAND_SENSITIVITY_ASK = 24;
 
     private final Logger logger;
     private final MarketSimulationManager marketSimulationManager;
@@ -146,7 +151,7 @@ public class SimulationMediator extends Mediator {
 
                 try {
                     Thread.sleep(1000L); // TODO for test
-                    //Thread.sleep(60 * 60 * 1000L); // hourly
+                    //Thread.sleep(ITERATION_PERIOD); // hourly
                 } catch (InterruptedException e) {
                     logger.info(getName() + " is interrupted.");
                     break;
