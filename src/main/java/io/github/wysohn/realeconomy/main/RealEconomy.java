@@ -650,8 +650,10 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                     int taken;
                                     if (amount == -1) {
                                         taken = MAX_INVENTORY_AMOUNT - user.take(itemStack, MAX_INVENTORY_AMOUNT);
+                                    } else if (amount > 0) {
+                                        taken = amount - user.take(itemStack, amount);
                                     } else {
-                                        taken = itemStack.getAmount();
+                                        taken = 0;
                                     }
 
                                     // this is impossible since player is holding it, but just in case
