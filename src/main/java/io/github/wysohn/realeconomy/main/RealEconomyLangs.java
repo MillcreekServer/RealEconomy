@@ -134,7 +134,8 @@ public enum RealEconomyLangs implements ILang {
             "&d/eco sell <price> * &8- &7sell &6all &7the of item type same as the one in your hand for specified price."),
 
     Command_Price_Desc("Check the price trend of the item in your hand."),
-    Command_Price_Usage("&d/eco price &8- &7Price trend of the item (in your hand) in last &6${integer} days."),
+    Command_Price_Usage("&d/eco price &8- &7Price trend of the item (in your hand) in last &6${integer} days.",
+            "&d/eco price <type> &8- &7Price trend of the item <type> in last &6${integer} days."),
 
     Command_Price_Format_Header_Top("&7Current open orders&8:"),
     Command_Price_Format_Seller("  &dSeller &7wants&8: &d${integer} &8@ &6${double} ${string}"), // Seller want: 119 @ 232 dollar
