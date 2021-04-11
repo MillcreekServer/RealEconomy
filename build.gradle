@@ -13,7 +13,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '1.19.10'
+version = '1.19.11'
 group = 'io.github.wysohn'
 
 ext {
@@ -292,7 +292,7 @@ dependencies {
     implementation ('org.spigotmc:spigot-api:1.16.5+'){
         exclude group: 'com.google.code.gson'
     }
-    implementation "io.github.wysohn:rapidframework:3.17.12"
+    implementation "io.github.wysohn:rapidframework:3.17.14"
     implementation "com.github.MilkBowl:VaultAPI:1.7"
 
     testCompile 'junit:junit:4.+'

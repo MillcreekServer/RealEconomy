@@ -214,7 +214,7 @@ public class TradeMediator extends Mediator {
                 after.run();
 
                 assetListingManager.commitOrders();
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
                 try {
                     assetListingManager.rollbackOrders();

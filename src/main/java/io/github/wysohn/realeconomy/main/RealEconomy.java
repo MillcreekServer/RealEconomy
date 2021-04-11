@@ -22,6 +22,7 @@ import io.github.wysohn.rapidframework3.interfaces.command.CommandAction;
 import io.github.wysohn.rapidframework3.interfaces.command.IArgumentMapper;
 import io.github.wysohn.rapidframework3.interfaces.command.ITabCompleter;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
+import io.github.wysohn.rapidframework3.utils.FailSensitiveTask;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.regex.CommonPatterns;
 import io.github.wysohn.realeconomy.api.smartinv.SmartInvAPI;
@@ -64,6 +65,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RealEconomy extends AbstractBukkitPlugin {
+    // just an arbitrary large number that exceeds the maximum capacity of player inventory
+    // there are 4 lines of 9 column items and some additional slots for player,
+    // so it is unlikely that it will exceed 9999.
+    public static final int MAX_INVENTORY_AMOUNT = 9999;
 
     public RealEconomy() {
     }
@@ -581,13 +586,14 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                             .compareTo(BigDecimal.valueOf(price)) < 0) {
                                         getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Buy_NotEnoughCurrency);
                                     } else {
-                                        // process one tick later since order listing have some delays
-                                        getMain().task().sync(() -> {
-                                            getMain().comm().runSubCommand(sender, "orders");
-                                        });
-                                        getMain().task().sync(() -> {
-                                            getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Buy_FailNotice);
-                                        });
+                                        // process one seconds later since order listing have some delays
+                                        getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_Adding);
+                                        Bukkit.getScheduler().runTaskLater(getMain().getPlatform(),
+                                                () -> {
+                                                    getMain().comm().runSubCommand(sender, "orders");
+                                                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Buy_FailNotice);
+                                                },
+                                                20L);
                                     }
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
@@ -598,15 +604,20 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                     return true;
                 }));
-        list.add(new SubCommand.Builder("sell", 1)
+        list.add(new SubCommand.Builder("sell", -1)
                 .withDescription(RealEconomyLangs.Command_Sell_Desc)
                 .addUsage(RealEconomyLangs.Command_Sell_Usage)
                 .addTabCompleter(0, TabCompleters.hint("<price>"))
+                .addTabCompleter(1, TabCompleters.simple("1", "10", "64", "500", "*"))
                 .addArgumentMapper(0, mapPrice())
+                .addArgumentMapper(1, ArgumentMappers.INTEGER)
                 .action((sender, args) -> {
-                    double price = args.get(0).map(Double.class::cast).orElse(-1.0);
+                    double price = args.get(0).map(Double.class::cast).filter(val -> val > 0.0).orElse(-1.0);
+                    int amount = args.get(1).map(Integer.class::cast).filter(val -> val == -1 || val > 0).orElse(0);
 
                     if (price < 0.0)
+                        return true;
+                    if (amount == 0)
                         return true;
 
                     AbstractBank bank = getMain().getManager(VisitingBankManager.class)
@@ -632,18 +643,38 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 }
 
                                 AssetSignature signature = new ItemStackSignature(itemStack);
-                                if (tradeMediator.sellAsset(user,
-                                        signature,
-                                        price,
-                                        bank.getBaseCurrency(),
-                                        itemStack.getAmount(),
-                                        () -> {
-                                            user.getSender().getInventory().setItemInMainHand(null);
-                                            bank.addAccountAsset(user, signature.asset((double) itemStack.getAmount()));
-                                        })){
 
-                                    // process one tick later since order listing have sone delays
-                                    getMain().task().sync(() -> getMain().comm().runSubCommand(sender, "orders"));
+                                boolean result = FailSensitiveTask.of(() -> {
+                                    int taken;
+                                    if (amount == -1) {
+                                        taken = MAX_INVENTORY_AMOUNT - user.take(itemStack, MAX_INVENTORY_AMOUNT);
+                                    } else {
+                                        taken = itemStack.getAmount();
+                                    }
+
+                                    // this is impossible since player is holding it, but just in case
+                                    if (taken < 1) {
+                                        sender.sendMessageRaw("taken < 1 : " + taken);
+                                        return true;
+                                    }
+
+                                    return tradeMediator.sellAsset(user,
+                                            signature,
+                                            price,
+                                            bank.getBaseCurrency(),
+                                            taken,
+                                            () -> bank.addAccountAsset(user, signature.asset((double) taken)));
+                                }).handleException(Throwable::printStackTrace)
+                                        .addStateSupplier("user", user::saveState)
+                                        .addStateConsumer("user", user::restoreState)
+                                        .run();
+
+                                if (result) {
+                                    // process seconds later since order listing have some delays
+                                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_Adding);
+                                    Bukkit.getScheduler().runTaskLater(getMain().getPlatform(),
+                                            () -> getMain().comm().runSubCommand(sender, "orders"),
+                                            20L);
                                 } else {
                                     String nameTrading = getMain().lang().parseFirst(RealEconomyLangs.BankingType_Trading);
                                     getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Common_NoAccount, (l, m) ->
