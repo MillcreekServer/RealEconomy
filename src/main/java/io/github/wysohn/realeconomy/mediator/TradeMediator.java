@@ -19,6 +19,9 @@ import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 import io.github.wysohn.realeconomy.manager.listing.*;
 import io.github.wysohn.realeconomy.manager.simulation.MarketSimulationManager;
 import org.bukkit.Material;
+import org.bukkit.block.data.Ageable;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Powerable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -96,8 +99,27 @@ public class TradeMediator extends Mediator {
             });
         } else {
             Arrays.stream(Material.values()).forEach(material -> {
-                MATERIAL_CATEGORY_MAP.put(material, MATERIAL_CATEGORY_DEFAULT);
-                config.put(MATERIALS + "." + material, MATERIAL_CATEGORY_DEFAULT);
+                if (!material.isItem())
+                    return;
+
+                String category = MATERIAL_CATEGORY_DEFAULT;
+                BlockData data = material.createBlockData();
+                if (material.isEdible()) {
+                    category = "food";
+                } else if (material.isFuel()) {
+                    category = "fuel";
+                } else if (material.isRecord()) {
+                    category = "record";
+                } else if (material.isBlock()) {
+                    category = "block";
+                } else if (data instanceof Ageable) {
+                    category = "crops";
+                } else if (data instanceof Powerable) {
+                    category = "redstone";
+                }
+
+                MATERIAL_CATEGORY_MAP.put(material, category);
+                config.put(MATERIALS + "." + material, category);
             });
         }
 
