@@ -35,6 +35,7 @@ public class SimulationMediator extends Mediator {
     //   for each purchase a user make.
     public static final int DEMAND_SENSITIVITY_BID = 24;
     public static final int DEMAND_SENSITIVITY_ASK = 24;
+    public static final int SCALE_LIMIT = 10;
 
     private final Logger logger;
     private final MarketSimulationManager marketSimulationManager;
@@ -235,6 +236,7 @@ public class SimulationMediator extends Mediator {
                     // change the price according to the number of trades
                     midPoint = midPoint.multiply(BigDecimal.valueOf(1.0
                             + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getTradeDemand(assetListingManager.signatureToUuid(sign)))));
+                    midPoint = midPoint.setScale(SCALE_LIMIT, RoundingMode.CEILING);
 
                     agent.updateCurrentPricing(sign, midPoint);
                     logger.fine("agent " + agent + " updating price (bid).");
@@ -347,6 +349,7 @@ public class SimulationMediator extends Mediator {
                     // change the price according to the number of trades
                     sellingPrice = sellingPrice.multiply(BigDecimal.valueOf(1.0
                             + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getTradeDemand(assetListingManager.signatureToUuid(sign)))));
+                    sellingPrice = sellingPrice.setScale(SCALE_LIMIT, RoundingMode.CEILING);
 
                     // we cannot sell items at the price cheaper than the unit cost!
                     // that would be a dumb thing to do
