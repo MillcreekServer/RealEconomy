@@ -15,7 +15,7 @@ softdepend:
 - SmartInvs
 - ScoreboardScreen
 - Citizens
-version: 1.19.12
+version: 1.19.14
 commands:
   realeconomy:
     aliases:
@@ -35,7 +35,7 @@ commands:
     description: shortcut command of /eco bank
   items:
     aliases:
-    - shop
+      - shop
     description: shortcut command of /eco items
   buy:
     description: shortcut command of /eco buy
@@ -43,6 +43,10 @@ commands:
     description: shortcut command of /eco sell
   cancel:
     description: shortcut command of /eco cancel
+  orders:
+    description: shortcut command of /eco orders
+  price:
+    description: shortcut command of /eco price
   business:
     description: shortcut command of /eco business
 authors: [

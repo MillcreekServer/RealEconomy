@@ -555,7 +555,7 @@ public class OrderQueryModule extends AbstractModule {
                         " FROM (" +
                         " SELECT " + OrderSQLModule.LISTING_UUID +
                         " FROM sell_orders" +
-                        (queryAll ? "" : " WHERE " + OrderSQLModule.CATEGORY_ID + " = ?;") +
+                        (queryAll ? "" : " WHERE " + OrderSQLModule.CATEGORY_ID + " = ?") +
                         " GROUP BY " + OrderSQLModule.LISTING_UUID +
                         ") tbl", pstmt -> {
                     try {
