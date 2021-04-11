@@ -1122,7 +1122,6 @@ public class RealEconomy extends AbstractBukkitPlugin {
         }).orElse(null);
 
         if (orderInfo == null) {
-            sender.removeOrderId(orderPair.value, orderPair.key);
             return null;
         } else {
             return Message.concat(MessageBuilder.forMessage(getMain().lang().parseFirst(lang, (s, m) ->
