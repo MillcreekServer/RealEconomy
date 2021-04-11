@@ -122,6 +122,7 @@ public class TradeMediator extends Mediator {
                 config.put(MATERIALS + "." + material, category);
             });
         }
+        MATERIAL_CATEGORY_MAP.values().forEach(assetListingManager::newCategory);
 
         if (!config.get(DENY_LIST).isPresent()) {
             itemDenySet.add(Material.WRITTEN_BOOK);

@@ -131,6 +131,23 @@ public class OrderQueryModule extends AbstractModule {
             this.ordersSession = ordersSession;
         }
 
+        public int getCategoryId(String category) {
+            if (!categoryIdMap.containsKey(category)) {
+                ordersSession.execute(INSERT_CATEGORY, pstmt -> {
+                    try {
+                        pstmt.setString(1, category);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }, key -> {
+                    categoryIdMap.put(category, key.intValue());
+                    categoryTrie.insert(category);
+                });
+            }
+
+            return categoryIdMap.get(category);
+        }
+
         @Override
         public void addOrder(UUID listingUuid,
                              String category,
@@ -165,23 +182,6 @@ public class OrderQueryModule extends AbstractModule {
                     ex.printStackTrace();
                 }
             }, index -> issuer.addOrderId(type, index.intValue()));
-        }
-
-        private int getCategoryId(String category) {
-            if (!categoryIdMap.containsKey(category)) {
-                ordersSession.execute(INSERT_CATEGORY, pstmt -> {
-                    try {
-                        pstmt.setString(1, category);
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
-                }, key -> {
-                    categoryIdMap.put(category, key.intValue());
-                    categoryTrie.insert(category);
-                });
-            }
-
-            return categoryIdMap.get(category);
         }
 
         @Override

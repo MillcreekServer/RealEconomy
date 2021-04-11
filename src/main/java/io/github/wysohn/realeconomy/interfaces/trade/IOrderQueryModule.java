@@ -16,6 +16,17 @@ import java.util.function.Consumer;
  * Methods must be implemented in a thread-safe way, yet they are expected to be blocking operation.
  */
 public interface IOrderQueryModule {
+
+    /**
+     * Get category id of the specified category name.
+     * <p>
+     * This is always successful as it assigns new id for the category that did not exist.
+     *
+     * @param category category name
+     * @return id of the category
+     */
+    int getCategoryId(String category);
+
     /**
      * Add order for sell or purchase.
      * <p>

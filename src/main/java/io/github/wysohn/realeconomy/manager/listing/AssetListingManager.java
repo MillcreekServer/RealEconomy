@@ -143,7 +143,19 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         return true;
     }
 
-    public UUID signatureToUuid(AssetSignature sign){
+    /**
+     * Create a new category to be used. Invoke it when config file is reloaded, so the new category
+     * names can be registered.
+     * <p>
+     * This is always successful as it assigns new id for the category that did not exist.
+     *
+     * @param category category name
+     */
+    public void newCategory(String category) {
+        orderQueryModule.getCategoryId(category);
+    }
+
+    public UUID signatureToUuid(AssetSignature sign) {
         newListing(sign);
         return signatureUUIDMap.get(sign);
     }
