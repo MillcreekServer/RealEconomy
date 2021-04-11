@@ -133,6 +133,18 @@ task writePluginYml {
                 }
             })
 
+            put("orders", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco orders")
+                }
+            })
+
+            put("price", new HashMap<String, Object>() {
+                {
+                    put("description", "shortcut command of /eco price")
+                }
+            })
+
             put("business", new HashMap<String, Object>() {
                 {
                     put("description", "shortcut command of /eco business")

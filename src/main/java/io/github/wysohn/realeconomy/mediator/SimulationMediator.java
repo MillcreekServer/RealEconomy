@@ -151,8 +151,8 @@ public class SimulationMediator extends Mediator {
                 iterate();
 
                 try {
-                    Thread.sleep(1000L); // TODO for test
-                    //Thread.sleep(ITERATION_PERIOD); // hourly
+                    //Thread.sleep(1000L);
+                    Thread.sleep(ITERATION_PERIOD); // hourly
                 } catch (InterruptedException e) {
                     logger.info(getName() + " is interrupted.");
                     break;
