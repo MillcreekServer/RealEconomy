@@ -1089,6 +1089,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
         getMain().comm().linkMainCommand("buy", "realeconomy", "buy");
         getMain().comm().linkMainCommand("sell", "realeconomy", "sell");
         getMain().comm().linkMainCommand("cancel", "realeconomy", "cancel");
+        getMain().comm().linkMainCommand("orders", "realeconomy", "orders");
+        getMain().comm().linkMainCommand("price", "realeconomy", "price");
         getMain().comm().linkMainCommand("business", "realeconomy", "business");
     }
 
