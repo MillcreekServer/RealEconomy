@@ -13,7 +13,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '1.19.9'
+version = '1.19.10'
 group = 'io.github.wysohn'
 
 ext {
@@ -289,10 +289,10 @@ sourceSets {
 dependencies {
     compile fileTree(dir: "libs", includes: ['*.jar'])
 
-    implementation ('org.spigotmc:spigot-api:1.16.+'){
+    implementation ('org.spigotmc:spigot-api:1.16.5+'){
         exclude group: 'com.google.code.gson'
     }
-    implementation "io.github.wysohn:rapidframework:3.17.8"
+    implementation "io.github.wysohn:rapidframework:3.17.12"
     implementation "com.github.MilkBowl:VaultAPI:1.7"
 
     testCompile 'junit:junit:4.+'
@@ -303,7 +303,7 @@ dependencies {
     testCompile 'org.javassist:javassist:3.20.0-GA'
     testCompile group: 'com.carrotsearch', name: 'junit-benchmarks', version: '0.7.0'
 
-    testCompile ('org.spigotmc:spigot-api:1.16.+'){
+    testCompile ('org.spigotmc:spigot-api:1.16.5+'){
         exclude group: 'com.google.code.gson'
     }
 }

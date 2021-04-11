@@ -237,6 +237,260 @@ public class MarketSimulationManager extends Manager {
                         .addNeededResource(Material.DIAMOND, 5)
                         .addOutput(Material.BELL, 5)
                         .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Toolsmith_IRON_SHOVEL")
+                        .addNeededResource(Material.IRON_INGOT, 50)
+                        .addNeededResource(Material.STICK, 100)
+                        .addOutput(Material.IRON_SHOVEL, 50)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Toolsmith_IRON_AXE")
+                        .addNeededResource(Material.IRON_INGOT, 150)
+                        .addNeededResource(Material.STICK, 100)
+                        .addOutput(Material.IRON_AXE, 50)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Toolsmith_IRON_PICKAXE")
+                        .addNeededResource(Material.IRON_INGOT, 150)
+                        .addNeededResource(Material.STICK, 100)
+                        .addOutput(Material.IRON_PICKAXE, 50)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Toolsmith_IRON_HOE")
+                        .addNeededResource(Material.IRON_INGOT, 100)
+                        .addNeededResource(Material.STICK, 100)
+                        .addOutput(Material.IRON_HOE, 50)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Toolsmith_DIAMOND_SHOVEL")
+                        .addNeededResource(Material.DIAMOND, 10)
+                        .addNeededResource(Material.STICK, 20)
+                        .addOutput(Material.IRON_SHOVEL, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Toolsmith_DIAMOND_AXE")
+                        .addNeededResource(Material.DIAMOND, 30)
+                        .addNeededResource(Material.STICK, 20)
+                        .addOutput(Material.IRON_AXE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Toolsmith_DIAMOND_PICKAXE")
+                        .addNeededResource(Material.DIAMOND, 30)
+                        .addNeededResource(Material.STICK, 20)
+                        .addOutput(Material.IRON_PICKAXE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Toolsmith_DIAMOND_HOE")
+                        .addNeededResource(Material.DIAMOND, 20)
+                        .addNeededResource(Material.STICK, 20)
+                        .addOutput(Material.IRON_PICKAXE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Red_1")
+                        .addNeededResource(Material.POPPY, 10)
+                        .addOutput(Material.RED_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Red_1")
+                        .addNeededResource(Material.RED_TULIP, 10)
+                        .addOutput(Material.RED_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Red_1")
+                        .addNeededResource(Material.ROSE_BUSH, 10)
+                        .addOutput(Material.RED_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Red_1")
+                        .addNeededResource(Material.BEETROOT, 10)
+                        .addOutput(Material.RED_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Green")
+                        .addNeededResource(Material.CACTUS, 10)
+                        .addOutput(Material.GREEN_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Purple")
+                        .addNeededResource(Material.RED_DYE, 10)
+                        .addNeededResource(Material.BLUE_DYE, 10)
+                        .addOutput(Material.PURPLE_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Cyan")
+                        .addNeededResource(Material.GREEN_DYE, 10)
+                        .addNeededResource(Material.BLUE_DYE, 10)
+                        .addOutput(Material.CYAN_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_LightGray_1")
+                        .addNeededResource(Material.AZURE_BLUET, 10)
+                        .addOutput(Material.LIGHT_GRAY_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_LightGray_2")
+                        .addNeededResource(Material.WHITE_TULIP, 10)
+                        .addOutput(Material.LIGHT_GRAY_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_LightGray_3")
+                        .addNeededResource(Material.OXEYE_DAISY, 10)
+                        .addOutput(Material.LIGHT_GRAY_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_LightGray_4")
+                        .addNeededResource(Material.GRAY_DYE, 10)
+                        .addNeededResource(Material.WHITE_DYE, 10)
+                        .addOutput(Material.LIGHT_GRAY_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_LightGray_5")
+                        .addNeededResource(Material.BLACK_DYE, 10)
+                        .addNeededResource(Material.WHITE_DYE, 20)
+                        .addOutput(Material.LIGHT_GRAY_DYE, 30)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Gray")
+                        .addNeededResource(Material.WHITE_DYE, 10)
+                        .addNeededResource(Material.BLACK_DYE, 10)
+                        .addOutput(Material.GRAY_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Pink_1")
+                        .addNeededResource(Material.RED_DYE, 10)
+                        .addNeededResource(Material.WHITE_DYE, 10)
+                        .addOutput(Material.PINK_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Pink_2")
+                        .addNeededResource(Material.PINK_TULIP, 10)
+                        .addOutput(Material.PINK_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Pink_3")
+                        .addNeededResource(Material.PEONY, 10)
+                        .addOutput(Material.PINK_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Lime")
+                        .addNeededResource(Material.GREEN_DYE, 10)
+                        .addNeededResource(Material.WHITE_DYE, 10)
+                        .addOutput(Material.LIME_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Yellow_1")
+                        .addNeededResource(Material.DANDELION, 10)
+                        .addOutput(Material.YELLOW_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Yellow_2")
+                        .addNeededResource(Material.SUNFLOWER, 10)
+                        .addOutput(Material.YELLOW_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_LightBlue_1")
+                        .addNeededResource(Material.BLUE_DYE, 10)
+                        .addNeededResource(Material.WHITE_DYE, 10)
+                        .addOutput(Material.LIGHT_BLUE_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_LightBlue_2")
+                        .addNeededResource(Material.BLUE_ORCHID, 10)
+                        .addOutput(Material.LIGHT_BLUE_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Magenta_1")
+                        .addNeededResource(Material.PURPLE_DYE, 10)
+                        .addNeededResource(Material.PINK_DYE, 10)
+                        .addOutput(Material.MAGENTA_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Magenta_2")
+                        .addNeededResource(Material.BLUE_DYE, 10)
+                        .addNeededResource(Material.RED_DYE, 10)
+                        .addNeededResource(Material.PINK_DYE, 10)
+                        .addOutput(Material.MAGENTA_DYE, 30)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Magenta_3")
+                        .addNeededResource(Material.BLUE_DYE, 10)
+                        .addNeededResource(Material.RED_DYE, 20)
+                        .addNeededResource(Material.WHITE_DYE, 10)
+                        .addOutput(Material.MAGENTA_DYE, 40)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Magenta_4")
+                        .addNeededResource(Material.ALLIUM, 10)
+                        .addOutput(Material.MAGENTA_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Magenta_5")
+                        .addNeededResource(Material.LILAC, 10)
+                        .addOutput(Material.MAGENTA_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Orange_1")
+                        .addNeededResource(Material.RED_DYE, 10)
+                        .addNeededResource(Material.YELLOW_DYE, 10)
+                        .addOutput(Material.ORANGE_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Orange_2")
+                        .addNeededResource(Material.ORANGE_TULIP, 10)
+                        .addOutput(Material.ORANGE_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Blue_1")
+                        .addNeededResource(Material.CORNFLOWER, 10)
+                        .addOutput(Material.BLUE_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Blue_2")
+                        .addNeededResource(Material.LAPIS_LAZULI, 10)
+                        .addOutput(Material.BLUE_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Brown")
+                        .addNeededResource(Material.COCOA_BEANS, 10)
+                        .addOutput(Material.BROWN_DYE, 20)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_Black_1")
+                        .addNeededResource(Material.INK_SAC, 10)
+                        .addOutput(Material.BLACK_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_Black_2")
+                        .addNeededResource(Material.WITHER_ROSE, 10)
+                        .addOutput(Material.BLACK_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Dye_White_1")
+                        .addNeededResource(Material.LILY_OF_THE_VALLEY, 10)
+                        .addOutput(Material.WHITE_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Dye_White_2")
+                        .addNeededResource(Material.BONE_MEAL, 10)
+                        .addOutput(Material.WHITE_DYE, 10)
+                        .build(logger, config, assetInfoProvider));
+
+                addAgent(new AgentConfigBuilder("Mason_1")
+                        .addNeededResource(Material.SAND, 100)
+                        .addOutput(Material.CLAY_BALL, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_2")
+                        .addNeededResource(Material.CLAY_BALL, 10)
+                        .addOutput(Material.BRICK, 10)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_3")
+                        .addNeededResource(Material.COBBLESTONE, 100)
+                        .addOutput(Material.STONE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_4")
+                        .addNeededResource(Material.STONE, 100)
+                        .addOutput(Material.STONE_BRICKS, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_5")
+                        .addNeededResource(Material.DIORITE, 100)
+                        .addNeededResource(Material.NETHER_QUARTZ_ORE, 100)
+                        .addOutput(Material.GRANITE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_6")
+                        .addNeededResource(Material.GRANITE, 100)
+                        .addOutput(Material.POLISHED_GRANITE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_7")
+                        .addNeededResource(Material.DIORITE, 100)
+                        .addNeededResource(Material.COBBLESTONE, 100)
+                        .addOutput(Material.ANDESITE, 200)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_8")
+                        .addNeededResource(Material.ANDESITE, 100)
+                        .addOutput(Material.POLISHED_GRANITE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_9")
+                        .addNeededResource(Material.COBBLESTONE, 100)
+                        .addNeededResource(Material.NETHER_QUARTZ_ORE, 100)
+                        .addOutput(Material.DIORITE, 100)
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Mason_10")
+                        .addNeededResource(Material.DIORITE, 100)
+                        .addOutput(Material.POLISHED_DIORITE, 100)
+                        .build(logger, config, assetInfoProvider));
 
             } else {
                 config.get(SIMULATOR)
