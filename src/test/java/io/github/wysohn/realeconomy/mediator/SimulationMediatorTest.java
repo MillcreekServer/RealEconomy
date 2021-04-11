@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -127,7 +128,7 @@ public class SimulationMediatorTest {
                 eq(currency),
                 eq(200),
                 anyBoolean());
-        assertEquals(BigDecimal.valueOf(1.0),
+        assertEquals(BigDecimal.valueOf(1.0).setScale(SimulationMediator.SCALE_LIMIT, RoundingMode.CEILING),
                 agent1.getCurrentPricing(WHEAT));
 
         verify(assetListingManager).addOrder(eq(COCOA),
@@ -137,7 +138,7 @@ public class SimulationMediatorTest {
                 eq(currency),
                 eq(100),
                 anyBoolean());
-        assertEquals(BigDecimal.valueOf(1.0),
+        assertEquals(BigDecimal.valueOf(1.0).setScale(SimulationMediator.SCALE_LIMIT, RoundingMode.CEILING),
                 agent1.getCurrentPricing(COCOA));
 
         verify(assetListingManager).addOrder(eq(WHEAT),
@@ -147,7 +148,7 @@ public class SimulationMediatorTest {
                 eq(currency),
                 eq(300),
                 anyBoolean());
-        assertEquals(BigDecimal.valueOf(1.0),
+        assertEquals(BigDecimal.valueOf(1.0).setScale(SimulationMediator.SCALE_LIMIT, RoundingMode.CEILING),
                 agent2.getCurrentPricing(WHEAT));
     }
 
