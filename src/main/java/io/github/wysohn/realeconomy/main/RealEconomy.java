@@ -489,7 +489,10 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .addTabCompleter(1, new ITabCompleter() {
                     @Override
                     public List<String> getHint() {
-                        return TabCompleters.list("...");
+                        return getMain().getManager(AssetListingManager.class)
+                                .map(AssetListingManager::categoryNames)
+                                .map(ArrayList::new)
+                                .orElseGet(ArrayList::new);
                     }
 
                     @Override

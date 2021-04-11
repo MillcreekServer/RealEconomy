@@ -25,10 +25,7 @@ import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -367,6 +364,10 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
      */
     public void peekMatchingOrder(Consumer<TradeInfo> consumer) {
         orderQueryModule.peekMatchingOrders(consumer);
+    }
+
+    public Collection<String> categoryNames() {
+        return orderQueryModule.categoryNames();
     }
 
     public StringListTrie getCategoryTrie() {

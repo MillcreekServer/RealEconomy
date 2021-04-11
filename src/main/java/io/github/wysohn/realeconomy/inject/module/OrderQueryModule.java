@@ -477,6 +477,10 @@ public class OrderQueryModule extends AbstractModule {
                     .orElse(null));
         }
 
+        public Collection<String> categoryNames() {
+            return categoryIdMap.keySet();
+        }
+
         @Override
         public StringListTrie categoryList() {
             return categoryTrie;

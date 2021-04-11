@@ -7,6 +7,7 @@ import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.listing.*;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -155,6 +156,13 @@ public interface IOrderQueryModule {
      * @param consumer
      */
     void peekMatchingOrders(Consumer<TradeInfo> consumer);
+
+    /**
+     * Get name of all existing category names
+     *
+     * @return
+     */
+    Collection<String> categoryNames();
 
     /**
      * Get String Trie of categories for query.
