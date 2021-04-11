@@ -613,11 +613,8 @@ public class RealEconomy extends AbstractBukkitPlugin {
                 .addArgumentMapper(1, ArgumentMappers.INTEGER)
                 .action((sender, args) -> {
                     double price = args.get(0).map(Double.class::cast).filter(val -> val > 0.0).orElse(-1.0);
-                    int amount = args.get(1).map(Integer.class::cast).filter(val -> val == -1 || val > 0).orElse(0);
 
                     if (price < 0.0)
-                        return true;
-                    if (amount == 0)
                         return true;
 
                     AbstractBank bank = getMain().getManager(VisitingBankManager.class)
@@ -643,6 +640,11 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 }
 
                                 AssetSignature signature = new ItemStackSignature(itemStack);
+                                int amount = args.get(1).map(Integer.class::cast)
+                                        .filter(val -> val == -1 || val > 0)
+                                        .orElse(itemStack.getAmount());
+                                if (amount == 0)
+                                    return;
 
                                 boolean result = FailSensitiveTask.of(() -> {
                                     int taken;
