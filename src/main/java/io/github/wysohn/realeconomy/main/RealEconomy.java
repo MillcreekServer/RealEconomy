@@ -3,6 +3,7 @@ package io.github.wysohn.realeconomy.main;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import io.github.wysohn.rapidframework3.bukkit.main.AbstractBukkitPlugin;
+import io.github.wysohn.rapidframework3.bukkit.manager.command.BukkitTabCompleters;
 import io.github.wysohn.rapidframework3.bukkit.manager.location.ManagerPlayerLocation;
 import io.github.wysohn.rapidframework3.core.command.ArgumentMappers;
 import io.github.wysohn.rapidframework3.core.command.EnumArgumentMapper;
@@ -688,10 +689,11 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                     return true;
                 }));
-        list.add(new SubCommand.Builder("price")
+        list.add(new SubCommand.Builder("price", -1)
                 .withDescription(RealEconomyLangs.Command_Price_Desc)
                 .addUsage(RealEconomyLangs.Command_Price_Usage, (sen, man) ->
                         man.addInteger(7)) //TODO later may change
+                .addTabCompleter(0, BukkitTabCompleters.MATERIAL)
                 .action(new CommandAction() {
                     @Override
                     public boolean execute(ICommandSender sender, SubCommand.Arguments args) {
@@ -706,7 +708,18 @@ public class RealEconomy extends AbstractBukkitPlugin {
 
                         getMain().getMediator(TradeMediator.class).ifPresent(tradeMediator ->
                                 getUser(sender).ifPresent(user -> {
-                                    ItemStack itemStack = user.getSender().getInventory().getItemInMainHand();
+                                    ItemStack itemStack = args.get(0)
+                                            .map(String.class::cast)
+                                            .map(materialName -> {
+                                                try {
+                                                    return Material.valueOf(materialName);
+                                                } catch (IllegalArgumentException ex) {
+                                                    return null;
+                                                }
+                                            })
+                                            .map(ItemStack::new)
+                                            .orElse(user.getSender().getInventory().getItemInMainHand());
+
                                     if (itemStack.getType() == Material.AIR) {
                                         getMain().lang().sendMessage(sender, DefaultLangs.General_NothingOnYourHand);
                                         return;
