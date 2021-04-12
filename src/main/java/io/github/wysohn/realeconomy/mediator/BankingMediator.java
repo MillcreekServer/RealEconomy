@@ -1,6 +1,5 @@
 package io.github.wysohn.realeconomy.mediator;
 
-import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.rapidframework3.utils.FailSensitiveTaskGeneric;
 import io.github.wysohn.realeconomy.interfaces.IGovernment;
@@ -17,16 +16,13 @@ import java.util.function.Supplier;
 
 @Singleton
 public class BankingMediator extends Mediator {
-    private final ManagerConfig config;
     private final CurrencyManager currencyManager;
     private final CentralBankingManager centralBankingManager;
 
     @Inject
     public BankingMediator(
-            ManagerConfig config,
             CurrencyManager currencyManager,
             CentralBankingManager centralBankingManager) {
-        this.config = config;
         this.currencyManager = currencyManager;
         this.centralBankingManager = centralBankingManager;
     }
