@@ -67,7 +67,7 @@ public class PlaceholderMediator extends Mediator {
                     if (bank == null)
                         return "No Bank";
 
-                    IBankingType type = BankingTypeRegistry.fromString(accountType);
+                    IBankingType type = BankingTypeRegistry.fromString(accountType.toUpperCase());
                     if (type == null)
                         return accountType + "[?]";
 
