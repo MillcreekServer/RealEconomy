@@ -619,7 +619,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     double price = args.get(0).map(Double.class::cast).filter(val -> val > 0.0).orElse(-1.0);
 
                     if (price < 0.0)
-                        return true;
+                        return false;
 
                     AbstractBank bank = getMain().getManager(VisitingBankManager.class)
                             .flatMap(manager -> getUser(sender).map(manager::getUsingBank))
@@ -647,8 +647,10 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                 int amount = args.get(1).map(Integer.class::cast)
                                         .filter(val -> val == -1 || val > 0)
                                         .orElse(itemStack.getAmount());
-                                if (amount == 0)
+                                if (amount == 0) {
+                                    getMain().lang().sendMessage(sender, RealEconomyLangs.Command_Sell_InvalidAmount);
                                     return;
+                                }
 
                                 boolean result = FailSensitiveTask.of(() -> {
                                     int taken;

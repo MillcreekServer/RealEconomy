@@ -132,6 +132,7 @@ public enum RealEconomyLangs implements ILang {
     Command_Sell_Usage("&d/eco sell <price> &8- &7sell the item in hand for specified price.",
             "&d/eco sell <price> <amount> &8- &7sell item amount of <amount> of the item type same as the one in your hand for specified price.",
             "&d/eco sell <price> * &8- &7sell &6all &7the of item type same as the one in your hand for specified price."),
+    Command_Sell_InvalidAmount("&cAmount should be larger than 0."),
 
     Command_Price_Desc("Check the price trend of the item in your hand."),
     Command_Price_Usage("&d/eco price &8- &7Price trend of the item (in your hand) in last &6${integer} days.",
