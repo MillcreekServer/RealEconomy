@@ -666,12 +666,18 @@ public class RealEconomy extends AbstractBukkitPlugin {
                                         return true;
                                     }
 
-                                    return tradeMediator.sellAsset(user,
+                                    boolean sellResult = tradeMediator.sellAsset(user,
                                             signature,
                                             price,
                                             bank.getBaseCurrency(),
                                             taken,
                                             () -> bank.addAccountAsset(user, signature.asset((double) taken)));
+
+                                    // if failed, return the items taken
+                                    if (!sellResult)
+                                        user.give(itemStack, taken);
+
+                                    return sellResult;
                                 }).handleException(Throwable::printStackTrace)
                                         .addStateSupplier("user", user::saveState)
                                         .addStateConsumer("user", user::restoreState)
