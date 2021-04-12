@@ -74,7 +74,7 @@ public enum RealEconomyLangs implements ILang {
 
     Command_Pay_Desc("Pay your currency to someone else."),
     Command_Pay_Usage("&d/eco pay wysohn 1304.22 dollar",
-            " &8- &7Give wysohn 1304.22 dollar."),
+            " &8- &7Give wysohn 1304.22 dollar out of your wallet."),
 
     Command_Currencies_Desc("Show list of all currencies available in the server."),
     Command_Currencies_Usage("&d/eco currencies"),
@@ -98,7 +98,7 @@ public enum RealEconomyLangs implements ILang {
             "&d/eco bank withdraw <type> <amount>",
             " &8- &7Withdraw currency from the account of given type to current bank.",
             "&d/eco bank assets <type>",
-            " &8- &7List assets stored in the acccount."),
+            " &8- &7List assets stored in the account."),
     Command_Bank_Balance("&dYour Account Balance &8: &6${string} ${string}"),
     Command_Bank_Assets_InvalidType("&cThat account cannot store assets."),
     Command_Bank_Info_Guide("&6To check your own account, specify the account type.",
@@ -197,12 +197,12 @@ public enum RealEconomyLangs implements ILang {
             " chosen randomly."),
     Command_Business_Common_NotOwner("&7You are not the owner of the business."),
 
-    Bank_Owner("&9Owner"),
-    Bank_BaseCurrency("&9BaseCurrency"),
-    Bank_NumAccounts("&9Number of accounts"),
-    Bank_Liquidity("&9Currency in circulation"),
-    Bank_Papers("&9Number of papers"),
-    Bank_PaperUnlimited("&9Paper unlimited"),
+    Bank_Owner("&9Owner &8:"),
+    Bank_BaseCurrency("&9BaseCurrency &8:"),
+    Bank_NumAccounts("&9Number of accounts &8:"),
+    Bank_Liquidity("&9Currency in circulation &8:"),
+    Bank_Papers("&9Number of papers &8:"),
+    Bank_PaperUnlimited("&9Paper unlimited &8:"),
     Bank_Finance("&9Finance"),
 
     ;

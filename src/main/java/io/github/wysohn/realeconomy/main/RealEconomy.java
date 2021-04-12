@@ -1101,6 +1101,7 @@ public class RealEconomy extends AbstractBukkitPlugin {
                     }
                 }));
 
+        getMain().comm().linkMainCommand("eco", "realeconomy");
         getMain().comm().linkMainCommand("bal", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("balance", "realeconomy", "wallet");
         getMain().comm().linkMainCommand("money", "realeconomy", "wallet");
