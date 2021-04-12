@@ -46,7 +46,7 @@ public class PlaceholderMediator extends Mediator {
                         .map(Reference::get)
                         .orElseThrow(RuntimeException::new);
 
-                String[] splits = params.split(" ");
+                String[] splits = params.split("_");
 
                 if (splits.length == 1 && "currentbank".equals(splits[0])) {
                     return visitingBankManager.getUsingBank(user).toString();
