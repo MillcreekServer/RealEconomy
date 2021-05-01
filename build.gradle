@@ -1,19 +1,20 @@
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath 'org.yaml:snakeyaml:1.8'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:6.0.0'
     }
 }
 
-plugins {
-    id 'java'
-    id 'groovy'
-    id 'maven-publish'
-}
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'maven-publish'
+apply plugin: 'com.github.johnrengelman.shadow'
 
-version = '1.19.25'
+version = '1.20.0'
 group = 'io.github.wysohn'
 
 ext {
@@ -320,6 +321,13 @@ dependencies {
     }
 }
 
+shadowJar{
+    from sourceSets.main.allSource
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+
+    include "io/github/wysohn/realeconomy/**"
+}
+
 jar {
     from {
         String[] include = [
@@ -331,6 +339,13 @@ jar {
                 .collect { it.isDirectory() ? it : zipTree(it) }
     }
 
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+}
+
+jar{
+    dependsOn(shadowJar)
+
+    from sourceSets.main.allSource
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 }
 
