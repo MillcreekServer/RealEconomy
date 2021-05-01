@@ -1,8 +1,10 @@
 /.gradle/
 /.idea/
+/.settings/
 /build/
 /bin/
 
+*.eclipse
 *.log
 
 # Compiled class file
