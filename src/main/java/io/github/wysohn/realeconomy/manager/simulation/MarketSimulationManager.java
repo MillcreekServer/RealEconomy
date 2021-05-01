@@ -13,11 +13,14 @@ import io.github.wysohn.realeconomy.interfaces.simulation.IAgentReloadObserver;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.asset.signature.ItemStackSignature;
 import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
 import java.util.*;
@@ -237,46 +240,33 @@ public class MarketSimulationManager extends Manager {
                         .addNeededResource(Material.DIAMOND, 5)
                         .addOutput(Material.BELL, 5)
                         .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Toolsmith_IRON_SHOVEL")
-                        .addNeededResource(Material.IRON_INGOT, 50)
-                        .addNeededResource(Material.STICK, 100)
-                        .addOutput(Material.IRON_SHOVEL, 50)
-                        .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Toolsmith_IRON_AXE")
-                        .addNeededResource(Material.IRON_INGOT, 150)
-                        .addNeededResource(Material.STICK, 100)
-                        .addOutput(Material.IRON_AXE, 50)
-                        .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Toolsmith_IRON_PICKAXE")
-                        .addNeededResource(Material.IRON_INGOT, 150)
-                        .addNeededResource(Material.STICK, 100)
-                        .addOutput(Material.IRON_PICKAXE, 50)
-                        .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Toolsmith_IRON_HOE")
-                        .addNeededResource(Material.IRON_INGOT, 100)
-                        .addNeededResource(Material.STICK, 100)
-                        .addOutput(Material.IRON_HOE, 50)
-                        .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Toolsmith_DIAMOND_SHOVEL")
-                        .addNeededResource(Material.DIAMOND, 10)
-                        .addNeededResource(Material.STICK, 20)
-                        .addOutput(Material.IRON_SHOVEL, 10)
-                        .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Toolsmith_DIAMOND_AXE")
-                        .addNeededResource(Material.DIAMOND, 30)
-                        .addNeededResource(Material.STICK, 20)
-                        .addOutput(Material.IRON_AXE, 10)
-                        .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Toolsmith_DIAMOND_PICKAXE")
-                        .addNeededResource(Material.DIAMOND, 30)
-                        .addNeededResource(Material.STICK, 20)
-                        .addOutput(Material.IRON_PICKAXE, 10)
-                        .build(logger, config, assetInfoProvider));
-                addAgent(new AgentConfigBuilder("Toolsmith_DIAMOND_HOE")
-                        .addNeededResource(Material.DIAMOND, 20)
-                        .addNeededResource(Material.STICK, 20)
-                        .addOutput(Material.IRON_PICKAXE, 10)
-                        .build(logger, config, assetInfoProvider));
+
+                addAgentsFromRecipe("Toolsmith", Material.IRON_HELMET, 50);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_CHESTPLATE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_LEGGINGS, 50);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_BOOTS, 50);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_SHOVEL, 50);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_AXE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_PICKAXE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_HOE, 50);
+
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_HELMET, 50);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_CHESTPLATE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_LEGGINGS, 50);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_BOOTS, 50);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_SHOVEL, 50);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_AXE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_PICKAXE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_HOE, 50);
+
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_HELMET, 50);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_CHESTPLATE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_LEGGINGS, 50);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_BOOTS, 50);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_SHOVEL, 50);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_AXE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_PICKAXE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_HOE, 50);
 
                 addAgent(new AgentConfigBuilder("Dye_Red_1")
                         .addNeededResource(Material.POPPY, 10)
@@ -506,6 +496,12 @@ public class MarketSimulationManager extends Manager {
         }
     }
 
+    private void addAgentsFromRecipe(String baseName, Material material, int amount) {
+        new AgentConfigBuilder(baseName + "_" + material)
+                .buildFromRecipe(logger, config, assetInfoProvider, material, amount)
+                .forEach(this::addAgent);
+    }
+
     @Override
     public void disable() throws Exception {
 
@@ -589,6 +585,46 @@ public class MarketSimulationManager extends Manager {
             config.put(SIMULATOR, section);
 
             return agent;
+        }
+
+        /**
+         * Create new agent from recipe setting. Can be multiple if multiple recipes found.
+         *
+         * @param logger
+         * @param config
+         * @param assetInfoProvide
+         * @param output
+         * @param amount
+         * @return list of Agents; empty list if no recipe found
+         */
+        public List<Agent> buildFromRecipe(Logger logger,
+                                           ManagerConfig config,
+                                           IListingInfoProvider assetInfoProvide,
+                                           Material output,
+                                           int amount) {
+            List<Agent> agents = new LinkedList<>();
+
+            List<Recipe> recipes = Bukkit.getRecipesFor(new ItemStack(output));
+            if (recipes.size() < 1)
+                return null;
+
+            for (Recipe recipe : recipes) {
+                if (recipe instanceof ShapedRecipe) {
+                    ShapedRecipe shapedRecipe = (ShapedRecipe) recipe;
+                    ItemStack result = recipe.getResult();
+
+                    needed.clear();
+                    production.clear();
+
+                    shapedRecipe.getIngredientMap().forEach((c, need) ->
+                            needed.add(Pair.of(new ItemStackSignature(need), (double) (need.getAmount() * amount))));
+                    production.add(Pair.of(new ItemStackSignature(result), (double) (result.getAmount() * amount)));
+
+                    agents.add(build(logger, config, assetInfoProvide));
+                }
+            }
+
+            return agents;
         }
     }
 }
