@@ -622,16 +622,21 @@ public class MarketSimulationManager extends Manager {
                     production.clear();
 
                     shapedRecipe.getIngredientMap().forEach((c, need) -> {
+                        if (need == null)
+                            return;
+
                         ItemStackSignature sign = new ItemStackSignature(need);
                         assetInfoProvide.newListing(sign);
                         needed.add(Pair.of(sign, (double) (need.getAmount() * amount)));
                     });
 
-                    ItemStackSignature sign = new ItemStackSignature(result);
-                    assetInfoProvide.newListing(sign);
-                    production.add(Pair.of(sign, (double) (result.getAmount() * amount)));
+                    if (!needed.isEmpty()) {
+                        ItemStackSignature sign = new ItemStackSignature(result);
+                        assetInfoProvide.newListing(sign);
+                        production.add(Pair.of(sign, (double) (result.getAmount() * amount)));
 
-                    agents.add(build(logger, config, assetInfoProvide));
+                        agents.add(build(logger, config, assetInfoProvide));
+                    }
                 }
             }
 
