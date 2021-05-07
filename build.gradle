@@ -269,7 +269,7 @@ repositories {
         }
     }
     maven{
-        url "http://repo.citizensnpcs.co/"
+        url "https://repo.citizensnpcs.co/"
     }
     maven{
         url "https://jitpack.io"
