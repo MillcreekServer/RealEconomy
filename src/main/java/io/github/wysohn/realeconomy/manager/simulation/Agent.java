@@ -47,8 +47,10 @@ public class Agent implements IBankUser {
         this.logger = logger;
         this.uuid = uuid;
         this.name = name;
-        resourcesNeeded.forEach(pair -> this.resourcesNeeded.put(pair.key, pair.value));
-        production.forEach(pair -> this.production.put(pair.key, pair.value));
+        resourcesNeeded.forEach(pair -> this.resourcesNeeded.put(pair.key,
+                this.resourcesNeeded.getOrDefault(pair.key, 0.0) + pair.value));
+        production.forEach(pair -> this.production.put(pair.key,
+                this.production.getOrDefault(pair.key, 0.0) + pair.value));
     }
 
     @Override
