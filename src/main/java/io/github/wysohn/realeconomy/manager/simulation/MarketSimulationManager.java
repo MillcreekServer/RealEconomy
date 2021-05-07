@@ -621,9 +621,15 @@ public class MarketSimulationManager extends Manager {
                     needed.clear();
                     production.clear();
 
-                    shapedRecipe.getIngredientMap().forEach((c, need) ->
-                            needed.add(Pair.of(new ItemStackSignature(need), (double) (need.getAmount() * amount))));
-                    production.add(Pair.of(new ItemStackSignature(result), (double) (result.getAmount() * amount)));
+                    shapedRecipe.getIngredientMap().forEach((c, need) -> {
+                        ItemStackSignature sign = new ItemStackSignature(need);
+                        assetInfoProvide.newListing(sign);
+                        needed.add(Pair.of(sign, (double) (need.getAmount() * amount)));
+                    });
+
+                    ItemStackSignature sign = new ItemStackSignature(result);
+                    assetInfoProvide.newListing(sign);
+                    production.add(Pair.of(sign, (double) (result.getAmount() * amount)));
 
                     agents.add(build(logger, config, assetInfoProvide));
                 }
