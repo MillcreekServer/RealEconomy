@@ -300,7 +300,7 @@ sourceSets {
 }
 
 dependencies {
-    compile fileTree(dir: "libs", includes: ['*.jar'])
+    implementation fileTree(dir: "libs", includes: ['*.jar'])
 
     implementation ('org.spigotmc:spigot-api:1.16.5+'){
         exclude group: 'com.google.code.gson'
@@ -308,15 +308,15 @@ dependencies {
     implementation "io.github.wysohn:rapidframework:3.17.14"
     implementation "com.github.MilkBowl:VaultAPI:1.7"
 
-    testCompile 'junit:junit:4.+'
-    testCompile 'org.mockito:mockito-core:1.9.5'
-    testCompile 'org.powermock:powermock:1.5.6'
-    testCompile 'org.powermock:powermock-module-junit4:1.6.1'
-    testCompile 'org.powermock:powermock-api-mockito:1.6.1'
-    testCompile 'org.javassist:javassist:3.20.0-GA'
-    testCompile group: 'com.carrotsearch', name: 'junit-benchmarks', version: '0.7.0'
+    testImplementation 'junit:junit:4.+'
+    testImplementation 'org.mockito:mockito-core:1.9.5'
+    testImplementation 'org.powermock:powermock:1.5.6'
+    testImplementation 'org.powermock:powermock-module-junit4:1.6.1'
+    testImplementation 'org.powermock:powermock-api-mockito:1.6.1'
+    testImplementation 'org.javassist:javassist:3.20.0-GA'
+    testImplementation group: 'com.carrotsearch', name: 'junit-benchmarks', version: '0.7.0'
 
-    testCompile ('org.spigotmc:spigot-api:1.16.5+'){
+    testImplementation ('org.spigotmc:spigot-api:1.16.5+'){
         exclude group: 'com.google.code.gson'
     }
 }
