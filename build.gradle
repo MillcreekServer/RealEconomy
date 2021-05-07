@@ -5,16 +5,14 @@ buildscript {
     }
     dependencies {
         classpath 'org.yaml:snakeyaml:1.8'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:6.0.0'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'maven-publish'
-apply plugin: 'com.github.johnrengelman.shadow'
 
-version = '1.21.2'
+version = '1.21.3'
 group = 'io.github.wysohn'
 
 ext {
@@ -336,8 +334,6 @@ jar {
 }
 
 jar{
-    dependsOn(shadowJar)
-
     from sourceSets.main.allSource
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 }
