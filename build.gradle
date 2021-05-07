@@ -302,7 +302,7 @@ sourceSets {
 dependencies {
     implementation fileTree(dir: "libs", includes: ['*.jar'])
 
-    implementation ('org.spigotmc:spigot-api:1.16.5+'){
+    implementation ('org.spigotmc:spigot-api:1.16.+'){
         exclude group: 'com.google.code.gson'
     }
     implementation "io.github.wysohn:rapidframework:3.17.14"
@@ -316,7 +316,7 @@ dependencies {
     testImplementation 'org.javassist:javassist:3.20.0-GA'
     testImplementation group: 'com.carrotsearch', name: 'junit-benchmarks', version: '0.7.0'
 
-    testImplementation ('org.spigotmc:spigot-api:1.16.5+'){
+    testImplementation ('org.spigotmc:spigot-api:1.16.+'){
         exclude group: 'com.google.code.gson'
     }
 }
