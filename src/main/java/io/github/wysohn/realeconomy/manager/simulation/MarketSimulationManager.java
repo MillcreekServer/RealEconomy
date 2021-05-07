@@ -2,9 +2,11 @@ package io.github.wysohn.realeconomy.manager.simulation;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.inject.factory.IStorageFactory;
 import io.github.wysohn.rapidframework3.core.main.Manager;
-import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
+import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.rapidframework3.utils.Validation;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUserProvider;
@@ -23,6 +25,7 @@ import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
+import java.io.File;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -35,22 +38,24 @@ public class MarketSimulationManager extends Manager {
 
     private final Map<UUID, Agent> agentList = new HashMap<>();
 
-    private final ManagerConfig config;
     private final Logger logger;
     private final IListingInfoProvider assetInfoProvider;
-    private final Set<IAgentReloadObserver> agentReloadObservers = new HashSet<>();
 
+    private final Set<IAgentReloadObserver> agentReloadObservers = new HashSet<>();
+    private final IKeyValueStorage config;
     private final IBankUserProvider provider = agentList::get;
 
     @Inject
-    public MarketSimulationManager(ManagerConfig config,
-                                   @PluginLogger Logger logger,
-                                   IListingInfoProvider assetInfoProvider) {
-        this.config = config;
+    public MarketSimulationManager(@PluginLogger Logger logger,
+                                   @PluginDirectory File pluginDir,
+                                   IListingInfoProvider assetInfoProvider,
+                                   IStorageFactory storageFactory) {
         this.logger = logger;
         this.assetInfoProvider = assetInfoProvider;
 
         dependsOn(AssetListingManager.class);
+
+        config = storageFactory.create(pluginDir, "agents.yml");
 
         for (Material value : Material.values()) {
             if (value.name().startsWith("LEGACY"))
@@ -241,32 +246,32 @@ public class MarketSimulationManager extends Manager {
                         .addOutput(Material.BELL, 5)
                         .build(logger, config, assetInfoProvider));
 
-                addAgentsFromRecipe("Toolsmith", Material.IRON_HELMET, 50);
-                addAgentsFromRecipe("Toolsmith", Material.IRON_CHESTPLATE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.IRON_LEGGINGS, 50);
-                addAgentsFromRecipe("Toolsmith", Material.IRON_BOOTS, 50);
-                addAgentsFromRecipe("Toolsmith", Material.IRON_SHOVEL, 50);
-                addAgentsFromRecipe("Toolsmith", Material.IRON_AXE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.IRON_PICKAXE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.IRON_HOE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_HELMET, 10);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_CHESTPLATE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_LEGGINGS, 10);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_BOOTS, 10);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_SHOVEL, 10);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_AXE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_PICKAXE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.IRON_HOE, 10);
 
-                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_HELMET, 50);
-                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_CHESTPLATE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_LEGGINGS, 50);
-                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_BOOTS, 50);
-                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_SHOVEL, 50);
-                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_AXE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_PICKAXE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_HOE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_HELMET, 10);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_CHESTPLATE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_LEGGINGS, 10);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_BOOTS, 10);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_SHOVEL, 10);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_AXE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_PICKAXE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.GOLDEN_HOE, 10);
 
-                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_HELMET, 50);
-                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_CHESTPLATE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_LEGGINGS, 50);
-                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_BOOTS, 50);
-                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_SHOVEL, 50);
-                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_AXE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_PICKAXE, 50);
-                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_HOE, 50);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_HELMET, 10);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_CHESTPLATE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_LEGGINGS, 10);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_BOOTS, 10);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_SHOVEL, 10);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_AXE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_PICKAXE, 10);
+                addAgentsFromRecipe("Toolsmith", Material.DIAMOND_HOE, 10);
 
                 addAgent(new AgentConfigBuilder("Dye_Red_1")
                         .addNeededResource(Material.POPPY, 10)
@@ -567,7 +572,7 @@ public class MarketSimulationManager extends Manager {
         }
 
         public Agent build(Logger logger,
-                           ManagerConfig config,
+                           IKeyValueStorage config,
                            IListingInfoProvider assetInfoProvider) {
             Validation.validate(needed, val -> val.size() > 0, "empty needed resources.");
             Validation.validate(production, val -> val.size() > 0, "empty production outputs.");
@@ -598,7 +603,7 @@ public class MarketSimulationManager extends Manager {
          * @return list of Agents; empty list if no recipe found
          */
         public List<Agent> buildFromRecipe(Logger logger,
-                                           ManagerConfig config,
+                                           IKeyValueStorage config,
                                            IListingInfoProvider assetInfoProvide,
                                            Material output,
                                            int amount) {

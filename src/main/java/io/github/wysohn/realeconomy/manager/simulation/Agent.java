@@ -1,7 +1,7 @@
 package io.github.wysohn.realeconomy.manager.simulation;
 
-import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.IMemento;
+import io.github.wysohn.rapidframework3.interfaces.store.IKeyValueStorage;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.listing.IListingInfoProvider;
@@ -397,7 +397,7 @@ public class Agent implements IBankUser {
         });
     }
 
-    public static Agent read(ManagerConfig config,
+    public static Agent read(IKeyValueStorage config,
                              Logger logger,
                              IListingInfoProvider assetInfoProvider,
                              String agentName,
@@ -451,7 +451,7 @@ public class Agent implements IBankUser {
                 production);
     }
 
-    public static Collection<Agent> readAll(ManagerConfig config,
+    public static Collection<Agent> readAll(IKeyValueStorage config,
                                             Logger logger,
                                             IListingInfoProvider assetInfoProvider,
                                             Object section) {
