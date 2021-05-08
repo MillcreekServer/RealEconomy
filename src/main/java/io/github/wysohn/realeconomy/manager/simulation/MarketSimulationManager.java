@@ -615,7 +615,7 @@ public class MarketSimulationManager extends Manager {
 
             List<Recipe> recipes = Bukkit.getRecipesFor(new ItemStack(output));
             if (recipes.size() < 1)
-                return null;
+                return agents;
 
             for (Recipe recipe : recipes) {
                 if (recipe instanceof ShapedRecipe) {
