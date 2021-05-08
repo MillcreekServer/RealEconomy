@@ -273,6 +273,10 @@ public class MarketSimulationManager extends Manager {
                 addAgentsFromRecipe("Toolsmith", Material.DIAMOND_PICKAXE, 10);
                 addAgentsFromRecipe("Toolsmith", Material.DIAMOND_HOE, 10);
 
+                for (Material material : Material.values()) {
+                    addAgentsFromRecipe("Auto", material, 10);
+                }
+
                 addAgent(new AgentConfigBuilder("Dye_Red_1")
                         .addNeededResource(Material.POPPY, 10)
                         .addOutput(Material.RED_DYE, 10)
