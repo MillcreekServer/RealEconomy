@@ -31,6 +31,7 @@ public class SimulationMediator extends Mediator {
     private static final long ITERATION_PERIOD = 60 * 60 * 1000L; // hour
     private static final double PURCHASE_THRESHOLD = 10000.0;
     private static final double PRICE_ADJUSTMENT_FACTOR = -4.0 / PURCHASE_THRESHOLD;
+    private static final double LOWEST_PRICE = 0.0000000001;
     // each iteration takes an hour, so multiplying 24 would yield a day worth of demand
     //   for each purchase a user make.
     public static final int DEMAND_SENSITIVITY_BID = 24;
@@ -261,7 +262,7 @@ public class SimulationMediator extends Mediator {
                         assetListingManager.addOrder(sign,
                                 OrderType.BUY,
                                 agent,
-                                midPoint.doubleValue(),
+                                Math.max(LOWEST_PRICE, midPoint.doubleValue()),
                                 currency,
                                 (int) Math.ceil(amount),
                                 true);
@@ -365,7 +366,7 @@ public class SimulationMediator extends Mediator {
                         assetListingManager.addOrder(sign,
                                 OrderType.SELL,
                                 agent,
-                                sellingPrice.doubleValue(),
+                                Math.max(LOWEST_PRICE, sellingPrice.doubleValue()),
                                 currency,
                                 currentStock,
                                 true);
