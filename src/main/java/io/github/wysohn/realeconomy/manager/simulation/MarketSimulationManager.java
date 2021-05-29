@@ -230,12 +230,10 @@ public class MarketSimulationManager extends Manager {
                     enchBook.setItemMeta(esm);
 
                     addAgent(new AgentConfigBuilder("Librarian_E_" + ench)
-                            .addNeededResource(Material.BOOK, 10)
-                            .addNeededResource(Material.EMERALD, 5)
-                            .addNeededResource(Material.DIAMOND, 5)
-                            .addNeededResource(Material.GOLD_INGOT, 5)
-                            .addNeededResource(Material.LAPIS_LAZULI, 10)
-                            .addOutput(enchBook, 10)
+                            .addNeededResource(Material.BOOK, 2)
+                            .addNeededResource(Material.EMERALD, 1)
+                            .addNeededResource(Material.LAPIS_LAZULI, 1)
+                            .addOutput(enchBook, 2)
                             .build(logger, config, assetInfoProvider));
                 }
 
