@@ -3,8 +3,11 @@ package io.github.wysohn.realeconomy.mediator;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.language.DefaultLangs;
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.core.main.Mediator;
 import io.github.wysohn.realeconomy.interfaces.simulation.IAgentReloadObserver;
+import io.github.wysohn.realeconomy.main.RealEconomyLangs;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import io.github.wysohn.realeconomy.manager.banking.TransactionManager;
@@ -38,6 +41,7 @@ public class SimulationMediator extends Mediator {
     public static final int DEMAND_SENSITIVITY_ASK = 24;
     public static final int SCALE_LIMIT = 10;
 
+    private final ManagerLanguage lang;
     private final Logger logger;
     private final MarketSimulationManager marketSimulationManager;
     private final AssetListingManager assetListingManager;
@@ -51,12 +55,14 @@ public class SimulationMediator extends Mediator {
     ReloadObserver reloadObserver = new ReloadObserver();
 
     @Inject
-    public SimulationMediator(@PluginLogger Logger logger,
+    public SimulationMediator(ManagerLanguage lang,
+                              @PluginLogger Logger logger,
                               MarketSimulationManager marketSimulationManager,
                               AssetListingManager assetListingManager,
                               VisitingBankManager visitingBankManager,
                               TransactionManager transactionManager,
                               TradeMediator tradeMediator) {
+        this.lang = lang;
         this.logger = logger;
         this.marketSimulationManager = marketSimulationManager;
         this.assetListingManager = assetListingManager;
@@ -79,8 +85,10 @@ public class SimulationMediator extends Mediator {
 
         if (marketSimulator != null)
             marketSimulator.interrupt();
-        marketSimulator = new MarketSimulator(assetListingManager,
-                logger, marketSimulationManager,
+        marketSimulator = new MarketSimulator(lang,
+                assetListingManager,
+                logger,
+                marketSimulationManager,
                 tradeMediator,
                 VisitingBankManager.getServerBank(),
                 transactionManager);
@@ -122,6 +130,7 @@ public class SimulationMediator extends Mediator {
     }
 
     static class MarketSimulator extends Thread {
+        private final ManagerLanguage lang;
         private final CentralBank centralBank;
         private final AssetListingManager assetListingManager;
         private final Logger logger;
@@ -129,12 +138,14 @@ public class SimulationMediator extends Mediator {
         private final TradeMediator tradeMediator;
         private final TransactionManager transactionManager;
 
-        public MarketSimulator(AssetListingManager assetListingManager,
+        public MarketSimulator(ManagerLanguage lang,
+                               AssetListingManager assetListingManager,
                                Logger logger,
                                MarketSimulationManager marketSimulationManager,
                                TradeMediator tradeMediator,
                                CentralBank centralBank,
                                TransactionManager transactionManager) {
+            this.lang = lang;
             this.centralBank = centralBank;
             this.assetListingManager = assetListingManager;
             this.logger = logger;
@@ -161,11 +172,15 @@ public class SimulationMediator extends Mediator {
             }
         }
 
-        public void iterate(){
+        public void iterate() {
             agentBid();
             agentWithdraw();
             agentProduce();
             agentAsk();
+
+            lang.broadcast(DefaultLangs.General_Line);
+            lang.broadcast(RealEconomyLangs.Simulation_AgentPricesUpdated);
+            lang.broadcast(DefaultLangs.General_Line);
         }
 
         /**

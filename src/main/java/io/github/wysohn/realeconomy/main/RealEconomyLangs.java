@@ -197,6 +197,11 @@ public enum RealEconomyLangs implements ILang {
             " chosen randomly."),
     Command_Business_Common_NotOwner("&7You are not the owner of the business."),
 
+    Simulation_AgentPricesUpdated("",
+            "    &7Market value has updated.",
+            "    &7Check it out with &d/items &7command.",
+            ""),
+
     Bank_Owner("&9Owner &8:"),
     Bank_BaseCurrency("&9BaseCurrency &8:"),
     Bank_NumAccounts("&9Number of accounts &8:"),
