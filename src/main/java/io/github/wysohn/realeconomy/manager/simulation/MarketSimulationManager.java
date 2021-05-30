@@ -224,17 +224,17 @@ public class MarketSimulationManager extends Manager {
                 for (Enchantment ench : Enchantment.values()) {
                     ItemStack enchBook = new ItemStack(Material.ENCHANTED_BOOK);
                     EnchantmentStorageMeta esm = (EnchantmentStorageMeta) enchBook.getItemMeta();
-                    esm.addStoredEnchant(ench, ench.getStartLevel()
-                                    + RAND.nextInt(ench.getMaxLevel() - ench.getStartLevel() + 1),
-                            false);
-                    enchBook.setItemMeta(esm);
+                    for (int level = ench.getStartLevel(); level <= ench.getMaxLevel(); level++) {
+                        esm.addStoredEnchant(ench, level, false);
+                        enchBook.setItemMeta(esm);
 
-                    addAgent(new AgentConfigBuilder("Librarian_E_" + ench)
-                            .addNeededResource(Material.BOOK, 2)
-                            .addNeededResource(Material.EMERALD, 1)
-                            .addNeededResource(Material.LAPIS_LAZULI, 1)
-                            .addOutput(enchBook, 2)
-                            .build(logger, config, assetInfoProvider));
+                        addAgent(new AgentConfigBuilder("Librarian_E_" + ench + "_lv" + level)
+                                .addNeededResource(Material.BOOK, 2)
+                                .addNeededResource(Material.EMERALD, 1)
+                                .addNeededResource(Material.LAPIS_LAZULI, 1)
+                                .addOutput(enchBook, 2)
+                                .build(logger, config, assetInfoProvider));
+                    }
                 }
 
                 addAgent(new AgentConfigBuilder("Toolsmith_1")
