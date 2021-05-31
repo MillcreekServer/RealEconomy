@@ -1,5 +1,5 @@
 /*query by currency*/
-select order_id, ln2.listing_uuid, category_id, timestamp, issuer, tbl2.price, currency_uuid, amount, maximum
+select order_id, tbl1.listing_uuid, category_id, timestamp, issuer, tbl2.price, currency_uuid, amount, maximum
 from sell_orders tbl1 left join listing_names ln2
 on tbl1.listing_uuid = ln2.listing_uuid
 join (
@@ -12,6 +12,6 @@ join (
 where category_id = ?
 -- since the sub-query may return multiple rows if there are multiple exact same priced items,
 -- choose the first one as output
-group by listing_uuid
+group by tbl1.listing_uuid
 order by REVERSE(ln2.name)
 LIMIT ?, ?;

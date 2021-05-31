@@ -503,6 +503,7 @@ public class OrderQueryModuleTest {
                 currency,
                 30,
                 false);
+        orderPlacementHandler.commitOrders();
 
         DataProvider<OrderInfo> provider =
                 orderPlacementHandler.getListedOrderProvider();

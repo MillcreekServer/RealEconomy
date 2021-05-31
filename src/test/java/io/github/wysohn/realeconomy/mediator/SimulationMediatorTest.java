@@ -1,5 +1,6 @@
 package io.github.wysohn.realeconomy.mediator;
 
+import io.github.wysohn.rapidframework3.core.language.ManagerLanguage;
 import io.github.wysohn.rapidframework3.utils.Pair;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankUser;
 import io.github.wysohn.realeconomy.interfaces.banking.IBankingType;
@@ -40,6 +41,7 @@ public class SimulationMediatorTest {
     public static final ItemStackSignature COOKIE = new ItemStackSignature(Material.COOKIE);
     public static final ItemStackSignature BREAD = new ItemStackSignature(Material.BREAD);
 
+    private ManagerLanguage lang;
     private AssetListingManager assetListingManager;
     private MarketSimulationManager marketSimulationManager;
     private Logger logger;
@@ -60,6 +62,7 @@ public class SimulationMediatorTest {
         ItemFactory itemFactory = mock(ItemFactory.class);
         when(server.getItemFactory()).thenReturn(itemFactory);
 
+        lang = mock(ManagerLanguage.class);
         assetListingManager = mock(AssetListingManager.class);
         marketSimulationManager = mock(MarketSimulationManager.class);
         logger = mock(Logger.class);
@@ -112,6 +115,7 @@ public class SimulationMediatorTest {
                 any())).thenReturn(TransactionManager.Result.OK);
 
         SimulationMediator.MarketSimulator simulator = new SimulationMediator.MarketSimulator(
+                lang,
                 assetListingManager,
                 logger,
                 marketSimulationManager,
@@ -155,6 +159,7 @@ public class SimulationMediatorTest {
     @Test
     public void testSimulatorWithdraw() throws Exception{
         SimulationMediator.MarketSimulator simulator = new SimulationMediator.MarketSimulator(
+                lang,
                 assetListingManager,
                 logger,
                 marketSimulationManager,
