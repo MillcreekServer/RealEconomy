@@ -199,7 +199,7 @@ public enum RealEconomyLangs implements ILang {
 
     Simulation_AgentPricesUpdated("",
             "    &7Market value has updated.",
-            "    &7Check it out with &d/items &7command.",
+            "    &7Check it out with &d/shop &7or &d/price &7command.",
             ""),
 
     Bank_Owner("&9Owner &8:"),
