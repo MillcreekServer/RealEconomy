@@ -12,7 +12,7 @@ apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'maven-publish'
 
-version = '1.21.12'
+version = '1.21.13'
 group = 'io.github.wysohn'
 
 ext {

@@ -267,9 +267,9 @@ public interface IOrderQueryModule {
      * @param category
      * @return
      */
-    DataProvider<OrderInfo> getListedOrderProvider(String category);
+    DataProvider<OrderInfo> getListedOrderProvider(OrderType type, String category);
 
-    default DataProvider<OrderInfo> getListedOrderProvider() {
-        return getListedOrderProvider(null);
+    default DataProvider<OrderInfo> getListedOrderProvider(OrderType type) {
+        return getListedOrderProvider(type, null);
     }
 }

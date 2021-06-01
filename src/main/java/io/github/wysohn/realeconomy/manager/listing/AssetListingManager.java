@@ -377,12 +377,14 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
     /**
      * Get DataProvider of given asset signature.
      *
+     * @param type     order type. For sell orders, lowest prices will be returned,
+     *                 and for buy orders, highest prices will be returned.
      * @param category the category to search for. It can be null to search for all listings.
      * @return the DataProvider.
      * @throws RuntimeException if given category does not exist. Make sure to use only the values provided
      *                          by {@link #getCategoryTrie()}
      */
-    public DataProvider<OrderInfo> getListedOrderProvider(String category) {
-        return orderQueryModule.getListedOrderProvider(category);
+    public DataProvider<OrderInfo> getListedOrderProvider(OrderType type, String category) {
+        return orderQueryModule.getListedOrderProvider(type, category);
     }
 }

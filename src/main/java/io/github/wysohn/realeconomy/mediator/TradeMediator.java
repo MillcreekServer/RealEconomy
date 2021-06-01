@@ -155,7 +155,15 @@ public class TradeMediator extends Mediator {
     }
 
     public DataProvider<OrderInfo> getPrices(String category) {
-        return assetListingManager.getListedOrderProvider(category);
+        return assetListingManager.getListedOrderProvider(OrderType.SELL, category);
+    }
+
+    public DataProvider<OrderInfo> getBids() {
+        return getBids(null);
+    }
+
+    public DataProvider<OrderInfo> getBids(String category) {
+        return assetListingManager.getListedOrderProvider(OrderType.BUY, category);
     }
 
     public PricePoint getLastPrice(AssetSignature sign, Currency currency) {

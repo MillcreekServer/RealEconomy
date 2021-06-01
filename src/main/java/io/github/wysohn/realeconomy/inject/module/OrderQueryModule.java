@@ -53,6 +53,10 @@ public class OrderQueryModule extends AbstractModule {
         orderPlacementHandler.SELECT_CATEGORIES = Metrics.resourceToString(resourceProvider, "select_categories.sql");
         orderPlacementHandler.SELECT_MATCH_ORDERS
                 = Metrics.resourceToString(resourceProvider, "select_match_orders.sql");
+        orderPlacementHandler.SELECT_BUY_ORDERS
+                = Metrics.resourceToString(resourceProvider, "select_buy_orders.sql");
+        orderPlacementHandler.SELECT_BUY_ORDERS_ALL
+                = Metrics.resourceToString(resourceProvider, "select_buy_orders_all.sql");
         orderPlacementHandler.SELECT_SELL_ORDERS
                 = Metrics.resourceToString(resourceProvider, "select_sell_orders.sql");
         orderPlacementHandler.SELECT_SELL_ORDERS_ALL
@@ -117,6 +121,8 @@ public class OrderQueryModule extends AbstractModule {
         private String SELECT_BY_SELL_ID;
         private String SELECT_CATEGORIES;
         private String SELECT_MATCH_ORDERS;
+        private String SELECT_BUY_ORDERS;
+        private String SELECT_BUY_ORDERS_ALL;
         private String SELECT_SELL_ORDERS;
         private String SELECT_SELL_ORDERS_ALL;
         private String SELECT_PRICE_TREND;
@@ -525,7 +531,7 @@ public class OrderQueryModule extends AbstractModule {
         }
 
         @Override
-        public DataProvider<OrderInfo> getListedOrderProvider(String category) {
+        public DataProvider<OrderInfo> getListedOrderProvider(OrderType type, String category) {
             boolean queryAll = false;
             if (category == null) {
                 queryAll = true;
@@ -536,21 +542,44 @@ public class OrderQueryModule extends AbstractModule {
             int categoryId = category == null ? 0 : categoryIdMap.get(category);
 
             boolean finalQueryAll = queryAll;
-            return dataProviderMap.computeIfAbsent(categoryId, c -> {
-                OrderDataProvider orderDataProvider = new OrderDataProvider(c, finalQueryAll);
-                return new DataProviderProxy<>(orderDataProvider, orderDataProvider);
-            });
+
+            switch (type) {
+                case BUY:
+                    return dataProviderMap.computeIfAbsent(categoryId, c -> {
+                        OrderDataProvider orderDataProvider = new OrderDataProvider("buy_orders",
+                                SELECT_BUY_ORDERS_ALL,
+                                SELECT_BUY_ORDERS,
+                                c, finalQueryAll);
+                        return new DataProviderProxy<>(orderDataProvider, orderDataProvider);
+                    });
+                case SELL:
+                    return dataProviderMap.computeIfAbsent(categoryId, c -> {
+                        OrderDataProvider orderDataProvider = new OrderDataProvider("sell_orders",
+                                SELECT_SELL_ORDERS_ALL,
+                                SELECT_SELL_ORDERS,
+                                c, finalQueryAll);
+                        return new DataProviderProxy<>(orderDataProvider, orderDataProvider);
+                    });
+                default:
+                    throw new RuntimeException("Unexpected type " + type);
+            }
         }
 
         private class OrderDataProvider implements Function<Range, List<OrderInfo>>, Supplier<Integer> {
             private static final String COLUMN_COUNT = "rows_count";
 
+            private final String tableName;
+            private final String queryAll;
+            private final String querySome;
             private final int categoryId;
-            private final boolean queryAll;
+            private final boolean all;
 
-            public OrderDataProvider(int categoryId, boolean queryAll) {
-                this.categoryId = categoryId;
+            public OrderDataProvider(String tableName, String queryAll, String querySome, int categoryId, boolean all) {
                 this.queryAll = queryAll;
+                this.querySome = querySome;
+                this.tableName = tableName;
+                this.categoryId = categoryId;
+                this.all = all;
             }
 
             @Override
@@ -558,12 +587,12 @@ public class OrderQueryModule extends AbstractModule {
                 List<Integer> out = ordersSession.query("SELECT COUNT(" + OrderSQLModule.LISTING_UUID + ") as " + COLUMN_COUNT +
                         " FROM (" +
                         " SELECT " + OrderSQLModule.LISTING_UUID +
-                        " FROM sell_orders" +
-                        (queryAll ? "" : " WHERE " + OrderSQLModule.CATEGORY_ID + " = ?") +
+                        " FROM " + tableName +
+                        (all ? "" : " WHERE " + OrderSQLModule.CATEGORY_ID + " = ?") +
                         " GROUP BY " + OrderSQLModule.LISTING_UUID +
                         ") tbl", pstmt -> {
                     try {
-                        if (!queryAll)
+                        if (!all)
                             pstmt.setInt(1, categoryId);
                     } catch (SQLException ex) {
                         ex.printStackTrace();
@@ -582,12 +611,12 @@ public class OrderQueryModule extends AbstractModule {
 
             @Override
             public List<OrderInfo> apply(Range range) {
-                String sql = queryAll ? SELECT_SELL_ORDERS_ALL : SELECT_SELL_ORDERS;
+                String sql = all ? queryAll : querySome;
 
                 return ordersSession.query(sql, pstmt -> {
                     try {
                         int i = 1;
-                        if (!queryAll)
+                        if (!all)
                             pstmt.setInt(i++, categoryId);
                         pstmt.setInt(i++, range.index);
                         pstmt.setInt(i++, range.size);

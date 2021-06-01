@@ -506,7 +506,7 @@ public class OrderQueryModuleTest {
         orderPlacementHandler.commitOrders();
 
         DataProvider<OrderInfo> provider =
-                orderPlacementHandler.getListedOrderProvider();
+                orderPlacementHandler.getListedOrderProvider(OrderType.SELL);
 
         List<OrderInfo> expected = new ArrayList<>();
         expected.add(OrderInfo.create(3,
@@ -549,7 +549,7 @@ public class OrderQueryModuleTest {
         assertEquals(expected, actual);
 
         DataProvider<OrderInfo> providerFiltered =
-                orderPlacementHandler.getListedOrderProvider("item1");
+                orderPlacementHandler.getListedOrderProvider(OrderType.SELL, "item1");
 
         List<OrderInfo> expected2 = new ArrayList<>();
         expected2.add(OrderInfo.create(3,
@@ -557,6 +557,170 @@ public class OrderQueryModuleTest {
                 1,
                 orderIssuer.getUuid(),
                 1001.32,
+                currencyUuid,
+                20,
+                20));
+        List<OrderInfo> actual2 = new ArrayList<>();
+        actual2.add(providerFiltered.get(0, 100).stream()
+                .findFirst()
+                .orElseThrow(RuntimeException::new));
+
+        expected2.sort(Comparator.comparingInt(OrderInfo::getOrderId));
+        actual2.sort(Comparator.comparingInt(OrderInfo::getOrderId));
+        assertEquals(expected2, actual2);
+    }
+
+    @Test
+    public void getListedOrderProvider2() throws Exception {
+        File folder = new File("build/tmp/orderprovider2/");
+        folder.mkdir();
+        moduleList.add(new AbstractModule() {
+            @Provides
+            @PluginDirectory
+            File directory() {
+                return folder;
+            }
+        });
+        new File(folder, "orders.db").delete();
+        IOrderQueryModule orderPlacementHandler = Guice.createInjector(moduleList)
+                .getInstance(IOrderQueryModule.class);
+
+        UUID listingUuid1 = UUID.randomUUID();
+        UUID listingUuid2 = UUID.randomUUID();
+        UUID listingUuid3 = UUID.randomUUID();
+
+        IOrderIssuer orderIssuer = new OrderIssuer(UUID.randomUUID());
+        Currency currency = mock(Currency.class);
+        UUID currencyUuid = UUID.randomUUID();
+
+        when(currency.getKey()).thenReturn(currencyUuid);
+
+        orderPlacementHandler.addOrder(listingUuid1,
+                "item1",
+                OrderType.BUY,
+                orderIssuer,
+                2000.55,
+                currency,
+                20,
+                false);
+        orderPlacementHandler.addOrder(listingUuid1,
+                "item1",
+                OrderType.BUY,
+                orderIssuer,
+                1045.33,
+                currency,
+                20,
+                false);
+        orderPlacementHandler.addOrder(listingUuid1,
+                "item1",
+                OrderType.BUY,
+                orderIssuer,
+                1001.32,
+                currency,
+                20,
+                false);
+        orderPlacementHandler.addOrder(listingUuid2,
+                "item2",
+                OrderType.BUY,
+                orderIssuer,
+                3463.55,
+                currency,
+                5,
+                false);
+        orderPlacementHandler.addOrder(listingUuid2,
+                "item2",
+                OrderType.BUY,
+                orderIssuer,
+                5534.55,
+                currency,
+                5,
+                false);
+        orderPlacementHandler.addOrder(listingUuid2,
+                "item2",
+                OrderType.BUY,
+                orderIssuer,
+                3940.23,
+                currency,
+                5,
+                false);
+        orderPlacementHandler.addOrder(listingUuid3,
+                "item3",
+                OrderType.BUY,
+                orderIssuer,
+                980.42,
+                currency,
+                30,
+                false);
+        orderPlacementHandler.addOrder(listingUuid3,
+                "item3",
+                OrderType.BUY,
+                orderIssuer,
+                1212.34,
+                currency,
+                30,
+                false);
+        orderPlacementHandler.addOrder(listingUuid3,
+                "item3",
+                OrderType.BUY,
+                orderIssuer,
+                1050.53,
+                currency,
+                30,
+                false);
+        orderPlacementHandler.commitOrders();
+
+        DataProvider<OrderInfo> provider =
+                orderPlacementHandler.getListedOrderProvider(OrderType.BUY);
+
+        List<OrderInfo> expected = new ArrayList<>();
+        expected.add(OrderInfo.create(1,
+                listingUuid1,
+                2,
+                orderIssuer.getUuid(),
+                2000.55,
+                currencyUuid,
+                20,
+                20));
+        expected.add(OrderInfo.create(5,
+                listingUuid2,
+                2,
+                orderIssuer.getUuid(),
+                5534.55,
+                currencyUuid,
+                5,
+                5));
+        expected.add(OrderInfo.create(8,
+                listingUuid3,
+                3,
+                orderIssuer.getUuid(),
+                1212.34,
+                currencyUuid,
+                30,
+                30));
+        List<OrderInfo> actual = new ArrayList<>();
+        actual.add(provider.get(0, 1).stream()
+                .findFirst()
+                .orElseThrow(RuntimeException::new));
+        actual.add(provider.get(1, 1).stream()
+                .findFirst()
+                .orElseThrow(RuntimeException::new));
+        actual.add(provider.get(2, 1).stream()
+                .findFirst()
+                .orElseThrow(RuntimeException::new));
+
+        expected.sort(Comparator.comparingInt(OrderInfo::getOrderId));
+        actual.sort(Comparator.comparingInt(OrderInfo::getOrderId));
+        assertEquals(expected, actual);
+
+        DataProvider<OrderInfo> providerFiltered =
+                orderPlacementHandler.getListedOrderProvider(OrderType.BUY, "item1");
+
+        List<OrderInfo> expected2 = new ArrayList<>();
+        expected2.add(OrderInfo.create(1,
+                listingUuid1,
+                1,
+                orderIssuer.getUuid(),
+                2000.55,
                 currencyUuid,
                 20,
                 20));
