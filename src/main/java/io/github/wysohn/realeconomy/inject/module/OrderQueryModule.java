@@ -103,7 +103,7 @@ public class OrderQueryModule extends AbstractModule {
         private final StringListTrie categoryTrie = new StringListTrie();
 
         private final SQLSession ordersSession;
-        private final Map<Integer, DataProvider<OrderInfo>> dataProviderMap = new HashMap<>();
+        private final Map<Integer, Map<OrderType, DataProvider<OrderInfo>>> dataProviderMap = new HashMap<>();
 
         private String INSERT_BUY;
         private String INSERT_SELL;
@@ -543,21 +543,23 @@ public class OrderQueryModule extends AbstractModule {
 
             boolean finalQueryAll = queryAll;
 
+            Map<OrderType, DataProvider<OrderInfo>> typeMap = dataProviderMap.computeIfAbsent(categoryId,
+                    c -> new EnumMap<>(OrderType.class));
             switch (type) {
                 case BUY:
-                    return dataProviderMap.computeIfAbsent(categoryId, c -> {
+                    return typeMap.computeIfAbsent(type, t -> {
                         OrderDataProvider orderDataProvider = new OrderDataProvider("buy_orders",
                                 SELECT_BUY_ORDERS_ALL,
                                 SELECT_BUY_ORDERS,
-                                c, finalQueryAll);
+                                categoryId, finalQueryAll);
                         return new DataProviderProxy<>(orderDataProvider, orderDataProvider);
                     });
                 case SELL:
-                    return dataProviderMap.computeIfAbsent(categoryId, c -> {
+                    return typeMap.computeIfAbsent(type, t -> {
                         OrderDataProvider orderDataProvider = new OrderDataProvider("sell_orders",
                                 SELECT_SELL_ORDERS_ALL,
                                 SELECT_SELL_ORDERS,
-                                c, finalQueryAll);
+                                categoryId, finalQueryAll);
                         return new DataProviderProxy<>(orderDataProvider, orderDataProvider);
                     });
                 default:
