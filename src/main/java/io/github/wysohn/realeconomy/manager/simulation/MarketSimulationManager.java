@@ -601,8 +601,11 @@ public class MarketSimulationManager extends Manager {
         public Agent build(Logger logger,
                            IKeyValueStorage config,
                            IListingInfoProvider assetInfoProvider) {
-            Validation.validate(needed, val -> val.size() > 0, "empty needed resources.");
             Validation.validate(production, val -> val.size() > 0, "empty production outputs.");
+
+            if(needed.size() < 1){
+                logger.info(agentName+" has no needed input. It will keep producing output");
+            }
 
             Agent agent = new Agent(logger,
                     uuid,
