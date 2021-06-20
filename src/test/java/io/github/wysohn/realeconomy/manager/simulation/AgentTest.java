@@ -90,9 +90,9 @@ public class AgentTest {
         Collection<Pair<AssetSignature, Double>> expected = new LinkedList<>();
         expected.add(Pair.of(cookie, 800.0));
 
-        assertTrue(agent.produce().containsAll(expected));
-        assertTrue(agent.produce().containsAll(expected));
-        assertFalse(agent.produce().containsAll(expected));
+        assertTrue(agent.produce(Double.MAX_VALUE).containsAll(expected));
+        assertTrue(agent.produce(Double.MAX_VALUE).containsAll(expected));
+        assertFalse(agent.produce(Double.MAX_VALUE).containsAll(expected));
     }
 
     @Test

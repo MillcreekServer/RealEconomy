@@ -316,7 +316,7 @@ public class SimulationMediator extends Mediator {
             Currency currency = centralBank.getBaseCurrency();
 
             for (Agent agent : marketSimulationManager.getAgents()) {
-                agent.produce().forEach(pair -> {
+                agent.produce(INVENTORY_THRESHOLD).forEach(pair -> {
                     AssetSignature sign = pair.key;
                     double amount = pair.value;
 

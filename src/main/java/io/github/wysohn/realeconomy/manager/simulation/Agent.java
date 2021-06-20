@@ -133,7 +133,7 @@ public class Agent implements IBankUser {
 
     @Override
     public void handleTransactionResult(TradeInfo info, OrderType type, TradeMediator.TradeResult result) {
-        logger.fine("Agent: " + toString());
+        logger.fine("Agent: " + this);
         logger.fine("Info: " + simplifyTradeInfo(info));
         logger.fine("Type: " + type);
         logger.fine("Result: " + result);
@@ -217,10 +217,18 @@ public class Agent implements IBankUser {
         return true;
     }
 
-    public Collection<Pair<AssetSignature, Double>> produce(){
+    public Collection<Pair<AssetSignature, Double>> produce(double maxInventory){
         Collection<Pair<AssetSignature, Double>> produced = new LinkedList<>();
         if(!canProduce())
             return produced;
+
+        // check for excessive production
+        for (Map.Entry<AssetSignature, Double> entry : production.entrySet()) {
+            AssetSignature sign = entry.getKey();
+            double amount = entry.getValue();
+            if(amount > maxInventory)
+                return produced;
+        }
 
         // consume
         for (Map.Entry<AssetSignature, Double> entry : resourcesNeeded.entrySet()) {
