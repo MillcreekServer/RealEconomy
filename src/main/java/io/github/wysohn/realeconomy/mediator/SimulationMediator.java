@@ -251,7 +251,7 @@ public class SimulationMediator extends Mediator {
 
                     // change the price according to the number of trades
                     int demandLevel = agent.getTradeDemand(assetListingManager.signatureToUuid(sign));
-                    double adjustment = (1.0 + Math.tanh(demandLevel / INVENTORY_THRESHOLD)) * MAXIMUM_ADJUST_PERCENTAGE;
+                    double adjustment = 1.0 + Math.tanh(-demandLevel / INVENTORY_THRESHOLD) * MAXIMUM_ADJUST_PERCENTAGE;
                     midPoint = midPoint.multiply(BigDecimal.valueOf(adjustment));
                     midPoint = midPoint.setScale(SCALE_LIMIT, RoundingMode.CEILING);
 
@@ -365,7 +365,7 @@ public class SimulationMediator extends Mediator {
 
                     // change the price according to the number of trades
                     int demandLevel = agent.getTradeDemand(assetListingManager.signatureToUuid(sign));
-                    double adjustment = (1.0 + Math.tanh(demandLevel / INVENTORY_THRESHOLD)) * MAXIMUM_ADJUST_PERCENTAGE;
+                    double adjustment = 1.0 + Math.tanh(-demandLevel / INVENTORY_THRESHOLD) * MAXIMUM_ADJUST_PERCENTAGE;
                     sellingPrice = sellingPrice.multiply(BigDecimal.valueOf(adjustment));
                     sellingPrice = sellingPrice.setScale(SCALE_LIMIT, RoundingMode.CEILING);
 
