@@ -32,8 +32,8 @@ import java.util.logging.Logger;
 public class SimulationMediator extends Mediator {
     private static final BigDecimal DEFAULT_PRICING_START = BigDecimal.ONE;
     private static final long ITERATION_PERIOD = 60 * 60 * 1000L; // hour
-    private static final double PURCHASE_THRESHOLD = 10000.0;
-    private static final double PRICE_ADJUSTMENT_FACTOR = -4.0 / PURCHASE_THRESHOLD;
+    private static final double INVENTORY_THRESHOLD = 10000.0;
+    private static final double MAXIMUM_ADJUST_PERCENTAGE = 0.1;
     private static final double LOWEST_PRICE = 0.0000000001;
     // each iteration takes an hour, so multiplying 24 would yield a day worth of demand
     //   for each purchase a user make.
@@ -232,7 +232,7 @@ public class SimulationMediator extends Mediator {
                     // this will prevent the case where the price will go sky-high indefinitely
                     UUID listingUuid = assetListingManager.signatureToUuid(sign);
                     int currentDemand = agent.getTradeDemand(listingUuid);
-                    agent.setTradeDemand(listingUuid, (int) Math.max(-PURCHASE_THRESHOLD, currentDemand));
+                    agent.setTradeDemand(listingUuid, (int) Math.max(-INVENTORY_THRESHOLD, currentDemand));
 
                     // get pricing of this agent is using
                     BigDecimal currentPricing = agent.getCurrentPricing(sign);
@@ -250,8 +250,9 @@ public class SimulationMediator extends Mediator {
                             .divide(BigDecimal.valueOf(2.0), RoundingMode.HALF_UP);
 
                     // change the price according to the number of trades
-                    midPoint = midPoint.multiply(BigDecimal.valueOf(1.0
-                            + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getTradeDemand(assetListingManager.signatureToUuid(sign)))));
+                    int demandLevel = agent.getTradeDemand(assetListingManager.signatureToUuid(sign));
+                    double adjustment = (1.0 + Math.tanh(demandLevel / INVENTORY_THRESHOLD)) * MAXIMUM_ADJUST_PERCENTAGE;
+                    midPoint = midPoint.multiply(BigDecimal.valueOf(adjustment));
                     midPoint = midPoint.setScale(SCALE_LIMIT, RoundingMode.CEILING);
 
                     agent.updateCurrentPricing(sign, midPoint);
@@ -358,13 +359,14 @@ public class SimulationMediator extends Mediator {
                             .map(PricePoint::getPrice)
                             .orElse(BigDecimal.TEN);
 
-                    // get (agent price + lowest price) / 2
+                    // get (agent price + highest price) / 2
                     BigDecimal sellingPrice = unitCost.add(highestPricing)
                             .divide(BigDecimal.valueOf(2.0), RoundingMode.HALF_UP);
 
                     // change the price according to the number of trades
-                    sellingPrice = sellingPrice.multiply(BigDecimal.valueOf(1.0
-                            + Math.tanh(PRICE_ADJUSTMENT_FACTOR * agent.getTradeDemand(assetListingManager.signatureToUuid(sign)))));
+                    int demandLevel = agent.getTradeDemand(assetListingManager.signatureToUuid(sign));
+                    double adjustment = (1.0 + Math.tanh(demandLevel / INVENTORY_THRESHOLD)) * MAXIMUM_ADJUST_PERCENTAGE;
+                    sellingPrice = sellingPrice.multiply(BigDecimal.valueOf(adjustment));
                     sellingPrice = sellingPrice.setScale(SCALE_LIMIT, RoundingMode.CEILING);
 
                     // we cannot sell items at the price cheaper than the unit cost!
