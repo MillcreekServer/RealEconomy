@@ -275,6 +275,31 @@ public class MarketSimulationManager extends Manager {
                     addAgentsFromRecipe("Auto", material, 10);
                 }
 
+                addAgent(new AgentConfigBuilder("Miner_Ancient")
+                        .addOutput(Material.ANCIENT_DEBRIS, (int)(2.89 * 4))
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Miner_Emerald")
+                        .addOutput(Material.EMERALD, (int)(3.48 * 4))
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Miner_Lapis")
+                        .addOutput(Material.LAPIS_LAZULI, (int)(4.11 * 4))
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Miner_Diamond")
+                        .addOutput(Material.DIAMOND, (int)(4.32 * 4))
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Miner_Gold")
+                        .addOutput(Material.GOLD_INGOT, (int)(5.4 * 4))
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Miner_Redstone")
+                        .addOutput(Material.REDSTONE, (int)(35.64 * 4))
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Miner_Iron")
+                        .addOutput(Material.IRON_INGOT, (int)(26.64 * 4))
+                        .build(logger, config, assetInfoProvider));
+                addAgent(new AgentConfigBuilder("Miner_Coal")
+                        .addOutput(Material.COAL, (int)(45.0 * 4))
+                        .build(logger, config, assetInfoProvider));
+
                 addAgent(new AgentConfigBuilder("Dye_Red_1")
                         .addNeededResource(Material.POPPY, 10)
                         .addOutput(Material.RED_DYE, 10)
