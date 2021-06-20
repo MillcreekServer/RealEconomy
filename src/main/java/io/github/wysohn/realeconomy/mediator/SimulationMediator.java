@@ -33,7 +33,7 @@ public class SimulationMediator extends Mediator {
     private static final BigDecimal DEFAULT_PRICING_START = BigDecimal.ONE;
     private static final long ITERATION_PERIOD = 60 * 60 * 1000L; // hour
     private static final double INVENTORY_THRESHOLD = 10000.0;
-    private static final double MAXIMUM_ADJUST_PERCENTAGE = 0.1;
+    private static final double MAXIMUM_ADJUST_PERCENTAGE = 0.03;
     private static final double LOWEST_PRICE = 0.0000000001;
     // each iteration takes an hour, so multiplying 24 would yield a day worth of demand
     //   for each purchase a user make.
