@@ -2,6 +2,7 @@ package io.github.wysohn.realeconomy.manager.business.types;
 
 import com.google.inject.Injector;
 import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;
+import io.github.wysohn.rapidframework3.core.inject.factory.IDatabaseFactoryCreator;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
@@ -19,7 +20,6 @@ import io.github.wysohn.realeconomy.manager.listing.AssetListingManager;
 import io.github.wysohn.realeconomy.mediator.BusinessMediator;
 
 import java.io.File;
-import java.lang.ref.Reference;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -38,11 +38,23 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
                                    IShutdownHandle shutdownHandle,
                                    ISerializer serializer,
                                    ITypeAsserter asserter,
+                                   IDatabaseFactoryCreator factoryCreator,
                                    Injector injector,
+                                   String tableName,
                                    Class<V> type,
                                    AssetListingManager listingManager,
                                    IBusinessContextHandler visitStateProvider) {
-        super(pluginName, logger, config, new File(pluginDir, "business"), shutdownHandle, serializer, asserter, injector, type);
+        super(pluginName,
+                logger,
+                config,
+                new File(pluginDir, "business"),
+                shutdownHandle,
+                serializer,
+                asserter,
+                factoryCreator,
+                injector,
+                tableName,
+                type);
         this.listingManager = listingManager;
         this.visitStateProvider = visitStateProvider;
 
@@ -59,7 +71,6 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
     @Override
     public IBusiness getBusiness(UUID uuid) {
         return get(uuid)
-                .map(Reference::get)
                 .orElse(null);
     }
 
@@ -100,13 +111,12 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
 
         UUID uuid = UUID.randomUUID();
         getOrNew(uuid)
-                .map(Reference::get)
                 .ifPresent(business -> {
                     business.setOwnerUuid(ownerUuid);
                     business.replaceTier(tier);
                 });
 
-        return get(uuid).map(Reference::get).orElseThrow(RuntimeException::new);
+        return get(uuid).orElseThrow(RuntimeException::new);
     }
 
     @Override
@@ -131,7 +141,6 @@ public abstract class AbstractBusinessManager<V extends AbstractBusiness>
                 .map(this::get)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .map(Reference::get)
                 .filter(Objects::nonNull)
                 .forEach(consumer);
     }

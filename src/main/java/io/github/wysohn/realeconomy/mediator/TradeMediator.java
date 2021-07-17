@@ -22,7 +22,6 @@ import org.bukkit.Material;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.*;
@@ -288,7 +287,6 @@ public class TradeMediator extends Mediator {
 
                 UUID listingUuid = orderInfo.getListingUuid();
                 AssetListing assetListing = assetListingManager.get(listingUuid)
-                        .map(Reference::get)
                         .orElse(null);
 
                 // obsolete item exist in the order list
@@ -409,7 +407,6 @@ public class TradeMediator extends Mediator {
                 }
 
                 Currency currency = currencyManager.get(tradeInfo.getCurrencyUuid())
-                        .map(Reference::get)
                         .orElse(null);
 
                 // weird currency found.
@@ -448,7 +445,6 @@ public class TradeMediator extends Mediator {
 
                 // get listing info
                 AssetListing listing = assetListingManager.get(tradeInfo.getListingUuid())
-                        .map(Reference::get)
                         .orElse(null);
 
                 CentralBank finalBank = bank;

@@ -6,6 +6,7 @@ import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /**
  * Represent any store that contains 'virtual' assets.
@@ -52,5 +53,5 @@ public interface IAssetHolder extends IEntitySnapshot {
      */
     Asset removeAsset(int index);
 
-    DataProvider<Asset> assetDataProvider();
+    DataProvider<Asset> assetDataProvider(Consumer<Runnable> readlock);
 }

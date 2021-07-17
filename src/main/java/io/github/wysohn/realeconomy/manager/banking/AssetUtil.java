@@ -6,6 +6,7 @@ import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class AssetUtil {
 
@@ -112,7 +113,7 @@ public class AssetUtil {
      * @param ownedAssets
      * @return
      */
-    public static DataProvider<Asset> assetDataProvider(List<Asset> ownedAssets) {
+    public static DataProvider<Asset> assetDataProvider(List<Asset> ownedAssets, Consumer<Runnable> readlock) {
         return new DataProviderProxy<>(ownedAssets, 1000L);
     }
 }

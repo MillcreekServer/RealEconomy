@@ -4,14 +4,21 @@ import io.github.wysohn.rapidframework3.core.caching.CachedElement;
 import io.github.wysohn.realeconomy.manager.asset.Asset;
 import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 
+import javax.persistence.Column;
 import java.util.Map;
 import java.util.UUID;
 
 public class AssetListing extends CachedElement<UUID> {
+    @Column
     private AssetSignature signature;
 
     private AssetListing() {
-        this(null);
+        this((UUID) null);
+    }
+
+    private AssetListing(AssetListing copy){
+        super(copy.getKey());
+        signature = copy.signature;
     }
 
     public AssetListing(UUID key) {
@@ -19,21 +26,19 @@ public class AssetListing extends CachedElement<UUID> {
     }
 
     void setSignature(AssetSignature signature) {
-        this.signature = signature;
-
-        notifyObservers();
+        mutate(() -> this.signature = signature);
     }
 
     public AssetSignature getSignature() {
-        return signature;
+        return read(() -> signature);
     }
 
     public Asset create(Map<String, Object> metaData) {
-        return signature.asset(metaData);
+        return read(() -> signature.asset(metaData));
     }
 
     @Override
     public String toString() {
-        return signature.toString();
+        return read(() -> signature.toString());
     }
 }

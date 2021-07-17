@@ -2,9 +2,9 @@ package io.github.wysohn.realeconomy.manager.user;
 
 import com.google.inject.Injector;
 import io.github.wysohn.rapidframework3.bukkit.manager.user.AbstractUserManager;
-import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.inject.factory.IDatabaseFactoryCreator;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
@@ -34,7 +34,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.File;
-import java.lang.ref.Reference;
 import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,7 +50,6 @@ public class UserManager extends AbstractUserManager<User> {
     private final NamespacedKey checkBalanceKey;
 
     private final IBankUserProvider bankUserProvider = (uuid) -> get(uuid)
-            .map(Reference::get)
             .orElse(null);
 
     @Inject
@@ -63,22 +61,28 @@ public class UserManager extends AbstractUserManager<User> {
             IShutdownHandle shutdownHandle,
             ISerializer serializer,
             ITypeAsserter asserter,
+            IDatabaseFactoryCreator factoryCreator,
             Injector injector,
             CurrencyManager currencyManager,
             @NamespaceKeyCheckCurrency NamespacedKey checkCurrencyKey,
             @NamespaceKeyCheckBalance NamespacedKey checkBalanceKey) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, User.class);
+        super(pluginName,
+                logger,
+                config,
+                pluginDir,
+                shutdownHandle,
+                serializer,
+                asserter,
+                factoryCreator,
+                injector,
+                "user",
+                User.class);
 
         this.logger = logger;
         this.config = config;
         this.currencyManager = currencyManager;
         this.checkCurrencyKey = checkCurrencyKey;
         this.checkBalanceKey = checkBalanceKey;
-    }
-
-    @Override
-    protected Databases.DatabaseFactory createDatabaseFactory() {
-        return getDatabaseFactory("user");
     }
 
     @Override
@@ -137,7 +141,6 @@ public class UserManager extends AbstractUserManager<User> {
             return;
 
         User user = get(event.getEntity().getUniqueId())
-                .map(Reference::get)
                 .orElse(null);
         if (user == null)
             return;
@@ -193,14 +196,12 @@ public class UserManager extends AbstractUserManager<User> {
 
         Player player = (Player) event.getEntity();
         User user = get(player.getUniqueId())
-                .map(Reference::get)
                 .orElse(null);
         if (user == null)
             return;
 
         Pair<UUID, BigDecimal> currencyPair = checkItemToCurrency(itemStack);
         Currency currency = currencyManager.get(currencyPair.key)
-                .map(Reference::get)
                 .orElse(null);
 
         // remove the item early

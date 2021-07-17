@@ -11,7 +11,7 @@ public interface IAccount extends IEntitySnapshot {
 
     Map<UUID, BigDecimal> getCurrencyMap();
 
-//    IAccount clone();
+    IAccount clone();
 
     default BigDecimal minimumBalance() {
         return BigDecimal.valueOf(0.0);

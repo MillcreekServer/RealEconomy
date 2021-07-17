@@ -2,9 +2,9 @@ package io.github.wysohn.realeconomy.manager.currency;
 
 import com.google.inject.Injector;
 import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;
-import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.inject.factory.IDatabaseFactoryCreator;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.core.paging.DataProviderProxy;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
@@ -20,8 +20,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.File;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Logger;
@@ -45,18 +43,24 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
             IShutdownHandle shutdownHandle,
             ISerializer serializer,
             ITypeAsserter asserter,
+            IDatabaseFactoryCreator factoryCreator,
             Injector injector,
             IOrderQueryModule orderPlacementHandler,
             ITaskSupervisor task) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, Currency.class);
+        super(pluginName,
+                logger,
+                config,
+                pluginDir,
+                shutdownHandle,
+                serializer,
+                asserter,
+                factoryCreator,
+                injector,
+                "currency",
+                Currency.class);
         this.config = config;
         this.orderPlacementHandler = orderPlacementHandler;
         this.task = task;
-    }
-
-    @Override
-    protected Databases.DatabaseFactory createDatabaseFactory() {
-        return getDatabaseFactory("currency");
     }
 
     @Override
@@ -90,9 +94,9 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
     }
 
     @Override
-    public Optional<WeakReference<Currency>> get(UUID key) {
-        final Optional<WeakReference<Currency>> reference = super.get(key);
-        reference.map(Reference::get).ifPresent(currency ->
+    public Optional<Currency> get(UUID key) {
+        final Optional<Currency> reference = super.get(key);
+        reference.ifPresent(currency ->
                 currency.setUseCount(currency.getUseCount() + 1));
         return reference;
     }
@@ -103,7 +107,7 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
      * @deprecated Use {@link #newCurrency(String, String, CentralBank)}
      */
     @Override
-    public Optional<WeakReference<Currency>> getOrNew(UUID key) {
+    public Optional<Currency> getOrNew(UUID key) {
         throw new RuntimeException("Do not use this directly. Use #newCurrency(String, String)");
     }
 
@@ -141,7 +145,6 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
 
         String finalCode = code;
         super.getOrNew(UUID.randomUUID())
-                .map(Reference::get)
                 .ifPresent(currency -> {
                     currency.setCentralBank(bank);
                     bank.setBaseCurrency(currency);
@@ -176,8 +179,7 @@ public class CurrencyManager extends AbstractManagerElementCaching<UUID, Currenc
         if (!get(name).isPresent())
             return Result.NOT_EXIST;
 
-        get(name).map(Reference::get)
-                .ifPresent(currency -> {
+        get(name).ifPresent(currency -> {
                     String previousCode = currency.getCode();
                     currency.setCode(newCode);
 

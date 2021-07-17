@@ -13,6 +13,7 @@ import io.github.wysohn.realeconomy.manager.banking.BankingTypeRegistry;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class TradingAccount implements IAccount, IAssetHolder {
     public final Map<UUID, BigDecimal> balances = new ConcurrentHashMap<>();
@@ -42,8 +43,8 @@ public class TradingAccount implements IAccount, IAssetHolder {
     }
 
     @Override
-    public DataProvider<Asset> assetDataProvider() {
-        return AssetUtil.assetDataProvider(ownedAssets);
+    public DataProvider<Asset> assetDataProvider(Consumer<Runnable> readLock) {
+        return AssetUtil.assetDataProvider(ownedAssets, readLock);
     }
 
     @Override

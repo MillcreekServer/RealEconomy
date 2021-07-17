@@ -6,20 +6,33 @@ import io.github.wysohn.realeconomy.manager.banking.CentralBankingManager;
 import io.github.wysohn.realeconomy.manager.banking.bank.CentralBank;
 
 import javax.inject.Inject;
-import java.lang.ref.Reference;
+import javax.persistence.Column;
+import javax.persistence.Transient;
 import java.util.Optional;
 import java.util.UUID;
 
 public class Currency extends CachedElement<UUID> {
     @Inject
+    @Transient
     private CentralBankingManager centralBankingManager;
 
+    @Column
     private String code;
+    @Column
     private UUID centralBankUuid;
+    @Column
     private int useCount;
 
     private Currency() {
-        super(null);
+        super((UUID) null);
+    }
+
+    private Currency(Currency copy){
+        super(copy.getKey());
+        centralBankingManager = copy.centralBankingManager;
+        code = copy.code;
+        centralBankUuid = copy.centralBankUuid;
+        useCount = copy.useCount;
     }
 
     public Currency(UUID key) {
@@ -31,15 +44,12 @@ public class Currency extends CachedElement<UUID> {
     }
 
     void setCode(String code) {
-        this.code = code;
-
-        notifyObservers();
+        mutate(() -> this.code = code);
     }
 
     public CentralBank ownerBank() {
-        return Optional.ofNullable(centralBankUuid)
+        return Optional.ofNullable(read(() -> centralBankUuid))
                 .flatMap(centralBankingManager::get)
-                .map(Reference::get)
                 .orElse(null);
     }
 
@@ -48,18 +58,15 @@ public class Currency extends CachedElement<UUID> {
         if (this.centralBankUuid != null)
             throw new RuntimeException("Currency " + this + " already has owner but is attempted to update.");
 
-        this.centralBankUuid = centralBank.getKey();
-
-        notifyObservers();
+        mutate(() -> this.centralBankUuid = centralBank.getKey());
     }
 
     public int getUseCount() {
-        return useCount;
+        return read(() -> useCount);
     }
 
     public void setUseCount(int useCount) {
-        this.useCount = useCount;
-        notifyObservers();
+        mutate(() -> this.useCount = useCount);
     }
 
     @Override

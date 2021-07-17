@@ -2,9 +2,9 @@ package io.github.wysohn.realeconomy.manager.listing;
 
 import com.google.inject.Injector;
 import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;
-import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.inject.factory.IDatabaseFactoryCreator;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.paging.DataProvider;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
@@ -22,8 +22,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.File;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -51,17 +49,23 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
                                IShutdownHandle shutdownHandle,
                                ISerializer serializer,
                                ITypeAsserter asserter,
+                               IDatabaseFactoryCreator factoryCreator,
                                Injector injector,
                                IOrderQueryModule orderQueryModule,
                                ITaskSupervisor taskSupervisor) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, AssetListing.class);
+        super(pluginName,
+                logger,
+                config,
+                pluginDir,
+                shutdownHandle,
+                serializer,
+                asserter,
+                factoryCreator,
+                injector,
+                "assetListings",
+                AssetListing.class);
         this.orderQueryModule = orderQueryModule;
         this.taskSupervisor = taskSupervisor;
-    }
-
-    @Override
-    protected Databases.DatabaseFactory createDatabaseFactory() {
-        return getDatabaseFactory("assetListings");
     }
 
     @Override
@@ -106,7 +110,7 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
      * @deprecated use {@link #newListing(AssetSignature)}
      */
     @Override
-    public Optional<WeakReference<AssetListing>> getOrNew(UUID key) {
+    public Optional<AssetListing> getOrNew(UUID key) {
         return super.getOrNew(key);
     }
 
@@ -121,7 +125,6 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
             return false;
 
         super.getOrNew(UUID.randomUUID())
-                .map(Reference::get)
                 .ifPresent(listing -> {
                     listing.setSignature(signature);
                     signatureUUIDMap.put(signature, listing.getKey());
@@ -169,7 +172,6 @@ public class AssetListingManager extends AbstractManagerElementCaching<UUID, Ass
         return Optional.ofNullable(signature)
                 .map(signatureUUIDMap::get)
                 .flatMap(this::get)
-                .map(Reference::get)
                 .orElse(null);
     }
 

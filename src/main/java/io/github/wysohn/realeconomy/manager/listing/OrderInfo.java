@@ -6,7 +6,6 @@ import io.github.wysohn.realeconomy.manager.asset.signature.AssetSignature;
 import io.github.wysohn.realeconomy.manager.currency.Currency;
 import io.github.wysohn.realeconomy.manager.currency.CurrencyManager;
 
-import java.lang.ref.Reference;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
@@ -80,14 +79,12 @@ public class OrderInfo {
 
     public AssetSignature signature(AssetListingManager manager) {
         return manager.get(listingUuid)
-                .map(Reference::get)
                 .map(AssetListing::getSignature)
                 .orElse(null);
     }
 
     public String currencyName(CurrencyManager manager) {
         return manager.get(currencyUuid)
-                .map(Reference::get)
                 .map(Currency::toString)
                 .orElse(null);
     }

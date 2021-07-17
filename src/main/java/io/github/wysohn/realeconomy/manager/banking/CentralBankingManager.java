@@ -1,9 +1,9 @@
 package io.github.wysohn.realeconomy.manager.banking;
 
 import com.google.inject.Injector;
-import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.inject.factory.IDatabaseFactoryCreator;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
@@ -26,15 +26,21 @@ public class CentralBankingManager extends AbstractBankingManager<CentralBank> {
             ManagerConfig config,
             @PluginDirectory File pluginDir,
             IShutdownHandle shutdownHandle,
+            IDatabaseFactoryCreator factoryCreator,
             ISerializer serializer,
             ITypeAsserter asserter,
             Injector injector) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, CentralBank.class);
-    }
-
-    @Override
-    protected Databases.DatabaseFactory createDatabaseFactory() {
-        return getDatabaseFactory("centralBanks");
+        super(pluginName,
+                logger,
+                config,
+                pluginDir,
+                shutdownHandle,
+                serializer,
+                asserter,
+                factoryCreator,
+                injector,
+                "centralBanks",
+                CentralBank.class);
     }
 
     @Override

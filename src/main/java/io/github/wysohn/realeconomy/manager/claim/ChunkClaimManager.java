@@ -5,9 +5,9 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import io.github.wysohn.rapidframework3.bukkit.manager.location.ManagerPlayerLocation;
 import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;
-import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.inject.factory.IDatabaseFactoryCreator;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.data.SimpleChunkLocation;
 import io.github.wysohn.rapidframework3.data.SimpleLocation;
@@ -21,7 +21,6 @@ import io.github.wysohn.realeconomy.mediator.BusinessMediator;
 
 import javax.inject.Named;
 import java.io.File;
-import java.lang.ref.Reference;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -42,18 +41,24 @@ public class ChunkClaimManager
                              ManagerConfig config,
                              @PluginDirectory File pluginDir,
                              IShutdownHandle shutdownHandle,
+                             IDatabaseFactoryCreator factoryCreator,
                              ISerializer serializer,
                              ITypeAsserter asserter,
                              Injector injector) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, ChunkClaim.class);
+        super(pluginName,
+                logger,
+                config,
+                pluginDir,
+                shutdownHandle,
+                serializer,
+                asserter,
+                factoryCreator,
+                injector,
+                "chunkClaims",
+                ChunkClaim.class);
         this.config = config;
 
         BusinessMediator.registerClaimHandler(this);
-    }
-
-    @Override
-    protected Databases.DatabaseFactory createDatabaseFactory() {
-        return getDatabaseFactory("chunkClaims");
     }
 
     @Override
@@ -98,7 +103,6 @@ public class ChunkClaimManager
 
         SimpleChunkLocation chunk = new SimpleChunkLocation(location);
         return get(chunk)
-                .map(Reference::get)
                 .map(ChunkClaim::getBusinessUuid)
                 .map(Collections::singleton)
                 .orElseGet(Collections::emptySet);
@@ -114,7 +118,6 @@ public class ChunkClaimManager
             return false;
 
         ChunkClaim claim = get(chunk)
-                .map(Reference::get)
                 .orElse(null);
         if (claim == null)
             return false;
@@ -132,7 +135,6 @@ public class ChunkClaimManager
             return false;
 
         ChunkClaim claim = get(chunk)
-                .map(Reference::get)
                 .orElse(null);
         if (claim == null)
             return false;
@@ -150,7 +152,6 @@ public class ChunkClaimManager
             return true;
 
         ChunkClaim claim = get(chunk)
-                .map(Reference::get)
                 .orElse(null);
         if (claim == null)
             return true;
@@ -168,7 +169,6 @@ public class ChunkClaimManager
             return false;
 
         ChunkClaim claim = get(chunk)
-                .map(Reference::get)
                 .orElse(null);
         if (claim == null)
             return false;
@@ -184,7 +184,6 @@ public class ChunkClaimManager
         Validation.assertNotNull(location);
 
         return get(new SimpleChunkLocation(location))
-                .map(Reference::get)
                 .map(ChunkClaim::getBusinessUuid)
                 .orElse(null);
     }
@@ -213,7 +212,7 @@ public class ChunkClaimManager
         Validation.assertNotNull(business);
 
         SimpleChunkLocation chunk = new SimpleChunkLocation(location);
-        getOrNew(chunk).map(Reference::get)
+        getOrNew(chunk)
                 .ifPresent(chunkClaim -> {
                     chunkClaim.setBusinessUuid(business.getUuid());
                     businessToChunk.put(business.getUuid(), chunk);

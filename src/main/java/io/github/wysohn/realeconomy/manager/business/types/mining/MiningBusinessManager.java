@@ -2,9 +2,9 @@ package io.github.wysohn.realeconomy.manager.business.types.mining;
 
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
-import io.github.wysohn.rapidframework3.core.database.Databases;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginDirectory;
 import io.github.wysohn.rapidframework3.core.inject.annotations.PluginLogger;
+import io.github.wysohn.rapidframework3.core.inject.factory.IDatabaseFactoryCreator;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
@@ -42,16 +42,23 @@ public class MiningBusinessManager extends AbstractBusinessManager<MiningBusines
                                  IShutdownHandle shutdownHandle,
                                  ISerializer serializer,
                                  ITypeAsserter asserter,
+                                 IDatabaseFactoryCreator factoryCreator,
                                  Injector injector,
                                  AssetListingManager listingManager,
                                  IBusinessContextHandler visitStateProvider) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer,
-                asserter, injector, MiningBusiness.class, listingManager, visitStateProvider);
-    }
-
-    @Override
-    protected Databases.DatabaseFactory createDatabaseFactory() {
-        return getDatabaseFactory(TIER_NAME);
+        super(pluginName,
+                logger,
+                config,
+                pluginDir,
+                shutdownHandle,
+                serializer,
+                asserter,
+                factoryCreator,
+                injector,
+                TIER_NAME,
+                MiningBusiness.class,
+                listingManager,
+                visitStateProvider);
     }
 
     @Override

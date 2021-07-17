@@ -2,6 +2,7 @@ package io.github.wysohn.realeconomy.manager.banking;
 
 import com.google.inject.Injector;
 import io.github.wysohn.rapidframework3.core.caching.AbstractManagerElementCaching;
+import io.github.wysohn.rapidframework3.core.inject.factory.IDatabaseFactoryCreator;
 import io.github.wysohn.rapidframework3.core.main.ManagerConfig;
 import io.github.wysohn.rapidframework3.interfaces.plugin.IShutdownHandle;
 import io.github.wysohn.rapidframework3.interfaces.serialize.ISerializer;
@@ -23,9 +24,21 @@ public abstract class AbstractBankingManager<Bank extends AbstractBank>
             IShutdownHandle shutdownHandle,
             ISerializer serializer,
             ITypeAsserter asserter,
+            IDatabaseFactoryCreator factoryCreator,
             Injector injector,
+            String tableName,
             Class<Bank> type) {
-        super(pluginName, logger, config, pluginDir, shutdownHandle, serializer, asserter, injector, type);
+        super(pluginName,
+                logger,
+                config,
+                pluginDir,
+                shutdownHandle,
+                serializer,
+                asserter,
+                factoryCreator,
+                injector,
+                tableName,
+                type);
 
         dependsOn(CurrencyManager.class);
     }
